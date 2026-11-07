@@ -30,7 +30,7 @@ export class NightGlowEffect {
     }));
   }
 
-  public render(ctx: CanvasRenderingContext2D, w: number, h: number, dayFloat: number): void {
+  public render(ctx: CanvasRenderingContext2D, w: number, h: number, dayFloat: number, advance = true): void {
     const dist = Math.min(Math.abs(dayFloat - 8), Math.abs(dayFloat - 9), Math.abs(dayFloat - 10));
     if (dist >= 1.1) return;
 
@@ -39,7 +39,7 @@ export class NightGlowEffect {
 
     for (let i = 0; i < this.orbs.length; i++) {
       const o = this.orbs[i];
-      o.phase += o.speed;
+      if (advance) o.phase += o.speed;
       const x = o.xRatio * w;
       const y = h - o.yOffset + Math.cos(o.phase * 0.7) * 4;
       ctx.globalAlpha = (0.45 + 0.55 * Math.sin(o.phase)) * strength;

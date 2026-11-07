@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
   <path d="M -20,205 L -20,146 Q 95,126 210,148 T 495,144 L 495,205 Z" fill="#1e293b" opacity="0.85"/>
-  <line x1="72" y1="148" x2="178" y2="156" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
-  <rect x="94" y="122" width="4.5" height="30" fill="#dc2626"/>
-  <rect x="120" y="122" width="4.5" height="30" fill="#dc2626"/>
-  <path d="M 86,122 Q 109,117 132,122" fill="none" stroke="#dc2626" stroke-width="4.5" stroke-linecap="round"/>
-  <path d="M 86,119.5 Q 109,114.5 132,119.5" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
-  <rect x="92" y="129" width="34" height="3" fill="#dc2626"/>
+  <rect x="94" y="118" width="5" height="32" fill="#dc2626"/>
+  <rect x="122" y="118" width="5" height="32" fill="#dc2626"/>
+  <path d="M 85,118 Q 110.5,113 136,118" fill="none" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 85,115 Q 110.5,110 136,115" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+  <rect x="92" y="126" width="37" height="3.2" fill="#dc2626"/>
 </svg>

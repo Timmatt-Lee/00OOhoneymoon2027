@@ -1,17 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 54" class="jetliner-svg">
-  <g transform="translate(160, 0) scale(-1, 1)">
-    <polygon points="72,19 94,6 105,6 88,19" fill="#e2e8f0" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/>
-    <path d="M 8,28 C 20,20 38,18 56,18 L 118,18 L 139,3 L 152,3 L 141,20 L 148,24 C 141,28 128,30 114,30 L 82,30 L 59,47 L 44,47 L 63,30 L 26,30 C 15,30 8,29 8,28 Z" fill="#0f172a" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/>
-    <rect x="66" y="32" width="17" height="6.5" rx="3.2" fill="#f8fafc" stroke="#ffffff" stroke-width="1.4"/>
-    <polygon points="16,25 26,21.5 28,25 18,26" fill="#fde047"/>
-    <rect x="35" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
-    <rect x="44" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
-    <rect x="53" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
-    <rect x="62" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
-    <rect x="71" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
-    <rect x="80" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
-    <rect x="89" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
-    <rect x="98" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
-    <rect x="107" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 38" class="jetliner-svg">
+  <polygon points="44,14 30,5 22,5 34,14" fill="#334155"/>
+  <path d="M 102,20 C 94,14 82,13 68,13 L 26,13 L 12,2 L 3,2 L 11,15 L 6,17 C 11,20 20,22 30,22 L 88,22 C 96,22 102,21 102,20 Z" fill="#0f172a"/>
+  <path d="M 3,2 L 12,2 L 26,13 L 68,13 C 82,13 94,14 101,19" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="16" y1="20" x2="94" y2="20" stroke="#f43f5e" stroke-width="2.2" stroke-linecap="round"/>
+  <polygon points="56,20 38,33 48,33 68,20" fill="#1e293b"/>
+  <line x1="68" y1="20" x2="48" y2="33" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round"/>
+  <rect x="46" y="23" width="12" height="5" rx="2.5" fill="#0f172a" stroke="#ffffff" stroke-width="2.2"/>
+  <polygon points="95,18 88,15.5 86,18 93,19" fill="#bae6fd"/>
+  <g fill="#fde047">
+    <rect x="76" y="15.5" width="4.5" height="2.8" rx="0.8"/>
+    <rect x="68" y="15.5" width="4.5" height="2.8" rx="0.8"/>
+    <rect x="60" y="15.5" width="4.5" height="2.8" rx="0.8"/>
+    <rect x="52" y="15.5" width="4.5" height="2.8" rx="0.8"/>
+    <rect x="44" y="15.5" width="4.5" height="2.8" rx="0.8"/>
+    <rect x="36" y="15.5" width="4.5" height="2.8" rx="0.8"/>
+    <rect x="28" y="15.5" width="4.5" height="2.8" rx="0.8"/>
   </g>
 </svg>

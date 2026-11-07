@@ -34,19 +34,21 @@ export class SnowfallEffect {
     }));
   }
 
-  public render(ctx: CanvasRenderingContext2D, w: number, h: number, dayFloat: number): void {
+  public render(ctx: CanvasRenderingContext2D, w: number, h: number, dayFloat: number, advance = true): void {
     ctx.fillStyle = Math.abs(dayFloat - 4) < 0.7 ? 'rgba(255, 245, 250, 0.92)' : '#FFFFFF';
     for (let i = 0; i < this.flakes.length; i++) {
       const f = this.flakes[i];
-      f.phase += 0.015;
-      f.y += f.vy;
-      f.x += f.vx + Math.sin(f.phase) * 0.18;
-      if (f.y > h + 6) {
-        f.y = -6;
-        f.x = this.rand() * w;
+      if (advance) {
+        f.phase += 0.015;
+        f.y += f.vy;
+        f.x += f.vx + Math.sin(f.phase) * 0.18;
+        if (f.y > h + 6) {
+          f.y = -6;
+          f.x = this.rand() * w;
+        }
+        if (f.x > w + 6) f.x = -6;
+        else if (f.x < -6) f.x = w + 6;
       }
-      if (f.x > w + 6) f.x = -6;
-      else if (f.x < -6) f.x = w + 6;
       ctx.globalAlpha = f.alpha;
       ctx.beginPath();
       ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);

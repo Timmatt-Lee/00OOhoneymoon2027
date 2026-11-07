@@ -5,10 +5,8 @@
     </clipPath>
   </defs>
   <path d="M 412 26 A 14 14 0 1 1 397 43 A 11.2 11.2 0 1 0 412 26 Z" fill="#fef08a" opacity="0.9"/>
-  <ellipse cx="114" cy="48" rx="24" ry="6" fill="#e2e8f0" opacity="0.32"/>
-  <ellipse cx="126" cy="38" rx="16" ry="4.5" fill="#e2e8f0" opacity="0.22"/>
-  <path d="M -20,205 L -20,126 L 82,60 L 146,60 L 224,118 L 334,54 L 465,126 L 495,134 L 495,205 Z" fill="#3b1d2e" opacity="0.72"/>
-  <g clip-path="url(#g3-bg-mtn-clip)" fill="#ffffff" opacity="0.88">
+  <path d="M -20,205 L -20,126 L 82,60 L 146,60 L 224,118 L 334,54 L 465,126 L 495,134 L 495,205 Z" fill="#4c1d3d" opacity="0.85" stroke="#701a75" stroke-width="1.4"/>
+  <g clip-path="url(#g3-bg-mtn-clip)" fill="#ffffff" opacity="0.9">
     <polygon points="-20,88 -20,48 224,48 224,88 144,81 114,89 84,81"/>
     <polygon points="224,88 224,44 465,44 465,88 358,80 334,89 310,80"/>
   </g>

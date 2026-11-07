@@ -11,40 +11,31 @@
   <polygon points="129.5,134 120,141 139,141" fill="#ffffff"/>
   <circle cx="129.5" cy="143" r="4.5" fill="#fde047"/>
   <path d="M 192,168 L 192,118 L 256,92 L 320,118 L 320,168 Z" fill="#090d16"/>
-  <polyline points="186,119 256,90 326,119" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="186,119 256,90 326,119" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   <g fill="#fde047" opacity="0.92">
     <rect x="212" y="122" width="20" height="11" rx="1.5"/>
     <rect x="246" y="122" width="20" height="11" rx="1.5"/>
     <rect x="280" y="122" width="20" height="11" rx="1.5"/>
     <rect x="224" y="140" width="64" height="10" rx="1.5"/>
   </g>
-  <rect x="318" y="142" width="28" height="26" fill="#1e293b"/>
-  <line x1="316" y1="142" x2="348" y2="142" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-  <rect x="346" y="144" width="100" height="22" rx="2" fill="#1e293b"/>
-  <line x1="344" y1="144" x2="448" y2="144" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-  <polygon points="354,136 346,142 362,142" fill="#ffffff"/>
-  <rect x="351" y="142" width="6" height="6" rx="1" fill="#fde047"/>
-  <ellipse cx="398" cy="169" rx="45" ry="7.5" fill="#2dd4bf"/>
-  <ellipse cx="398" cy="168.5" rx="39" ry="5.5" fill="#99f6e4"/>
-  <line x1="372" y1="168" x2="400" y2="168" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="392" y1="171" x2="422" y2="171" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Open-Air Noboribetsu Sulfur Rock Rotenburo (No backing wall or static white lines — steam is rendered by Canvas!) -->
+  <polygon points="342,148 333,155 351,155" fill="#ffffff"/>
+  <rect x="339" y="155" width="6" height="7" rx="1" fill="#fde047"/>
+  <rect x="340" y="162" width="4" height="6" fill="#1e293b"/>
+  <ellipse cx="400" cy="169" rx="45" ry="7.5" fill="#2dd4bf"/>
+  <ellipse cx="400" cy="168.5" rx="39" ry="5.5" fill="#99f6e4"/>
   <g fill="#334155">
-    <ellipse cx="352" cy="169" rx="9" ry="5.5"/>
-    <ellipse cx="371" cy="175" rx="11.5" ry="5"/>
-    <ellipse cx="397" cy="176.5" rx="13.5" ry="5"/>
-    <ellipse cx="423" cy="175" rx="11.5" ry="5"/>
-    <ellipse cx="443" cy="169" rx="9" ry="5.5"/>
+    <ellipse cx="354" cy="169" rx="9" ry="5.5"/>
+    <ellipse cx="373" cy="175" rx="11.5" ry="5"/>
+    <ellipse cx="399" cy="176.5" rx="13.5" ry="5"/>
+    <ellipse cx="425" cy="175" rx="11.5" ry="5"/>
+    <ellipse cx="445" cy="169" rx="9" ry="5.5"/>
   </g>
   <g fill="#ffffff" opacity="0.94">
-    <ellipse cx="352" cy="166" rx="6.5" ry="2"/>
-    <ellipse cx="371" cy="172.5" rx="8" ry="2"/>
-    <ellipse cx="397" cy="174" rx="9.5" ry="2"/>
-    <ellipse cx="423" cy="172.5" rx="8" ry="2"/>
-    <ellipse cx="443" cy="166" rx="6.5" ry="2"/>
-  </g>
-  <g fill="none" stroke="#f8fafc" stroke-width="2.2" stroke-linecap="round" opacity="0.8">
-    <path d="M 378,163 Q 374,154 380,146 T 377,135"/>
-    <path d="M 400,164 Q 396,153 402,144 T 399,132"/>
-    <path d="M 420,163 Q 416,155 422,147 T 419,137"/>
+    <ellipse cx="354" cy="166" rx="6.5" ry="2"/>
+    <ellipse cx="373" cy="172.5" rx="8" ry="2"/>
+    <ellipse cx="399" cy="174" rx="9.5" ry="2"/>
+    <ellipse cx="425" cy="172.5" rx="8" ry="2"/>
+    <ellipse cx="445" cy="166" rx="6.5" ry="2"/>
   </g>
 </svg>

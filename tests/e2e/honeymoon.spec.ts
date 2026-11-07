@@ -27,6 +27,7 @@ test.describe('00OO 北海道蜜月 2027 — Visual & Interaction E2E Suite', ()
       const slot = page.locator(`.story-slot[data-day="${dayIdx}"]`);
       await slot.dispatchEvent('pointerdown', { button: 0, clientX: 0, clientY: 0, pointerId: 1 });
       await slot.dispatchEvent('pointerup', { button: 0, pointerId: 1 });
+      await page.waitForTimeout(25);
 
       const pill = page.locator('.story-seg.is-active-pill');
       await expect(pill).toContainText(`Day ${dayIdx + 1}`);
