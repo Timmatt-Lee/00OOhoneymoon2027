@@ -1,11 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
-              <path d="M -20,205 L -20,162 Q 110,152 220,162 Q 340,112 460,138 T 595,124 L 595,205 Z" fill="#e2e8f0" opacity="0.85"/>
-              <path d="M 24,164 Q 82,108 140,164 Q 198,108 256,164" fill="none" stroke="#334155" stroke-width="6"/>
-              <line x1="16" y1="164" x2="264" y2="164" stroke="#ffffff" stroke-width="3.5"/>
-              <!-- 7-Seater Alphard Charter Van on Biei Hill -->
-              <g transform="translate(278, 134)">
-                <rect x="0" y="0" width="44" height="15" rx="4" fill="#0f172a"/>
-                <rect x="6" y="3" width="14" height="5.5" rx="1" fill="#fde047"/>
-                <rect x="23" y="3" width="15" height="5.5" rx="1" fill="#bae6fd"/>
-              </g>
-            </svg>
+  <path d="M -20,205 L -20,162 Q 110,152 220,162 Q 340,116 460,138 T 595,126 L 595,205 Z" fill="#e2e8f0" opacity="0.88"/>
+  <path d="M 24,164 Q 82,108 140,164 Q 198,108 256,164" fill="none" stroke="#334155" stroke-width="6"/>
+  <line x1="16" y1="164" x2="264" y2="164" stroke="#ffffff" stroke-width="3.5"/>
+</svg>

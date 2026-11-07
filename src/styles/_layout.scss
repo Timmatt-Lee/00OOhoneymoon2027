@@ -262,6 +262,7 @@ html, body {
 }
 
 .schedule-item-title {
+  flex-shrink: 0;
   font-weight: 900;
   line-height: 1.35;
   letter-spacing: -0.025em;
@@ -284,6 +285,7 @@ html, body {
 }
 
 .schedule-item-subtitle {
+  flex-shrink: 0;
   font-weight: 700;
   line-height: 1.35;
   margin-top: 2px;
@@ -385,21 +387,21 @@ html, body {
   will-change: transform, opacity;
 
   &.plane-arrive {
-    top: 22px;
-    left: 46px;
-    width: 184px;
-    height: 64px;
+    top: 14px;
+    left: 28px;
+    width: 108px;
+    height: 37px;
     opacity: calc(1 - var(--arrive-p, 0) * 1.05);
-    transform: translate3d(calc(var(--arrive-p, 0) * -240px), calc(var(--arrive-p, 0) * -60px), 0) rotate(-7deg);
+    transform: translate3d(calc(var(--arrive-p, 0) * 180px), calc(var(--arrive-p, 0) * 32px), 0) rotate(6deg);
   }
 
   &.plane-depart {
-    top: 16px;
-    left: 215px;
-    width: 180px;
-    height: 62px;
+    top: 14px;
+    left: 248px;
+    width: 108px;
+    height: 37px;
     opacity: calc(var(--depart-p, 0) * 1.15);
-    transform: translate3d(calc((1 - var(--depart-p, 0)) * 240px), calc((1 - var(--depart-p, 0)) * 28px), 0) rotate(-13deg);
+    transform: translate3d(calc((1 - var(--depart-p, 0)) * -160px), calc((1 - var(--depart-p, 0)) * 34px), 0) rotate(-11deg);
   }
 }
 

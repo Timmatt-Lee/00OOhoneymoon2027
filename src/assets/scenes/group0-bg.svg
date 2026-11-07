@@ -1,20 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
   <defs>
-    <clipPath id="g0-moiwa-clip">
-      <path d="M -20,205 L -20,132 Q 65,78 155,118 Q 225,146 310,142 L 640,142 L 640,205 Z"/>
+    <clipPath id="g0-mtn-clip">
+      <path d="M -20,205 L -20,128 L 95,56 L 205,118 L 330,48 L 455,116 L 555,62 L 640,122 L 640,205 Z"/>
     </clipPath>
   </defs>
-  <circle cx="505" cy="38" r="24" fill="#fef08a" opacity="0.16"/>
-  <circle cx="505" cy="38" r="13" fill="#fef9c3" opacity="0.92"/>
-  <path d="M -20,205 L -20,132 Q 65,78 155,118 Q 225,146 310,142 L 640,142 L 640,205 Z" fill="#1e293b" opacity="0.52"/>
-  <path d="M 5,112 Q 65,76 128,112 Q 95,104 65,110 Q 35,104 5,112 Z" fill="#ffffff" opacity="0.42" clip-path="url(#g0-moiwa-clip)"/>
-  <g fill="#0f172a" opacity="0.58">
-    <rect x="218" y="116" width="28" height="89" rx="1"/>
-    <rect x="252" y="102" width="34" height="103" rx="1"/>
-    <rect x="292" y="120" width="26" height="85" rx="1"/>
-    <rect x="342" y="96" width="38" height="109" rx="1"/>
-    <rect x="386" y="112" width="30" height="93" rx="1"/>
-    <rect x="438" y="106" width="36" height="99" rx="1"/>
-    <rect x="512" y="114" width="32" height="91" rx="1"/>
+  <circle cx="505" cy="32" r="20" fill="#fef08a" opacity="0.16"/>
+  <circle cx="505" cy="32" r="11" fill="#fef9c3" opacity="0.92"/>
+  <path d="M -20,205 L -20,128 L 95,56 L 205,118 L 330,48 L 455,116 L 555,62 L 640,122 L 640,205 Z" fill="#1e293b" opacity="0.65"/>
+  <g clip-path="url(#g0-mtn-clip)" fill="#ffffff" opacity="0.82">
+    <polygon points="-20,86 -20,40 205,40 205,86 122,79 95,87 68,79"/>
+    <polygon points="205,80 205,35 455,35 455,80 360,72 330,81 300,72"/>
+    <polygon points="455,90 455,45 640,45 640,90 580,83 555,91 530,83"/>
   </g>
 </svg>

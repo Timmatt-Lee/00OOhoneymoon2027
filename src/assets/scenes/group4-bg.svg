@@ -8,6 +8,6 @@
   <circle cx="515" cy="96" r="31" fill="#fde047" opacity="0.92"/>
   <path d="M -20,205 L -20,148 L 65,136 L 178,48 L 226,48 L 325,142 L 395,92 L 485,138 L 585,88 L 695,134 L 820,104 L 940,146 L 940,205 Z" fill="#334155" opacity="0.58"/>
   <g clip-path="url(#g4-bg-mtn-clip)" fill="#ffffff" opacity="0.94">
-    <polygon points="115,88 178,44 226,44 280,88 232,80 202,90 172,80"/>
+    <polygon points="65,88 65,40 325,40 325,88 232,80 202,90 172,80"/>
   </g>
 </svg>

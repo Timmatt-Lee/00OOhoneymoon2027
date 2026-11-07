@@ -1,10 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
-              <!-- Pair of White Swans on Lake Shikotsu -->
-              <path d="M 146,162 Q 157,162 159,152 Q 161,143 155,143 Q 152,143 153,147 L 142,155 Z" fill="#ffffff"/>
-              <path d="M 182,162 Q 171,162 169,152 Q 167,143 173,143 Q 176,143 175,147 L 186,155 Z" fill="#ffffff"/>
-              <!-- Lakeside Boutique Ryokan & Outdoor Rotemburo Pool -->
-              <path d="M 258,186 L 258,122 L 324,98 L 390,122 L 436,122 L 436,186 Z" fill="#0f172a"/>
-              <path d="M 254,123 L 324,96 L 394,123" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
-              <rect x="302" y="128" width="36" height="14" rx="2" fill="#fde047"/>
-              <ellipse cx="374" cy="166" rx="42" ry="12" fill="#38bdf8" stroke="#ffffff" stroke-width="4.5"/>
-            </svg>
+  <path d="M 172,205 L 192,166 Q 320,162 490,165 L 490,205 Z" fill="#e2e8f0"/>
+  <rect x="136" y="158" width="52" height="4" rx="1.5" fill="#334155"/>
+  <rect x="144" y="162" width="4" height="18" fill="#1e293b"/>
+  <rect x="168" y="162" width="4" height="18" fill="#1e293b"/>
+  <rect x="142" y="142" width="3.5" height="16" fill="#1e293b"/>
+  <circle cx="143.7" cy="139" r="4.5" fill="#fde047"/>
+  <path d="M 204,168 L 204,120 L 265,96 L 326,120 L 326,168 Z" fill="#0f172a"/>
+  <polyline points="198,121 265,94 332,121" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#fde047" opacity="0.9">
+    <rect x="222" y="126" width="22" height="11" rx="1.5"/>
+    <rect x="254" y="126" width="22" height="11" rx="1.5"/>
+    <rect x="286" y="126" width="22" height="11" rx="1.5"/>
+    <rect x="236" y="144" width="58" height="10" rx="1.5"/>
+  </g>
+  <rect x="324" y="142" width="28" height="26" fill="#1e293b"/>
+  <line x1="322" y1="142" x2="354" y2="142" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <rect x="350" y="144" width="96" height="22" rx="2" fill="#1e293b"/>
+  <line x1="348" y1="144" x2="448" y2="144" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="356,136 348,142 364,142" fill="#ffffff"/>
+  <rect x="353" y="142" width="6" height="6" rx="1" fill="#fde047"/>
+  <ellipse cx="400" cy="169" rx="44" ry="7.5" fill="#0284c7"/>
+  <ellipse cx="400" cy="168.5" rx="38" ry="5.5" fill="#38bdf8"/>
+  <line x1="376" y1="168" x2="402" y2="168" stroke="#e0f2fe" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="394" y1="171" x2="422" y2="171" stroke="#e0f2fe" stroke-width="1.6" stroke-linecap="round"/>
+  <g fill="#334155">
+    <ellipse cx="356" cy="169" rx="9" ry="5.5"/>
+    <ellipse cx="374" cy="175" rx="11" ry="5"/>
+    <ellipse cx="398" cy="176.5" rx="13" ry="5"/>
+    <ellipse cx="422" cy="175" rx="11" ry="5"/>
+    <ellipse cx="442" cy="169" rx="9" ry="5.5"/>
+  </g>
+  <g fill="#ffffff" opacity="0.92">
+    <ellipse cx="356" cy="166" rx="6.5" ry="2"/>
+    <ellipse cx="374" cy="172.5" rx="8" ry="2"/>
+    <ellipse cx="398" cy="174" rx="9.5" ry="2"/>
+    <ellipse cx="422" cy="172.5" rx="8" ry="2"/>
+    <ellipse cx="442" cy="166" rx="6.5" ry="2"/>
+  </g>
+  <g fill="none" stroke="#f8fafc" stroke-width="2.2" stroke-linecap="round" opacity="0.75">
+    <path d="M 380,163 Q 376,154 382,146 T 379,136"/>
+    <path d="M 402,164 Q 398,153 404,144 T 401,133"/>
+    <path d="M 422,163 Q 418,155 424,147 T 421,138"/>
+  </g>
+</svg>

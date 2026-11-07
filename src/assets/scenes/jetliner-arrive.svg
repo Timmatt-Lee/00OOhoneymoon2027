@@ -1,15 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 54" class="jetliner-svg">
-  <polygon points="72,19 94,6 105,6 88,19" fill="#e2e8f0" stroke="#0f172a" stroke-width="1.2" stroke-linejoin="round"/>
-  <path d="M 8,28 C 20,20 38,18 56,18 L 118,18 L 139,3 L 152,3 L 141,20 L 148,24 C 141,28 128,30 114,30 L 82,30 L 59,47 L 44,47 L 63,30 L 26,30 C 15,30 8,29 8,28 Z" fill="#ffffff" stroke="#0f172a" stroke-width="1.6" stroke-linejoin="round"/>
-  <rect x="66" y="32" width="17" height="6.5" rx="3.2" fill="#f8fafc" stroke="#0f172a" stroke-width="1.4"/>
-  <polygon points="16,25 26,21.5 28,25 18,26" fill="#0284c7"/>
-  <rect x="35" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
-  <rect x="44" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
-  <rect x="53" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
-  <rect x="62" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
-  <rect x="71" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
-  <rect x="80" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
-  <rect x="89" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
-  <rect x="98" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
-  <rect x="107" y="23" width="5.5" height="3" rx="1" fill="#0284c7"/>
+  <g transform="translate(160, 0) scale(-1, 1)">
+    <polygon points="72,19 94,6 105,6 88,19" fill="#e2e8f0" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M 8,28 C 20,20 38,18 56,18 L 118,18 L 139,3 L 152,3 L 141,20 L 148,24 C 141,28 128,30 114,30 L 82,30 L 59,47 L 44,47 L 63,30 L 26,30 C 15,30 8,29 8,28 Z" fill="#0f172a" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/>
+    <rect x="66" y="32" width="17" height="6.5" rx="3.2" fill="#f8fafc" stroke="#ffffff" stroke-width="1.4"/>
+    <polygon points="16,25 26,21.5 28,25 18,26" fill="#fde047"/>
+    <rect x="35" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+    <rect x="44" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+    <rect x="53" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+    <rect x="62" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+    <rect x="71" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+    <rect x="80" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+    <rect x="89" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+    <rect x="98" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+    <rect x="107" y="23" width="5.5" height="3" rx="1" fill="#fde047"/>
+  </g>
 </svg>

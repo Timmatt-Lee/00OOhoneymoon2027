@@ -15,8 +15,8 @@
   </g>
   <ellipse cx="88" cy="62" rx="18" ry="5" fill="#e2e8f0" opacity="0.28"/>
   <path d="M -20,205 L -20,132 L 58,74 L 118,74 L 192,126 L 265,118 L 348,48 L 435,128 L 495,140 L 495,205 Z" fill="#1e293b" opacity="0.68"/>
-  <g clip-path="url(#g2-shikotsu-clip)" fill="#ffffff" opacity="0.9">
-    <polygon points="32,96 58,70 118,70 144,96 112,89 88,95 64,89"/>
-    <polygon points="312,86 348,44 384,86 362,78 348,87 334,78"/>
+  <g clip-path="url(#g2-shikotsu-clip)" fill="#ffffff" opacity="0.92">
+    <polygon points="-20,96 -20,60 192,60 192,96 116,89 88,96 60,89"/>
+    <polygon points="265,86 265,40 435,40 435,86 368,78 348,87 328,78"/>
   </g>
 </svg>

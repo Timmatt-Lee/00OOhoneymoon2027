@@ -44,6 +44,9 @@ test.describe('00OO 北海道蜜月 2027 — Visual & Interaction E2E Suite', ()
       for (let r = 0; r < count; r++) {
         const tBox = await titles.nth(r).boundingBox();
         expect(tBox).not.toBeNull();
+        // Title must have visible rendered height and width (guards against flex-shrink:1 / height:0 clipping)
+        expect(tBox!.height).toBeGreaterThan(18);
+        expect(tBox!.width).toBeGreaterThan(80);
         // Title must start to the right of the timeline rail line and stay inside the 400px viewport
         expect(tBox!.x).toBeGreaterThan(railLineBox!.x + railLineBox!.width + 8);
         expect(tBox!.x + tBox!.width).toBeLessThanOrEqual(390);
