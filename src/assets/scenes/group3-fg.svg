@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+              <path d="M -20,205 L -20,168 Q 120,160 250,168 T 500,166 L 500,205 Z" fill="#e2e8f0"/>
+              <polygon points="48,112 26,184 70,184" fill="#0f172a"/>
+              <polygon points="48,112 36,134 60,134" fill="#ffffff"/>
+              <rect x="122" y="142" width="8" height="42" fill="#1e293b"/>
+              <circle cx="126" cy="137" r="5.5" fill="#fde047"/>
+              <rect x="188" y="144" width="8" height="40" fill="#1e293b"/>
+              <circle cx="192" cy="139" r="5.5" fill="#fde047"/>
+              <!-- Forest Ryokan & Milky Sulfur Rotemburo -->
+              <path d="M 252,196 L 252,118 L 324,94 L 396,118 L 438,118 L 438,196 Z" fill="#090d16"/>
+              <path d="M 248,119 L 324,92 L 400,119" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+              <rect x="292" y="124" width="20" height="12" rx="1.5" fill="#fde047"/>
+              <rect x="320" y="124" width="20" height="12" rx="1.5" fill="#fde047"/>
+              <ellipse cx="376" cy="168" rx="44" ry="12.5" fill="#f1f5f9" stroke="#ffffff" stroke-width="4.5"/>
+            </svg>

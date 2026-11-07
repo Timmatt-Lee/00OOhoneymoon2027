@@ -1,0 +1,9 @@
+{
+  "name": "2027 北海道雪地婚紗蜜月",
+  "short_name": "北海道蜜月",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070b14",
+  "theme_color": "#070b14"
+}

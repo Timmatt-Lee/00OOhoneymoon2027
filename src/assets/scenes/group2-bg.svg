@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+              <path d="M 382 26 A 14 14 0 1 1 367 43 A 11.2 11.2 0 1 0 382 26 Z" fill="#fef08a" opacity="0.9"/>
+              <path d="M -20,205 L -20,126 L 88,64 L 195,122 L 320,58 L 460,124 L 495,205 Z" fill="#1e293b" opacity="0.62"/>
+              <polygon points="88,64 62,92 88,82 114,92" fill="#ffffff" opacity="0.86"/>
+              <polygon points="320,58 292,88 320,78 348,88" fill="#ffffff" opacity="0.86"/>
+            </svg>

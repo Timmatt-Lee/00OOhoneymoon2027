@@ -1,0 +1,29 @@
+@keyframes waterShimmer {
+  0%, 100% {
+    opacity: 0.45;
+    transform: translate3d(-3px, 0, 0);
+  }
+  50% {
+    opacity: 0.92;
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+.water-shimmer {
+  animation: waterShimmer 3.6s ease-in-out infinite;
+}
+
+@keyframes ferrisRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.ferris-wheel-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ferrisRotate 24s linear infinite;
+}

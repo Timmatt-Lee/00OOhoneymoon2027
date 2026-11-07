@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+              <path d="M 6,182 L 48,84 L 104,124 L 164,70 L 222,126 L 282,80 L 356,128 L 412,182 Z" fill="#5c2422" opacity="0.9"/>
+              <polygon points="48,84 30,104 48,97 68,106" fill="#ffffff" opacity="0.92"/>
+              <polygon points="164,70 140,94 164,86 188,96" fill="#ffffff" opacity="0.92"/>
+              <ellipse cx="110" cy="136" rx="24" ry="6.5" fill="#f97316" opacity="0.85"/>
+              <ellipse cx="212" cy="138" rx="26" ry="7" fill="#fb923c" opacity="0.85"/>
+            </svg>

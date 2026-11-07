@@ -1,0 +1,92 @@
+import Papa from 'papaparse';
+import { z } from 'zod';
+import rawThemes from '../content/day-themes.json';
+import type { DayData, SceneGroupConfig } from '../types/schedule';
+
+const ScheduleItemSchema = z.object({
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Time must be 24h HH:MM format'),
+  title: z.string().min(1, 'Title cannot be empty'),
+  subtitle: z.string().min(1, 'Subtitle cannot be empty')
+});
+
+const DayThemeSchema = z.object({
+  day: z.number().int().min(1).max(12),
+  csvFile: z.string().regex(/^\d{2}_\d{4}\.csv$/),
+  label: z.string().min(1),
+  isDark: z.boolean(),
+  groupIdx: z.number().int().min(0).max(4),
+  localIdx: z.number().int().min(0),
+  mapQuery: z.string().min(1),
+  skyGrad: z.string().min(10)
+});
+
+const SceneGroupSchema = z.object({
+  groupIdx: z.number().int().min(0).max(4),
+  startDay: z.number().int().min(0).max(11),
+  endDay: z.number().int().min(0).max(11),
+  panStepPx: z.number().min(0),
+  widthPx: z.number().positive()
+});
+
+const ThemesDocumentSchema = z.object({
+  days: z.array(DayThemeSchema).length(12),
+  sceneGroups: z.array(SceneGroupSchema).length(5)
+});
+
+const rawCsvFiles = import.meta.glob<string>('../content/days/*.csv', {
+  query: '?raw',
+  import: 'default',
+  eager: true
+});
+
+export function parseAndValidateDayCsv(rawCsv: string, fileName: string) {
+  const normalized = rawCsv.replace(/\r\n/g, '\n').trim();
+  const firstLine = normalized.split('\n')[0]?.trim();
+  if (firstLine !== 'time,title,subtitle') {
+    throw new Error(`[Schema Error] ${fileName} must start with exact header 'time,title,subtitle', got '${firstLine}'`);
+  }
+
+  const parsed = Papa.parse<Record<string, string>>(normalized, {
+    header: true,
+    skipEmptyLines: true
+  });
+
+  if (parsed.errors.length > 0) {
+    throw new Error(`[CSV Parse Error] ${fileName}: ${parsed.errors[0].message}`);
+  }
+
+  const items = z.array(ScheduleItemSchema).min(1).parse(parsed.data);
+
+  let prevMins = -1;
+  for (let i = 0; i < items.length; i++) {
+    const [hh, mm] = items[i].time.split(':').map(Number);
+    const totalMins = hh * 60 + mm;
+    if (totalMins < prevMins) {
+      throw new Error(`[Schema Error] ${fileName} row ${i + 2} time '${items[i].time}' is out of chronological order.`);
+    }
+    prevMins = totalMins;
+  }
+
+  return items;
+}
+
+export function loadHoneymoonData(): { daysData: DayData[]; sceneGroups: SceneGroupConfig[] } {
+  const validatedDoc = ThemesDocumentSchema.parse(rawThemes);
+
+  const daysData: DayData[] = validatedDoc.days.map((theme) => {
+    const matchKey = Object.keys(rawCsvFiles).find((k) => k.endsWith('/' + theme.csvFile));
+    if (!matchKey) {
+      throw new Error(`Missing CSV file: src/content/days/${theme.csvFile}`);
+    }
+    const items = parseAndValidateDayCsv(rawCsvFiles[matchKey], theme.csvFile);
+    return {
+      ...theme,
+      items
+    };
+  });
+
+  return {
+    daysData,
+    sceneGroups: validatedDoc.sceneGroups
+  };
+}

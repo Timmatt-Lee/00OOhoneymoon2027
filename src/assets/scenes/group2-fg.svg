@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+              <!-- Pair of White Swans on Lake Shikotsu -->
+              <path d="M 146,162 Q 157,162 159,152 Q 161,143 155,143 Q 152,143 153,147 L 142,155 Z" fill="#ffffff"/>
+              <path d="M 182,162 Q 171,162 169,152 Q 167,143 173,143 Q 176,143 175,147 L 186,155 Z" fill="#ffffff"/>
+              <!-- Lakeside Boutique Ryokan & Outdoor Rotemburo Pool -->
+              <path d="M 258,186 L 258,122 L 324,98 L 390,122 L 436,122 L 436,186 Z" fill="#0f172a"/>
+              <path d="M 254,123 L 324,96 L 394,123" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+              <rect x="302" y="128" width="36" height="14" rx="2" fill="#fde047"/>
+              <ellipse cx="374" cy="166" rx="42" ry="12" fill="#38bdf8" stroke="#ffffff" stroke-width="4.5"/>
+            </svg>

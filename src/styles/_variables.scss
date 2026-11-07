@@ -1,0 +1,10 @@
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+$bg-deep: #070b14;
+$font-stack: 'M PLUS Rounded 1c', 'Noto Sans TC', -apple-system, sans-serif;
+$rail-top: 14.5%;
+$rail-bottom: 32.5%;
+$footer-height: 205px;

@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -e
+echo "🔍 [pre-commit] Running TypeScript typecheck & CSV/SVG Schema unit tests..."
+npm run typecheck
+npm run test:unit
+echo "✅ [pre-commit] All schema & type checks passed!"

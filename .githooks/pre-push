@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -e
+echo "🚀 [pre-push] Building production bundle & running Playwright E2E + 12-day screenshot tests..."
+npm run build
+npm run test:e2e
+echo "✅ [pre-push] Build, gesture tests & 12-day screenshots all passed!"

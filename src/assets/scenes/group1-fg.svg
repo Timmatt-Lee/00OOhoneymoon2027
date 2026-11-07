@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+              <path d="M -20,205 L -20,166 Q 140,156 280,166 T 600,164 L 600,205 Z" fill="#f8fafc"/>
+              <!-- King Penguins Marching on Snow -->
+              <g transform="translate(56, 148)">
+                <ellipse cx="0" cy="16" rx="6.5" ry="11" fill="#0f172a"/><ellipse cx="2" cy="17" rx="3.8" ry="8" fill="#ffffff"/><circle cx="0" cy="3" r="5" fill="#0f172a"/><polygon points="4,3 10,4.5 4,6" fill="#f59e0b"/>
+                <ellipse cx="24" cy="18" rx="6" ry="10" fill="#0f172a"/><ellipse cx="26" cy="19" rx="3.4" ry="7" fill="#ffffff"/><circle cx="24" cy="6" r="4.5" fill="#0f172a"/><polygon points="28,6 33,7.5 28,9" fill="#f59e0b"/>
+                <ellipse cx="46" cy="19" rx="5.5" ry="9" fill="#0f172a"/><ellipse cx="48" cy="20" rx="3.2" ry="6.5" fill="#ffffff"/><circle cx="46" cy="8" r="4" fill="#0f172a"/><polygon points="50,8 55,9.5 50,11" fill="#f59e0b"/>
+                <ellipse cx="66" cy="20" rx="5" ry="8" fill="#0f172a"/><ellipse cx="68" cy="21" rx="2.8" ry="5.5" fill="#ffffff"/><circle cx="66" cy="10" r="3.6" fill="#0f172a"/><polygon points="69,10 74,11.5 69,13" fill="#f59e0b"/>
+              </g>
+              <!-- White Birch Forest & Horse -->
+              <line x1="178" y1="112" x2="178" y2="184" stroke="#ffffff" stroke-width="4.5"/>
+              <line x1="202" y1="102" x2="202" y2="184" stroke="#ffffff" stroke-width="5"/>
+              <path d="M 222,178 L 222,154 L 244,154 L 252,138 L 260,142 L 250,156 L 250,178" fill="#1e293b"/>
+
+              <!-- Iconic Biei Christmas Tree (クリスマスツリーの木) -->
+              <g transform="translate(352, 6)">
+                <polygon points="38,44 14,82 27,82 4,118 20,118 -2,154 78,154 56,118 72,118 49,82 62,82" fill="#0f172a"/>
+                <polygon points="38,44 20,72 56,72" fill="#ffffff" opacity="0.92"/>
+                <polygon points="38,76 12,106 64,106" fill="#ffffff" opacity="0.78"/>
+                <rect x="34" y="154" width="8" height="24" fill="#1e293b"/>
+                <circle cx="38" cy="39" r="5" fill="#fde047"/>
+              </g>
+
+              <!-- Groom & Bride in White Flowing Gown Beside the Christmas Tree -->
+              <g transform="translate(454, 6)">
+                <circle cx="12" cy="122" r="6.5" fill="#0f172a"/>
+                <path d="M 2,176 L 4,131 L 20,131 L 22,176 Z" fill="#0f172a"/>
+                <polygon points="12,131 9,140 15,140" fill="#ffffff"/>
+                <circle cx="40" cy="125" r="6.2" fill="#0f172a"/>
+                <path d="M 42,120 Q 68,126 82,150 Q 62,148 44,132 Z" fill="#ffffff" opacity="0.94"/>
+                <path d="M 33,133 L 47,133 L 68,176 Q 40,181 20,176 Z" fill="#ffffff"/>
+                <circle cx="27" cy="145" r="6" fill="#fb7185"/>
+                <circle cx="30" cy="143" r="3.8" fill="#fef08a"/>
+              </g>
+            </svg>

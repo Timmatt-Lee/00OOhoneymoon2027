@@ -1,0 +1,7 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.mcp-logs/
+.DS_Store
+*.log

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+              <!-- Pure single-path crescent moon (No dark overlay circle = Zero box/circle artifact on 3/4->3/5!) -->
+              <path d="M 455 24 A 15 15 0 1 1 439 42 A 12 12 0 1 0 455 24 Z" fill="#fef08a" opacity="0.92"/>
+              <path d="M -20,205 L -20,136 L 85,96 L 195,132 L 325,88 L 455,128 L 560,94 L 640,134 L 640,205 Z" fill="#1e293b" opacity="0.55"/>
+            </svg>

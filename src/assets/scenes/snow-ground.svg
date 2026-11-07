@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 48" class="snow-ground-svg" preserveAspectRatio="none">
+  <path d="M -20,48 L -20,14 Q 95,4 220,12 T 460,10 L 460,48 Z" fill="#e2e8f0"/>
+  <path d="M -20,48 L -20,20 Q 130,10 250,18 T 460,15 L 460,48 Z" fill="#f8fafc"/>
+  <path d="M -20,48 L -20,27 Q 160,19 290,25 T 460,22 L 460,48 Z" fill="#ffffff"/>
+</svg>
