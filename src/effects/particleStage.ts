@@ -3,7 +3,7 @@ import { OnsenSteamEffect } from './onsenSteamEffect';
 import { NightGlowEffect } from './nightGlowEffect';
 
 export function startParticleStage(getDayFloat: () => number): void {
-  const canvas = document.getElementById('snow-canvas') as HTMLCanvasElement | null;
+  const canvas = document.getElementById('fx-canvas') as HTMLCanvasElement | null;
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;

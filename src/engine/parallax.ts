@@ -1,4 +1,4 @@
-import type { DayData, GroupLayerElements, SceneGroupConfig } from '../types/schedule';
+import type { DayData, SceneGroupConfig } from '../types/schedule';
 import group0Bg from '../assets/scenes/group0-bg.svg?raw';
 import group0Mid from '../assets/scenes/group0-mid.svg?raw';
 import group0Fg from '../assets/scenes/group0-fg.svg?raw';
@@ -32,38 +32,26 @@ export interface ParallaxController {
 
 export function mountParallaxScenes(daysData: DayData[], sceneGroups: SceneGroupConfig[]): ParallaxController {
   const snowSlot = document.getElementById('snow-ground-slot');
-  if (snowSlot) {
-    snowSlot.innerHTML = snowGroundSvg;
-  }
+  if (snowSlot) snowSlot.innerHTML = snowGroundSvg;
 
+  const footerEl = document.getElementById('cityscape-footer')!;
   const container = document.getElementById('scene-groups-container')!;
   container.innerHTML = sceneGroups
     .map((grp, idx) => {
-      const assets = GROUP_SVG_ASSETS[idx];
+      const a = GROUP_SVG_ASSETS[idx];
       const w = `${grp.widthPx}px`;
-      const planeHtml = assets.planeId
-        ? `<div id="${assets.planeId}" class="plane-actor ${assets.planeCls}">${assets.planeSvg}</div>`
-        : '';
+      const planeHtml = a.planeId ? `<div id="${a.planeId}" class="plane-actor ${a.planeCls}">${a.planeSvg}</div>` : '';
       return `
         <div class="scene-group-clip" data-group="${grp.groupIdx}">
-          <div class="parallax-layer parallax-bg" style="width: ${w};">${assets.bg}</div>
-          <div class="parallax-layer parallax-mid" style="width: ${w};">${assets.mid}</div>
-          <div class="parallax-layer parallax-fg" style="width: ${w};">${assets.fg}</div>
+          <div class="parallax-layer parallax-bg" style="width:${w}">${a.bg}</div>
+          <div class="parallax-layer parallax-mid" style="width:${w}">${a.mid}</div>
+          <div class="parallax-layer parallax-fg" style="width:${w}">${a.fg}</div>
           ${planeHtml}
-        </div>
-      `;
+        </div>`;
     })
     .join('');
 
   const groupClipEls = Array.from(container.querySelectorAll<HTMLElement>('.scene-group-clip'));
-  const groupLayersMap: GroupLayerElements[] = groupClipEls.map((clipEl) => ({
-    bg: clipEl.querySelector<HTMLElement>('.parallax-bg'),
-    mid: clipEl.querySelector<HTMLElement>('.parallax-mid'),
-    fg: clipEl.querySelector<HTMLElement>('.parallax-fg')
-  }));
-
-  const day1PlaneEl = document.getElementById('day1-arriving-plane');
-  const day12PlaneEl = document.getElementById('day12-departing-plane');
 
   return {
     renderParallax(clamped, idxA, idxB, t, viewportWidth) {
@@ -73,71 +61,25 @@ export function mountParallaxScenes(daysData: DayData[], sceneGroups: SceneGroup
       for (let g = 0; g < sceneGroups.length; g++) {
         const grp = sceneGroups[g];
         const clipEl = groupClipEls[g];
-        const layers = groupLayersMap[g];
+        const isGroupA = g === groupA;
+        const isGroupB = g === groupB;
 
-        let clipX = 0;
-        let localDayOffset = 0;
-        let visible = true;
-
-        if (groupA === groupB) {
-          if (g === groupA) {
-            clipX = 0;
-            localDayOffset = clamped - grp.startDay;
-          } else {
-            visible = false;
-          }
-        } else {
-          if (g === groupA) {
-            clipX = -t * viewportWidth;
-            localDayOffset = idxA - grp.startDay;
-          } else if (g === groupB) {
-            clipX = (1 - t) * viewportWidth;
-            localDayOffset = idxB - grp.startDay;
-          } else {
-            visible = false;
-          }
+        if (!isGroupA && !isGroupB) {
+          clipEl.classList.remove('is-visible');
+          continue;
         }
 
-        if (!visible) {
-          if (clipEl.style.visibility !== 'hidden') {
-            clipEl.style.visibility = 'hidden';
-            clipEl.style.transform = `translate3d(${viewportWidth * 1.2}px, 0, 0)`;
-          }
-        } else {
-          if (clipEl.style.visibility !== 'visible') clipEl.style.visibility = 'visible';
-          clipEl.style.transform = `translate3d(${clipX.toFixed(1)}px, 0, 0)`;
-          const shift = -localDayOffset * grp.panStepPx;
-          if (layers.bg) layers.bg.style.transform = `translate3d(${(shift * 0.38).toFixed(1)}px, 0, 0)`;
-          if (layers.mid) layers.mid.style.transform = `translate3d(${(shift * 0.68).toFixed(1)}px, 0, 0)`;
-          if (layers.fg) layers.fg.style.transform = `translate3d(${(shift * 1.0).toFixed(1)}px, 0, 0)`;
-        }
+        const clipX = groupA === groupB ? 0 : isGroupA ? -t * viewportWidth : (1 - t) * viewportWidth;
+        const localDayOffset = (groupA === groupB ? clamped : isGroupA ? idxA : idxB) - grp.startDay;
+        clipEl.classList.add('is-visible');
+        clipEl.style.setProperty('--clip-x', `${clipX.toFixed(1)}px`);
+        clipEl.style.setProperty('--pan-shift', `${(-localDayOffset * grp.panStepPx).toFixed(1)}px`);
       }
 
-      if (day1PlaneEl) {
-        if (clamped <= 1.2) {
-          const p = Math.max(0, Math.min(1, clamped));
-          const px = (-p * 240).toFixed(1);
-          const py = (-p * 60).toFixed(1);
-          const op = Math.max(0, 1 - p * 1.05).toFixed(3);
-          day1PlaneEl.style.opacity = op;
-          day1PlaneEl.style.transform = `translate3d(${px}px, ${py}px, 0) rotate(-7deg)`;
-        } else if (day1PlaneEl.style.opacity !== '0') {
-          day1PlaneEl.style.opacity = '0';
-        }
-      }
-
-      if (day12PlaneEl) {
-        if (clamped >= 9.8) {
-          const p = Math.max(0, Math.min(1, clamped - 10));
-          const px = ((1 - p) * 240).toFixed(1);
-          const py = ((1 - p) * 28).toFixed(1);
-          const op = Math.max(0, Math.min(1, p * 1.15)).toFixed(3);
-          day12PlaneEl.style.opacity = op;
-          day12PlaneEl.style.transform = `translate3d(${px}px, ${py}px, 0) rotate(-13deg)`;
-        } else if (day12PlaneEl.style.opacity !== '0') {
-          day12PlaneEl.style.opacity = '0';
-        }
-      }
+      const arriveP = Math.max(0, Math.min(1, clamped));
+      const departP = Math.max(0, Math.min(1, clamped - 10));
+      footerEl.style.setProperty('--arrive-p', arriveP.toFixed(3));
+      footerEl.style.setProperty('--depart-p', departP.toFixed(3));
     }
   };
 }

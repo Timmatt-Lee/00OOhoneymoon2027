@@ -14,289 +14,150 @@ export function bindGesturesAndPhysics(
   timeline: TimelineController,
   parallax: ParallaxController
 ): GestureEngine {
+  const maxIdx = daysData.length - 1;
+  const shell = document.getElementById('app-shell')!;
+  const track = document.getElementById('story-bar-track')!;
+  const footerEl = document.getElementById('cityscape-footer')!;
+
   let targetDayIdx = 0;
   let currentPos = 0;
-  let currentDayFloat = 0;
-  let isPointerDragging = false;
-  let physicsRafId: number | null = null;
-  let cachedViewportWidth = 400;
+  let isDragging = false;
+  let rafId: number | null = null;
+  let vw = shell.clientWidth || 400;
 
-  const updateViewportWidth = () => {
-    const shell = document.getElementById('app-shell');
-    if (shell) cachedViewportWidth = shell.clientWidth || 400;
-  };
-  updateViewportWidth();
-  window.addEventListener('resize', updateViewportWidth);
+  window.addEventListener('resize', () => { vw = shell.clientWidth || 400; });
 
   function renderAtPos(pos: number): void {
-    const maxIdx = daysData.length - 1;
     const clamped = Math.max(0, Math.min(maxIdx, pos));
-    currentDayFloat = clamped;
-
     const idxA = Math.floor(clamped);
     const idxB = Math.min(maxIdx, idxA + 1);
     const t = clamped - idxA;
 
-    for (let i = 0; i < renderer.skyLayerEls.length; i++) {
-      const el = renderer.skyLayerEls[i];
-      if (i === idxA || i === idxB) {
-        const op = i === idxA ? 1 - t : t;
-        if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
-        el.style.opacity = op.toFixed(3);
-      } else if (el.style.visibility !== 'hidden') {
-        el.style.opacity = '0';
-        el.style.visibility = 'hidden';
+    renderer.skyLayerEls.forEach((el, i) => {
+      const active = i === idxA || i === idxB;
+      el.style.visibility = active ? 'visible' : 'hidden';
+      el.style.opacity = active ? (i === idxA ? 1 - t : t).toFixed(3) : '0';
+    });
+
+    renderer.schedulePanelEls.forEach((panel, i) => {
+      const active = i === idxA || i === idxB;
+      panel.style.visibility = active ? 'visible' : 'hidden';
+      if (active) {
+        const offset = i - pos;
+        panel.style.opacity = Math.max(0, 1 - Math.abs(offset) * 0.85).toFixed(3);
+        panel.style.transform = `translate3d(${(offset * vw).toFixed(1)}px, 0, 0)`;
       }
-    }
+    });
 
     timeline.renderInterpolation(idxA, idxB, t);
-
-    for (let i = 0; i < renderer.schedulePanelEls.length; i++) {
-      const panel = renderer.schedulePanelEls[i];
-      if (i === idxA || i === idxB) {
-        if (panel.style.visibility !== 'visible') panel.style.visibility = 'visible';
-        const offsetDays = i - pos;
-        const x = (offsetDays * cachedViewportWidth).toFixed(1);
-        const op = Math.max(0, 1 - Math.abs(offsetDays) * 0.85).toFixed(3);
-        panel.style.opacity = op;
-        panel.style.transform = `translate3d(${x}px, 0, 0)`;
-      } else if (panel.style.visibility !== 'hidden') {
-        panel.style.opacity = '0';
-        panel.style.visibility = 'hidden';
-      }
-    }
-
-    parallax.renderParallax(clamped, idxA, idxB, t, cachedViewportWidth);
-
-    const nearestDay = Math.round(clamped);
-    renderer.updateTopStoryBar(nearestDay, daysData[nearestDay].isDark);
+    parallax.renderParallax(clamped, idxA, idxB, t, vw);
+    const nearest = Math.round(clamped);
+    renderer.updateTopStoryBar(nearest, daysData[nearest].isDark);
   }
 
-  const stepPhysicsLoop = (): void => {
-    physicsRafId = null;
-    if (isPointerDragging) {
-      renderAtPos(currentPos);
-      return;
-    }
+  function stepSpring(): void {
+    rafId = null;
+    if (isDragging) return renderAtPos(currentPos);
     const diff = targetDayIdx - currentPos;
     if (Math.abs(diff) > 0.0015) {
       currentPos += diff * 0.26;
       renderAtPos(currentPos);
-      physicsRafId = requestAnimationFrame(stepPhysicsLoop);
+      rafId = requestAnimationFrame(stepSpring);
     } else {
-      currentPos = targetDayIdx;
-      renderAtPos(currentPos);
-    }
-  };
-
-  function ensurePhysicsLoop(): void {
-    if (!physicsRafId) {
-      physicsRafId = requestAnimationFrame(stepPhysicsLoop);
+      renderAtPos((currentPos = targetDayIdx));
     }
   }
 
-  function glideToDay(nextTargetIdx: number): void {
-    targetDayIdx = Math.max(0, Math.min(daysData.length - 1, nextTargetIdx));
-    ensurePhysicsLoop();
+  function glideToDay(idx: number): void {
+    targetDayIdx = Math.max(0, Math.min(maxIdx, idx));
+    if (!rafId) rafId = requestAnimationFrame(stepSpring);
   }
 
-  // 1. Top Story Bar Scrubbing
-  const track = document.getElementById('story-bar-track')!;
-  let activeScrubPointerId: number | null = null;
-  let rectLeft = 0;
-  let rectWidth = 1;
-
-  const updateRect = () => {
+  // 1. Top Story Bar Scrub & Slot Click
+  let scrubId: number | null = null;
+  const resolveSlotDay = (clientX: number, targetEl?: EventTarget | null): number => {
+    const slotEl = (targetEl as HTMLElement | null)?.closest?.('[data-day]') as HTMLElement | null;
+    if (slotEl?.dataset.day !== undefined && (clientX === 0 || scrubId === null)) return Number(slotEl.dataset.day);
     const r = track.getBoundingClientRect();
-    rectLeft = r.left;
-    rectWidth = Math.max(1, r.width);
-  };
-
-  const getDayAtX = (clientX: number, checkExactSlot: boolean, targetEl?: EventTarget | null): number => {
-    if (checkExactSlot && targetEl && (targetEl as HTMLElement).closest) {
-      const slotEl = (targetEl as HTMLElement).closest("[data-day]") as HTMLElement | null;
-      if (slotEl && slotEl.dataset.day !== undefined) {
-        return Number(slotEl.dataset.day);
-      }
-    }
-    if (checkExactSlot) {
-      for (let i = 0; i < renderer.storySlotEls.length; i++) {
-        const sr = renderer.storySlotEls[i].getBoundingClientRect();
-        if (clientX >= sr.left - 3 && clientX <= sr.right + 3) return i;
-      }
-    }
-    const ratio = Math.max(0, Math.min(0.9999, (clientX - rectLeft) / rectWidth));
+    const ratio = Math.max(0, Math.min(0.9999, (clientX - r.left) / Math.max(1, r.width)));
     return (ratio * daysData.length) | 0;
   };
 
-  const jumpToX = (clientX: number, checkExactSlot: boolean, targetEl?: EventTarget | null) => {
-    const target = getDayAtX(clientX, checkExactSlot, targetEl);
-    isPointerDragging = false;
-    targetDayIdx = target;
-    currentPos = target;
-    renderAtPos(target);
-  };
-
   track.addEventListener('pointerdown', (e: PointerEvent) => {
-    if (e.button !== undefined && e.button !== 0) return;
+    if (e.button) return;
     e.stopPropagation();
-    activeScrubPointerId = e.pointerId;
-    if (track.setPointerCapture) {
-      try { track.setPointerCapture(e.pointerId); } catch (_) {}
-    }
-    updateRect();
-    jumpToX(e.clientX, true, e.target);
+    const day = resolveSlotDay(e.clientX, e.target);
+    scrubId = e.pointerId;
+    try { track.setPointerCapture(e.pointerId); } catch {}
+    isDragging = false;
+    renderAtPos((currentPos = targetDayIdx = day));
   });
 
   track.addEventListener('pointermove', (e: PointerEvent) => {
-    if (activeScrubPointerId === null || e.pointerId !== activeScrubPointerId) return;
-    e.stopPropagation();
-    jumpToX(e.clientX, false);
+    if (scrubId !== e.pointerId) return;
+    renderAtPos((currentPos = targetDayIdx = resolveSlotDay(e.clientX)));
   });
+  track.addEventListener('pointerup', () => { scrubId = null; });
+  track.addEventListener('pointercancel', () => { scrubId = null; });
 
-  const endScrub = (e: PointerEvent) => {
-    if (activeScrubPointerId === null || e.pointerId !== activeScrubPointerId) return;
-    activeScrubPointerId = null;
-  };
-  track.addEventListener('pointerup', endScrub);
-  track.addEventListener('pointercancel', endScrub);
-
-  // 2. Main Stage Swipe, Tap & Footer Google Maps Click
-  const shell = document.getElementById('app-shell')!;
-  let activePointerId: number | null = null;
-  let isHorizontalDrag = false;
-  let startX = 0;
-  let startY = 0;
-  let dragStartPos = 0;
-  let lastX = 0;
-  let lastTime = 0;
-  let velocityX = 0;
-  let startedInFooter = false;
-  let lastTapTimestamp = 0;
+  // 2. Stage Swipe, Left/Right Tap & Footer Google Maps Link
+  let activeId: number | null = null;
+  let startX = 0, startY = 0, dragStart = 0, inFooter = false, horiz = false, lastTap = 0;
 
   shell.addEventListener('pointerdown', (e: PointerEvent) => {
-    if (e.button !== undefined && e.button !== 0) return;
-    const targetEl = e.target as HTMLElement | null;
-    if (targetEl && targetEl.closest && targetEl.closest('#story-bar-track')) return;
-
-    activePointerId = e.pointerId;
-    if (shell.setPointerCapture) {
-      try { shell.setPointerCapture(e.pointerId); } catch (_) {}
-    }
-
-    updateViewportWidth();
-    const footerEl = document.getElementById('cityscape-footer')!;
-    const fRect = footerEl.getBoundingClientRect();
-    startedInFooter = e.clientY >= fRect.top + 16;
-
-    isPointerDragging = true;
-    isHorizontalDrag = false;
+    if (e.button || (e.target as HTMLElement | null)?.closest?.('#story-bar-track')) return;
+    activeId = e.pointerId;
+    try { shell.setPointerCapture(e.pointerId); } catch {}
+    vw = shell.clientWidth || 400;
+    inFooter = e.clientY >= footerEl.getBoundingClientRect().top + 16;
+    isDragging = true;
+    horiz = false;
     startX = e.clientX;
     startY = e.clientY;
-    dragStartPos = currentPos;
-    lastX = e.clientX;
-    lastTime = performance.now();
-    velocityX = 0;
+    dragStart = currentPos;
   });
 
   shell.addEventListener('pointermove', (e: PointerEvent) => {
-    if (activePointerId === null || e.pointerId !== activePointerId) return;
-
+    if (activeId !== e.pointerId) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-
-    if (!isHorizontalDrag) {
-      if (Math.abs(dx) > 5 && Math.abs(dx) >= Math.abs(dy) * 0.75) {
-        isHorizontalDrag = true;
-      } else {
-        return;
-      }
-    }
-
-    const now = performance.now();
-    const dt = Math.max(1, now - lastTime);
-    const instVx = (e.clientX - lastX) / dt;
-    velocityX = velocityX * 0.35 + instVx * 0.65;
-    lastX = e.clientX;
-    lastTime = now;
-
-    const maxIdx = daysData.length - 1;
-    let nextPos = dragStartPos - dx / cachedViewportWidth;
-    if (nextPos < 0) nextPos = nextPos * 0.2;
-    if (nextPos > maxIdx) nextPos = maxIdx + (nextPos - maxIdx) * 0.2;
-
-    currentPos = Math.max(-0.18, Math.min(maxIdx + 0.18, nextPos));
-    ensurePhysicsLoop();
+    if (!horiz && (Math.abs(dx) <= 5 || Math.abs(dx) < Math.abs(dy) * 0.75)) return;
+    horiz = true;
+    const raw = dragStart - dx / vw;
+    currentPos = raw < 0 ? raw * 0.2 : raw > maxIdx ? maxIdx + (raw - maxIdx) * 0.2 : raw;
+    if (!rafId) rafId = requestAnimationFrame(stepSpring);
   });
 
-  const finishPointer = (e: PointerEvent) => {
-    if (activePointerId === null || e.pointerId !== activePointerId) return;
-    activePointerId = null;
-    isPointerDragging = false;
-
+  const endSwipe = (e: PointerEvent) => {
+    if (activeId !== e.pointerId) return;
+    activeId = null;
+    isDragging = false;
     const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    const dist = Math.hypot(dx, dy);
-    const maxIdx = daysData.length - 1;
+    const dist = Math.hypot(dx, e.clientY - startY);
+    const settled = Math.round(dragStart);
 
-    if (isHorizontalDrag) {
-      const projectedPos = currentPos - velocityX * 0.28;
-      let nextTarget = Math.round(projectedPos);
-      const baseDay = Math.round(dragStartPos);
-      if (velocityX < -0.2 || dx < -36) {
-        nextTarget = Math.max(nextTarget, Math.floor(dragStartPos) + 1);
-      } else if (velocityX > 0.2 || dx > 36) {
-        nextTarget = Math.min(nextTarget, Math.ceil(dragStartPos) - 1);
-      }
-      nextTarget = Math.max(baseDay - 1, Math.min(baseDay + 1, nextTarget));
-      glideToDay(Math.max(0, Math.min(maxIdx, nextTarget)));
-    } else if (dist < 10) {
-      const now = performance.now();
-      if (now - lastTapTimestamp > 220) {
-        lastTapTimestamp = now;
-        const settledDay = Math.round(currentPos);
-        if (startedInFooter) {
-          const q = daysData[settledDay].mapQuery;
-          window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`, '_blank', 'noopener,noreferrer');
-          glideToDay(settledDay);
-        } else {
-          const shellRect = shell.getBoundingClientRect();
-          const relX = (e.clientX - shellRect.left) / Math.max(1, shellRect.width);
-          if (relX >= 0.65 && settledDay < maxIdx) {
-            glideToDay(settledDay + 1);
-          } else if (relX <= 0.35 && settledDay > 0) {
-            glideToDay(settledDay - 1);
-          } else {
-            glideToDay(settledDay);
-          }
-        }
+    if (horiz) {
+      glideToDay(dx < -36 ? settled + 1 : dx > 36 ? settled - 1 : Math.round(currentPos));
+    } else if (dist < 10 && performance.now() - lastTap > 200) {
+      lastTap = performance.now();
+      if (inFooter) {
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(daysData[settled].mapQuery)}`, '_blank', 'noopener,noreferrer');
       } else {
-        glideToDay(targetDayIdx);
+        const relX = (e.clientX - shell.getBoundingClientRect().left) / vw;
+        glideToDay(relX >= 0.65 ? settled + 1 : relX <= 0.35 ? settled - 1 : settled);
       }
     } else {
       glideToDay(Math.round(currentPos));
     }
-
-    isHorizontalDrag = false;
-    startedInFooter = false;
   };
+  shell.addEventListener('pointerup', endSwipe);
+  shell.addEventListener('pointercancel', endSwipe);
 
-  shell.addEventListener('pointerup', finishPointer);
-  shell.addEventListener('pointercancel', finishPointer);
-
-  // 3. Keyboard Navigation
   window.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight' && targetDayIdx < daysData.length - 1) {
-      glideToDay(targetDayIdx + 1);
-    } else if (e.key === 'ArrowLeft' && targetDayIdx > 0) {
-      glideToDay(targetDayIdx - 1);
-    }
+    if (e.key === 'ArrowRight') glideToDay(targetDayIdx + 1);
+    else if (e.key === 'ArrowLeft') glideToDay(targetDayIdx - 1);
   });
 
   renderAtPos(0);
-
-  return {
-    getCurrentDayFloat: () => currentDayFloat,
-    glideToDay
-  };
+  return { getCurrentDayFloat: () => currentPos, glideToDay };
 }

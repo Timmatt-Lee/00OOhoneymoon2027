@@ -1,7 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
-              <path d="M 6,182 L 48,84 L 104,124 L 164,70 L 222,126 L 282,80 L 356,128 L 412,182 Z" fill="#5c2422" opacity="0.9"/>
-              <polygon points="48,84 30,104 48,97 68,106" fill="#ffffff" opacity="0.92"/>
-              <polygon points="164,70 140,94 164,86 188,96" fill="#ffffff" opacity="0.92"/>
-              <ellipse cx="110" cy="136" rx="24" ry="6.5" fill="#f97316" opacity="0.85"/>
-              <ellipse cx="212" cy="138" rx="26" ry="7" fill="#fb923c" opacity="0.85"/>
-            </svg>
+  <defs>
+    <clipPath id="g3-mtn-clip">
+      <path d="M 6,182 L 52,82 L 106,124 L 168,68 L 230,124 L 288,78 L 356,128 L 412,182 Z"/>
+    </clipPath>
+  </defs>
+  <path d="M 6,182 L 52,82 L 106,124 L 168,68 L 230,124 L 288,78 L 356,128 L 412,182 Z" fill="#5c2422" opacity="0.9"/>
+  <g clip-path="url(#g3-mtn-clip)" fill="#ffffff" opacity="0.92">
+    <polygon points="24,106 52,78 82,106 64,100 52,106 40,100"/>
+    <polygon points="132,96 168,64 204,96 182,89 168,96 154,89"/>
+    <polygon points="254,104 288,74 324,104 302,98 288,104 274,98"/>
+  </g>
+  <ellipse cx="110" cy="136" rx="24" ry="6.5" fill="#f97316" opacity="0.85"/>
+  <ellipse cx="212" cy="138" rx="26" ry="7" fill="#fb923c" opacity="0.85"/>
+</svg>

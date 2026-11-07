@@ -37,6 +37,31 @@ html, body {
     box-shadow: 0 25px 90px rgba(0, 0, 0, 0.75);
     border: 6px solid rgba(255, 255, 255, 0.8);
   }
+
+  // Theme-driven Timeline & Story-bar Variables in pure SCSS
+  &.theme-dark {
+    --tl-line-bg: rgba(255, 255, 255, 0.38);
+    --tl-text-color: #ffffff;
+    --tl-text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+    --tl-dot-bg: #f43f5e;
+    --seg-past-bg: rgba(255, 255, 255, 0.85);
+    --seg-past-border: rgba(255, 255, 255, 0.95);
+    --seg-future-bg: rgba(255, 255, 255, 0.55);
+    --seg-future-border: rgba(255, 255, 255, 0.88);
+    --seg-shadow: 0 1px 4px rgba(0, 0, 0, 0.38);
+  }
+
+  &.theme-light {
+    --tl-line-bg: rgba(15, 23, 42, 0.28);
+    --tl-text-color: #0f172a;
+    --tl-text-shadow: 0 1px 6px rgba(255, 255, 255, 0.9);
+    --tl-dot-bg: #0f172a;
+    --seg-past-bg: rgba(15, 23, 42, 0.50);
+    --seg-past-border: rgba(255, 255, 255, 0.90);
+    --seg-future-bg: rgba(30, 41, 59, 0.28);
+    --seg-future-border: rgba(255, 255, 255, 0.80);
+    --seg-shadow: none;
+  }
 }
 
 #sky-stack {
@@ -54,7 +79,6 @@ html, body {
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transition: none !important;
   will-change: opacity;
   backface-visibility: hidden;
   transform: translateZ(0);
@@ -66,9 +90,7 @@ html, body {
   left: 0;
   right: 0;
   z-index: 50;
-  padding-top: calc(12px + var(--sat));
-  padding-left: 20px;
-  padding-right: 20px;
+  padding: calc(12px + var(--sat)) 20px 0;
   pointer-events: auto;
 }
 
@@ -79,12 +101,6 @@ html, body {
   height: 40px;
   cursor: ew-resize;
   touch-action: none;
-  user-select: none;
-}
-
-.story-slot,
-.story-seg {
-  transition: none !important;
 }
 
 .story-slot {
@@ -99,6 +115,18 @@ html, body {
     flex: 0 0 auto;
     padding: 4px 0;
   }
+
+  &.is-past .story-seg {
+    background: var(--seg-past-bg);
+    border: 1px solid var(--seg-past-border);
+    box-shadow: var(--seg-shadow);
+  }
+
+  &.is-future .story-seg {
+    background: var(--seg-future-bg);
+    border: 1px solid var(--seg-future-border);
+    box-shadow: var(--seg-shadow);
+  }
 }
 
 .story-seg {
@@ -111,7 +139,6 @@ html, body {
     width: auto;
     height: auto;
     padding: 4px 14px;
-    border-radius: 9999px;
     background: #0f172a;
     color: #ffffff;
     font-size: 17px;
@@ -146,7 +173,7 @@ html, body {
   bottom: 0;
   width: 2.5px;
   border-radius: 9999px;
-  transition: none !important;
+  background-color: var(--tl-line-bg);
 }
 
 #timeline-nodes-container {
@@ -163,8 +190,9 @@ html, body {
   margin-top: -14px;
   display: flex;
   align-items: center;
-  transition: none !important;
-  will-change: top, opacity, transform;
+  top: var(--node-top, 0%);
+  opacity: var(--node-opacity, 0);
+  will-change: top, opacity;
 }
 
 .tl-time-wrap {
@@ -183,8 +211,9 @@ html, body {
   font-weight: 900;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  transition: none !important;
-  will-change: opacity, transform;
+  color: var(--tl-text-color);
+  text-shadow: var(--tl-text-shadow);
+  will-change: opacity;
 }
 
 .tl-dot {
@@ -194,7 +223,9 @@ html, body {
   height: 11px;
   margin-left: -5.5px;
   border-radius: 9999px;
-  transition: none !important;
+  background-color: var(--tl-dot-bg);
+  border: 2px solid #ffffff;
+  transform: scale(var(--dot-scale, 1));
   will-change: transform, background-color;
 }
 
@@ -216,7 +247,6 @@ html, body {
   right: 0;
   pointer-events: none;
   visibility: hidden;
-  transition: none !important;
   will-change: transform, opacity;
   backface-visibility: hidden;
 }
@@ -294,6 +324,7 @@ html, body {
   height: 100%;
 }
 
+// Pure SCSS calc() Parallax Engine driven by --clip-x and --pan-shift
 .scene-group-clip {
   position: absolute;
   inset: 0;
@@ -301,10 +332,14 @@ html, body {
   height: 100%;
   overflow: hidden;
   visibility: hidden;
-  transition: none !important;
+  transform: translate3d(var(--clip-x, 0px), 0, 0);
   will-change: transform;
   backface-visibility: hidden;
   pointer-events: none;
+
+  &.is-visible {
+    visibility: visible;
+  }
 }
 
 .parallax-layer {
@@ -312,10 +347,13 @@ html, body {
   bottom: 0;
   left: 0;
   height: $footer-height;
-  transition: none !important;
   will-change: transform;
   backface-visibility: hidden;
   pointer-events: none;
+
+  &.parallax-bg  { transform: translate3d(calc(var(--pan-shift, 0px) * 0.38), 0, 0); }
+  &.parallax-mid { transform: translate3d(calc(var(--pan-shift, 0px) * 0.68), 0, 0); }
+  &.parallax-fg  { transform: translate3d(calc(var(--pan-shift, 0px) * 1.00), 0, 0); }
 }
 
 .scene-svg {
@@ -351,6 +389,8 @@ html, body {
     left: 46px;
     width: 184px;
     height: 64px;
+    opacity: calc(1 - var(--arrive-p, 0) * 1.05);
+    transform: translate3d(calc(var(--arrive-p, 0) * -240px), calc(var(--arrive-p, 0) * -60px), 0) rotate(-7deg);
   }
 
   &.plane-depart {
@@ -358,8 +398,8 @@ html, body {
     left: 215px;
     width: 180px;
     height: 62px;
-    opacity: 0;
-    transform: translate3d(260px, 24px, 0) rotate(-14deg);
+    opacity: calc(var(--depart-p, 0) * 1.15);
+    transform: translate3d(calc((1 - var(--depart-p, 0)) * 240px), calc((1 - var(--depart-p, 0)) * 28px), 0) rotate(-13deg);
   }
 }
 

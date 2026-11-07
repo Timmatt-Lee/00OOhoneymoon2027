@@ -1,4 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
-              <path d="M 392 26 A 14 14 0 1 1 377 43 A 11.2 11.2 0 1 0 392 26 Z" fill="#fef08a" opacity="0.9"/>
-              <path d="M -20,205 L -20,128 L 95,68 L 210,120 L 340,62 L 480,126 L 480,205 Z" fill="#1e1b4b" opacity="0.55"/>
-            </svg>
+  <defs>
+    <clipPath id="g3-bg-mtn-clip">
+      <path d="M -20,205 L -20,128 L 95,68 L 210,120 L 340,62 L 480,126 L 480,205 Z"/>
+    </clipPath>
+  </defs>
+  <path d="M 392 26 A 14 14 0 1 1 377 43 A 11.2 11.2 0 1 0 392 26 Z" fill="#fef08a" opacity="0.9"/>
+  <path d="M -20,205 L -20,128 L 95,68 L 210,120 L 340,62 L 480,126 L 480,205 Z" fill="#1e1b4b" opacity="0.55"/>
+  <g clip-path="url(#g3-bg-mtn-clip)" fill="#ffffff" opacity="0.5">
+    <polygon points="40,94 95,64 150,94 114,88 95,94 76,88"/>
+    <polygon points="280,90 340,58 400,90 362,84 340,90 318,84"/>
+  </g>
+</svg>
