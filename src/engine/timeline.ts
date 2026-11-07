@@ -1,10 +1,5 @@
 import type { DayData } from '../types/schedule';
 
-export function getEvenPct(index: number, count: number): number {
-  if (count <= 1) return 50;
-  return (Math.max(0, Math.min(index, count - 1)) / (count - 1)) * 100;
-}
-
 export interface TimelineController {
   renderInterpolation(dayIdxA: number, dayIdxB: number, t: number): void;
 }
@@ -22,7 +17,11 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
       <div class="tl-dot"></div>
     </div>`).join('');
 
-  const nodeEls = Array.from(container.querySelectorAll<HTMLElement>('.tl-node'));
+  const cachedNodes = Array.from(container.querySelectorAll<HTMLElement>('.tl-node')).map((nodeEl) => ({
+    nodeEl,
+    timeAEl: nodeEl.querySelector<HTMLElement>('.tl-time-a')!,
+    timeBEl: nodeEl.querySelector<HTMLElement>('.tl-time-b')!
+  }));
 
   return {
     renderInterpolation(dayIdxA: number, dayIdxB: number, t: number) {
@@ -31,14 +30,19 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
       const countA = itemsA.length;
       const countB = itemsB.length;
       const maxCount = Math.max(countA, countB);
+      const denomA = Math.max(1, countA - 1);
+      const denomB = Math.max(1, countB - 1);
 
       for (let i = 0; i < maxNodes; i++) {
-        const nodeEl = nodeEls[i];
+        const { nodeEl, timeAEl, timeBEl } = cachedNodes[i];
         if (i >= maxCount) {
           nodeEl.style.setProperty('--node-opacity', '0');
           continue;
         }
-        const curPct = getEvenPct(i, countA) * (1 - t) + getEvenPct(i, countB) * t;
+        const pctA = (Math.min(i, countA - 1) / denomA) * 100;
+        const pctB = (Math.min(i, countB - 1) / denomB) * 100;
+        const curPct = pctA + (pctB - pctA) * t;
+
         const inA = i < countA;
         const inB = i < countB;
         const opacity = inA && !inB ? 1 - t : !inA && inB ? t : 1;
@@ -48,8 +52,6 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
         nodeEl.style.setProperty('--node-opacity', opacity.toFixed(3));
         nodeEl.style.setProperty('--dot-scale', scale.toFixed(2));
 
-        const timeAEl = nodeEl.querySelector<HTMLElement>('.tl-time-a')!;
-        const timeBEl = nodeEl.querySelector<HTMLElement>('.tl-time-b')!;
         const strA = itemsA[Math.min(i, countA - 1)].time;
         const strB = itemsB[Math.min(i, countB - 1)].time;
 

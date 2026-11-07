@@ -1,13 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
   <defs>
-    <clipPath id="g2-mtn-clip">
-      <path d="M -20,205 L -20,126 L 88,64 L 195,122 L 320,58 L 460,124 L 495,205 Z"/>
+    <clipPath id="g2-shikotsu-clip">
+      <path d="M -20,205 L -20,132 L 58,74 L 118,74 L 192,126 L 265,118 L 348,48 L 435,128 L 495,140 L 495,205 Z"/>
     </clipPath>
   </defs>
-  <path d="M 382 26 A 14 14 0 1 1 367 43 A 11.2 11.2 0 1 0 382 26 Z" fill="#fef08a" opacity="0.9"/>
-  <path d="M -20,205 L -20,126 L 88,64 L 195,122 L 320,58 L 460,124 L 495,205 Z" fill="#1e293b" opacity="0.62"/>
-  <g clip-path="url(#g2-mtn-clip)" fill="#ffffff" opacity="0.88">
-    <polygon points="35,92 88,60 142,92 108,85 88,92 68,85"/>
-    <polygon points="260,86 320,54 384,86 344,79 320,87 296,79"/>
+  <g fill="#fef9c3" opacity="0.85">
+    <circle cx="46" cy="28" r="1.6"/>
+    <circle cx="128" cy="22" r="2.1"/>
+    <circle cx="166" cy="38" r="1.4"/>
+    <circle cx="234" cy="26" r="1.8"/>
+    <circle cx="288" cy="42" r="1.5"/>
+    <circle cx="412" cy="30" r="2.0"/>
+    <circle cx="448" cy="48" r="1.4"/>
+  </g>
+  <ellipse cx="88" cy="62" rx="18" ry="5" fill="#e2e8f0" opacity="0.28"/>
+  <path d="M -20,205 L -20,132 L 58,74 L 118,74 L 192,126 L 265,118 L 348,48 L 435,128 L 495,140 L 495,205 Z" fill="#1e293b" opacity="0.68"/>
+  <g clip-path="url(#g2-shikotsu-clip)" fill="#ffffff" opacity="0.9">
+    <polygon points="32,96 58,70 118,70 144,96 112,89 88,95 64,89"/>
+    <polygon points="312,86 348,44 384,86 362,78 348,87 334,78"/>
   </g>
 </svg>

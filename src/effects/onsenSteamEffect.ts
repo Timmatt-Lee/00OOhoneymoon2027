@@ -7,28 +7,53 @@ interface SteamWisp {
   phase: number;
 }
 
-export class OnsenSteamEffect {
-  private wisps: SteamWisp[] = [];
+function createPrng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-  constructor(count = 16) {
-    for (let i = 0; i < count; i++) {
-      this.wisps.push({
-        xRatio: 0.14 + Math.random() * 0.72,
-        yOffset: Math.random() * 140,
-        radius: 14 + Math.random() * 20,
-        vy: 0.25 + Math.random() * 0.32,
-        alpha: 0.12 + Math.random() * 0.14,
-        phase: Math.random() * Math.PI * 2
-      });
-    }
+function createSteamPuffSprite(): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = 64;
+  c.height = 64;
+  const gCtx = c.getContext('2d');
+  if (gCtx) {
+    const grad = gCtx.createRadialGradient(32, 32, 2, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(241, 245, 249, 1)');
+    grad.addColorStop(1, 'rgba(241, 245, 249, 0)');
+    gCtx.fillStyle = grad;
+    gCtx.fillRect(0, 0, 64, 64);
+  }
+  return c;
+}
+
+export class OnsenSteamEffect {
+  private readonly wisps: SteamWisp[];
+  private readonly sprite: HTMLCanvasElement;
+  private readonly rand = createPrng(20270307);
+
+  constructor(count = 15) {
+    this.sprite = createSteamPuffSprite();
+    this.wisps = Array.from({ length: count }, () => ({
+      xRatio: 0.14 + this.rand() * 0.72,
+      yOffset: this.rand() * 140,
+      radius: 14 + this.rand() * 20,
+      vy: 0.25 + this.rand() * 0.32,
+      alpha: 0.12 + this.rand() * 0.14,
+      phase: this.rand() * Math.PI * 2
+    }));
   }
 
   public render(ctx: CanvasRenderingContext2D, w: number, h: number, dayFloat: number): void {
-    // Active around Day 6 (index 5: Lake Shikotsu) and Day 7 (index 6: Noboribetsu Onsen)
-    const distToOnsen = Math.min(Math.abs(dayFloat - 5), Math.abs(dayFloat - 6));
-    if (distToOnsen >= 1.15) return;
+    const dist = Math.min(Math.abs(dayFloat - 5), Math.abs(dayFloat - 6));
+    if (dist >= 1.15) return;
 
-    const strength = Math.max(0, 1 - distToOnsen / 1.15);
+    const strength = 1 - dist / 1.15;
     const baseY = h - 42;
 
     for (let i = 0; i < this.wisps.length; i++) {
@@ -37,22 +62,15 @@ export class OnsenSteamEffect {
       s.yOffset += s.vy;
       if (s.yOffset > 155) {
         s.yOffset = 0;
-        s.xRatio = 0.14 + Math.random() * 0.72;
+        s.xRatio = 0.14 + this.rand() * 0.72;
       }
       const lifeRatio = s.yOffset / 155;
-      const fade = Math.sin(lifeRatio * Math.PI);
       const x = s.xRatio * w + Math.sin(s.phase) * 9;
       const y = baseY - s.yOffset;
       const r = s.radius * (0.8 + lifeRatio * 0.75);
 
-      const grad = ctx.createRadialGradient(x, y, 1, x, y, r);
-      grad.addColorStop(0, `rgba(241, 245, 249, ${(s.alpha * fade * strength).toFixed(3)})`);
-      grad.addColorStop(1, 'rgba(241, 245, 249, 0)');
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.globalAlpha = s.alpha * Math.sin(lifeRatio * Math.PI) * strength;
+      ctx.drawImage(this.sprite, x - r, y - r, r * 2, r * 2);
     }
   }
 }

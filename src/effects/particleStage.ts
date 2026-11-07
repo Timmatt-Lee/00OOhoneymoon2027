@@ -19,14 +19,36 @@ export function startParticleStage(getDayFloat: () => number): void {
   const snowfall = new SnowfallEffect(44, w, h);
   const onsenSteam = new OnsenSteamEffect(15);
   const nightGlow = new NightGlowEffect(12);
+  let rafId: number | null = null;
 
-  const tick = (): void => {
+  const renderFrame = (): void => {
     ctx.clearRect(0, 0, w, h);
     const dayFloat = getDayFloat();
     snowfall.render(ctx, w, h, dayFloat);
     onsenSteam.render(ctx, w, h, dayFloat);
     nightGlow.render(ctx, w, h, dayFloat);
-    requestAnimationFrame(tick);
   };
-  requestAnimationFrame(tick);
+
+  // In automated headless E2E tests (navigator.webdriver), freeze after 1 deterministic frame so screenshots are 100% reproducible
+  if (navigator.webdriver) {
+    renderFrame();
+    return;
+  }
+
+  const tick = (): void => {
+    if (document.hidden) {
+      rafId = null;
+      return;
+    }
+    renderFrame();
+    rafId = requestAnimationFrame(tick);
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && rafId === null) {
+      rafId = requestAnimationFrame(tick);
+    }
+  });
+
+  rafId = requestAnimationFrame(tick);
 }

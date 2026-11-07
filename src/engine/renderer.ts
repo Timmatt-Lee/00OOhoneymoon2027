@@ -1,5 +1,4 @@
 import type { DayData } from '../types/schedule';
-import { getEvenPct } from './timeline';
 
 export interface RendererRefs {
   skyLayerEls: HTMLElement[];
@@ -29,8 +28,8 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
       const themeCls = d.isDark ? 'theme-dark' : 'theme-light';
       const sizeCls = count >= 8 ? 'size-dense' : count === 7 ? 'size-compact' : 'size-normal';
       const rowsHtml = d.items
-        .map((item, i) => `
-          <div class="schedule-item-row" style="top:${getEvenPct(i, count).toFixed(2)}%">
+        .map((item) => `
+          <div class="schedule-item-row">
             <div class="schedule-item-title ${sizeCls} ${themeCls}">${item.title}</div>
             ${item.subtitle ? `<div class="schedule-item-subtitle ${sizeCls} ${themeCls}">${item.subtitle}</div>` : ''}
           </div>`)
