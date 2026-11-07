@@ -14,6 +14,7 @@ test.describe('00OO 北海道蜜月 2027 — Visual & Interaction E2E Suite', ()
     });
 
     await page.goto('/');
+    await page.addStyleTag({ content: '*, *::before, *::after { animation: none !important; transition: none !important; }' });
     await expect(page).toHaveTitle('00OO 北海道蜜月 2027');
 
     // Ensure zero horizontal overflow on viewport

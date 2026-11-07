@@ -1,9 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 38" class="jetliner-svg">
-  <!-- Minimalist Flat Silhouette: Zero strokes, clean geometric form matching scene buildings -->
-  <path d="M 100,20 C 92,14 80,13 66,13 L 24,13 L 10,2 L 3,2 L 10,15 L 5,18 C 10,21 20,22 32,22 L 86,22 C 94,22 100,21 100,20 Z" fill="#0f172a"/>
-  <!-- Clean Swept Wing Silhouette -->
+  <!-- Minimalist Flat Silhouette in Deep Slate (Zero strokes, high contrast against Day 12 bright sky) -->
   <polygon points="58,19 38,32 48,32 68,19" fill="#1e293b"/>
-  <!-- 4 Simple Warm Yellow Cabin Windows (Same #fde047 language as buildings & train) -->
+  <path d="M 100,20 C 92,14 80,13 66,13 L 24,13 L 10,2 L 3,2 L 10,15 L 5,18 C 10,21 20,22 32,22 L 86,22 C 94,22 100,21 100,20 Z" fill="#0f172a"/>
   <g fill="#fde047">
     <rect x="72" y="15.5" width="6" height="3" rx="1"/>
     <rect x="60" y="15.5" width="6" height="3" rx="1"/>

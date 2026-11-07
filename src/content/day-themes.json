@@ -18,6 +18,6 @@
     { "groupIdx": 1, "startDay": 3, "endDay": 4,  "panStepPx": 88, "widthPx": 580 },
     { "groupIdx": 2, "startDay": 5, "endDay": 5,  "panStepPx": 0,  "widthPx": 480 },
     { "groupIdx": 3, "startDay": 6, "endDay": 6,  "panStepPx": 0,  "widthPx": 480 },
-    { "groupIdx": 4, "startDay": 7, "endDay": 11, "panStepPx": 150, "widthPx": 1000 }
+    { "groupIdx": 4, "startDay": 7, "endDay": 11, "panStepPx": 200, "widthPx": 1200 }
   ]
 }
