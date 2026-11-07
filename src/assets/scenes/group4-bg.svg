@@ -4,11 +4,9 @@
       <path d="M -20,205 L -20,146 L 55,134 L 162,42 L 218,42 L 315,138 L 415,82 L 515,134 L 625,78 L 745,132 L 860,96 L 1020,144 L 1020,205 Z"/>
     </clipPath>
   </defs>
-  <!-- Warm Sunset / Twilight Glow over Otaru & Sapporo (Visible on Days 9-10) -->
   <circle cx="385" cy="92" r="46" fill="#fb923c" opacity="0.42"/>
   <circle cx="385" cy="92" r="30" fill="#fde047" opacity="0.9"/>
-  <!-- Continuous Mountain Horizon: Mt. Yotei (Day 8) -> Mt. Tengu (Day 9) -> Mt. Moiwa & Teine (Days 10-12) -->
-  <path d="M -20,205 L -20,146 L 55,134 L 162,42 L 218,42 L 315,138 L 415,82 L 515,134 L 625,78 L 745,132 L 860,96 L 1020,144 L 1020,205 Z" fill="#334155" opacity="0.78" stroke="#64748b" stroke-width="1.5"/>
+  <path d="M -20,205 L -20,146 L 55,134 L 162,42 L 218,42 L 315,138 L 415,82 L 515,134 L 625,78 L 745,132 L 860,96 L 1020,144 L 1020,205 Z" fill="#334155" opacity="0.72"/>
   <g clip-path="url(#g4-bg-mtn-clip)" fill="#ffffff" opacity="0.94">
     <polygon points="55,88 55,34 315,34 315,88 224,78 190,89 156,78"/>
     <polygon points="315,108 315,74 515,74 515,108 438,101 415,109 392,101"/>

@@ -6,8 +6,7 @@
   </defs>
   <circle cx="505" cy="32" r="20" fill="#fef08a" opacity="0.18"/>
   <circle cx="505" cy="32" r="11" fill="#fef9c3" opacity="0.94"/>
-  <!-- High-Contrast Moonlight Slate Mountain Range (Clearly visible against #1e293b night sky!) -->
-  <path d="M -20,205 L -20,124 L 95,48 L 205,114 L 330,42 L 455,112 L 555,56 L 640,118 L 640,205 Z" fill="#334155" opacity="0.92" stroke="#64748b" stroke-width="1.6"/>
+  <path d="M -20,205 L -20,124 L 95,48 L 205,114 L 330,42 L 455,112 L 555,56 L 640,118 L 640,205 Z" fill="#334155" opacity="0.85"/>
   <g clip-path="url(#g0-mtn-clip)" fill="#ffffff" opacity="0.9">
     <polygon points="-20,84 -20,36 205,36 205,84 122,76 95,85 68,76"/>
     <polygon points="205,78 205,30 455,30 455,78 360,70 330,79 300,70"/>

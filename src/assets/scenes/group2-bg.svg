@@ -13,7 +13,7 @@
     <circle cx="412" cy="30" r="2.0"/>
     <circle cx="448" cy="48" r="1.4"/>
   </g>
-  <path d="M -20,205 L -20,132 L 58,74 L 118,74 L 192,126 L 265,118 L 348,48 L 435,128 L 495,140 L 495,205 Z" fill="#334155" opacity="0.88" stroke="#64748b" stroke-width="1.5"/>
+  <path d="M -20,205 L -20,132 L 58,74 L 118,74 L 192,126 L 265,118 L 348,48 L 435,128 L 495,140 L 495,205 Z" fill="#334155" opacity="0.82"/>
   <g clip-path="url(#g2-shikotsu-clip)" fill="#ffffff" opacity="0.92">
     <polygon points="-20,96 -20,60 192,60 192,96 116,89 88,96 60,89"/>
     <polygon points="265,86 265,40 435,40 435,86 368,78 348,87 328,78"/>

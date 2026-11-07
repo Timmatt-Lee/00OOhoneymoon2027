@@ -1,19 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 38" class="jetliner-svg">
-  <polygon points="44,14 30,5 22,5 34,14" fill="#334155"/>
-  <path d="M 102,20 C 94,14 82,13 68,13 L 26,13 L 12,2 L 3,2 L 11,15 L 6,17 C 11,20 20,22 30,22 L 88,22 C 96,22 102,21 102,20 Z" fill="#0f172a"/>
-  <path d="M 3,2 L 12,2 L 26,13 L 68,13 C 82,13 94,14 101,19" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="16" y1="20" x2="94" y2="20" stroke="#f43f5e" stroke-width="2.2" stroke-linecap="round"/>
-  <polygon points="56,20 38,33 48,33 68,20" fill="#1e293b"/>
-  <line x1="68" y1="20" x2="48" y2="33" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round"/>
-  <rect x="46" y="23" width="12" height="5" rx="2.5" fill="#0f172a" stroke="#ffffff" stroke-width="2.2"/>
-  <polygon points="95,18 88,15.5 86,18 93,19" fill="#bae6fd"/>
+  <!-- Minimalist Flat Silhouette: Zero strokes, clean geometric form matching scene buildings -->
+  <path d="M 100,20 C 92,14 80,13 66,13 L 24,13 L 10,2 L 3,2 L 10,15 L 5,18 C 10,21 20,22 32,22 L 86,22 C 94,22 100,21 100,20 Z" fill="#0f172a"/>
+  <!-- Clean Swept Wing Silhouette -->
+  <polygon points="58,19 38,32 48,32 68,19" fill="#1e293b"/>
+  <!-- 4 Simple Warm Yellow Cabin Windows (Same #fde047 language as buildings & train) -->
   <g fill="#fde047">
-    <rect x="76" y="15.5" width="4.5" height="2.8" rx="0.8"/>
-    <rect x="68" y="15.5" width="4.5" height="2.8" rx="0.8"/>
-    <rect x="60" y="15.5" width="4.5" height="2.8" rx="0.8"/>
-    <rect x="52" y="15.5" width="4.5" height="2.8" rx="0.8"/>
-    <rect x="44" y="15.5" width="4.5" height="2.8" rx="0.8"/>
-    <rect x="36" y="15.5" width="4.5" height="2.8" rx="0.8"/>
-    <rect x="28" y="15.5" width="4.5" height="2.8" rx="0.8"/>
+    <rect x="72" y="15.5" width="6" height="3" rx="1"/>
+    <rect x="60" y="15.5" width="6" height="3" rx="1"/>
+    <rect x="48" y="15.5" width="6" height="3" rx="1"/>
+    <rect x="36" y="15.5" width="6" height="3" rx="1"/>
   </g>
 </svg>
