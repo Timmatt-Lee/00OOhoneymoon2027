@@ -1,7 +1,7 @@
 {
   "days": [
     { "day": 1,  "csvFile": "01_0302.csv", "label": "3/2 (二)",  "isDark": true,  "groupIdx": 0, "localIdx": 0, "mapQuery": "Sapporo Station",          "skyGrad": "linear-gradient(180deg, #070B19 0%, #131C38 52%, #1E294B 100%)" },
-    { "day": 2,  "csvFile": "02_0303.csv", "label": "3/3 (三)",  "isDark": true,  "groupIdx": 0, "localIdx": 1, "mapQuery": "Sapporo Station",          "skyGrad": "linear-gradient(180deg, #090D1E 0%, #172042 52%, #263159 100%)" },
+    { "day": 2,  "csvFile": "02_0303.csv", "label": "3/3 (三)",  "isDark": true,  "groupIdx": 0, "localIdx": 1, "mapQuery": "Mitsui Outlet Park Sapporo Kitahiroshima", "skyGrad": "linear-gradient(180deg, #090D1E 0%, #172042 52%, #263159 100%)" },
     { "day": 3,  "csvFile": "03_0304.csv", "label": "3/4 (四)",  "isDark": true,  "groupIdx": 0, "localIdx": 2, "mapQuery": "Sapporo Station",          "skyGrad": "linear-gradient(180deg, #0B1024 0%, #1B254B 52%, #2E3B68 100%)" },
     { "day": 4,  "csvFile": "04_0305.csv", "label": "3/5 (五)",  "isDark": false, "groupIdx": 1, "localIdx": 0, "mapQuery": "Asahikawa Station",        "skyGrad": "linear-gradient(180deg, #BAE6FD 0%, #E0F2FE 55%, #F8FAFC 100%)" },
     { "day": 5,  "csvFile": "05_0306.csv", "label": "3/6 (六)",  "isDark": false, "groupIdx": 1, "localIdx": 1, "mapQuery": "Christmas Tree Biei",      "skyGrad": "linear-gradient(180deg, #FBCFE8 0%, #FED7AA 52%, #FEF3C7 100%)" },
