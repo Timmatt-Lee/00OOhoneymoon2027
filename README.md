@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/icon.svg" width="96" height="96" alt="00OO App Icon" />
+<img src="public/icon-192.png" width="96" height="96" alt="00OO App Icon" />
 
 # 00OO — Hokkaido Winter Honeymoon 2027
 
