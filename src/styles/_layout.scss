@@ -17,6 +17,9 @@ html, body {
   font-family: $font-stack;
   background: $bg-deep;
   touch-action: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 #app-shell {
@@ -29,7 +32,7 @@ html, body {
   &.theme-dark {
     --tl-line-bg: rgba(255, 255, 255, 0.38);
     --tl-text-color: #ffffff;
-    --tl-text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+    --tl-text-shadow: none;
     --tl-dot-bg: #f43f5e;
     --seg-past-bg: rgba(255, 255, 255, 0.85);
     --seg-past-border: rgba(255, 255, 255, 0.95);
@@ -41,7 +44,7 @@ html, body {
   &.theme-light {
     --tl-line-bg: rgba(15, 23, 42, 0.28);
     --tl-text-color: #0f172a;
-    --tl-text-shadow: 0 1px 6px rgba(255, 255, 255, 0.9);
+    --tl-text-shadow: none;
     --tl-dot-bg: #0f172a;
     --seg-past-bg: rgba(15, 23, 42, 0.50);
     --seg-past-border: rgba(255, 255, 255, 0.90);
@@ -250,43 +253,40 @@ html, body {
 
 .schedule-item-title {
   flex-shrink: 0;
-  font-weight: 900;
+  font-family: $font-cjk;
+  font-size: 17.5px;
+  font-weight: 700;
   line-height: 1.32;
-  letter-spacing: -0.025em;
+  letter-spacing: 0.015em;
   white-space: nowrap;
-
-  &.size-normal { font-size: 18px; }
-  &.size-compact { font-size: 16.5px; }
-  &.size-dense { font-size: 15.5px; }
 
   &.theme-dark {
     color: #ffffff;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+    text-shadow: none;
   }
   &.theme-light {
-    color: #020617;
-    text-shadow: 0 1px 8px rgba(255, 255, 255, 0.9);
+    color: #0f172a;
+    text-shadow: none;
   }
 }
 
 .schedule-item-subtitle {
   flex-shrink: 0;
-  font-weight: 700;
-  line-height: 1.32;
+  font-family: $font-cjk;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.35;
   margin-top: 2px;
-  letter-spacing: -0.02em;
-
-  &.size-normal { font-size: 13.5px; }
-  &.size-compact { font-size: 13px; }
-  &.size-dense { font-size: 12.5px; }
+  letter-spacing: 0.005em;
+  white-space: nowrap;
 
   &.theme-dark {
-    color: #e2e8f0;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+    color: #cbd5e1;
+    text-shadow: none;
   }
   &.theme-light {
-    color: #1e293b;
-    text-shadow: 0 1px 8px rgba(255, 255, 255, 0.9);
+    color: #334155;
+    text-shadow: none;
   }
 }
 

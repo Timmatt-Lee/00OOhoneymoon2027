@@ -24,14 +24,12 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
   const stage = document.getElementById('schedule-stage')!;
   stage.innerHTML = daysData
     .map((d, dayIdx) => {
-      const count = d.items.length;
       const themeCls = d.isDark ? 'theme-dark' : 'theme-light';
-      const sizeCls = count >= 8 ? 'size-dense' : count === 7 ? 'size-compact' : 'size-normal';
       const rowsHtml = d.items
         .map((item) => `
           <div class="schedule-item-row">
-            <div class="schedule-item-title ${sizeCls} ${themeCls}">${item.title}</div>
-            ${item.subtitle ? `<div class="schedule-item-subtitle ${sizeCls} ${themeCls}">${item.subtitle}</div>` : ''}
+            <div class="schedule-item-title ${themeCls}">${item.title}</div>
+            ${item.subtitle ? `<div class="schedule-item-subtitle ${themeCls}">${item.subtitle}</div>` : ''}
           </div>`)
         .join('');
       return `<div class="day-schedule-panel" data-day="${dayIdx}" style="opacity:${dayIdx === 0 ? 1 : 0};transform:translate3d(${dayIdx === 0 ? 0 : 100}%,0,0)">${rowsHtml}</div>`;
