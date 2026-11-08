@@ -1,194 +1,142 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Night Sky to Winter Aurora Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#0b1124"/>
-      <stop offset="48%" stop-color="#172a54"/>
-      <stop offset="82%" stop-color="#284b82"/>
-      <stop offset="100%" stop-color="#3b6998"/>
+    <!-- Soft Pastel Hokkaido Winter Sky to Sakura Blush Gradient -->
+    <linearGradient id="bgPastel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="48%" stop-color="#bae6fd"/>
+      <stop offset="100%" stop-color="#fbcfe8"/>
     </linearGradient>
 
-    <!-- Soft Aurora Glow -->
-    <radialGradient id="auroraGlow" cx="50%" cy="28%" r="55%">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.32"/>
-      <stop offset="55%" stop-color="#818cf8" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#0b1124" stop-opacity="0"/>
-    </radialGradient>
-
-    <!-- Warm Heart Glow -->
-    <radialGradient id="heartGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fda4af" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#fb7185" stop-opacity="0"/>
-    </radialGradient>
-
-    <!-- Fluffy White Body Shading -->
-    <radialGradient id="fluffGradL" cx="42%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="72%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#dbeafe"/>
-    </radialGradient>
-
-    <radialGradient id="fluffGradR" cx="58%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="72%" stop-color="#fff1f2"/>
-      <stop offset="100%" stop-color="#fce7f3"/>
+    <!-- Soft Warm White Radial Highlight -->
+    <radialGradient id="centerGlow" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
 
     <!-- Heart Gradient -->
-    <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="heartFill" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#fb7185"/>
       <stop offset="100%" stop-color="#e11d48"/>
     </linearGradient>
 
-    <!-- Snow Hill Gradient -->
-    <linearGradient id="snowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#e2e8f0"/>
-    </linearGradient>
-
-    <!-- Cheek Blush Filter -->
-    <filter id="softBlur" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="7"/>
-    </filter>
-    <filter id="dropShadow" x="-15%" y="-15%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#090d1a" flood-opacity="0.42"/>
+    <!-- Soft Drop Shadow for Characters -->
+    <filter id="cardShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#1e293b" flood-opacity="0.16"/>
     </filter>
   </defs>
 
-  <!-- Full Bleed Background (safe for iOS squircle clipping) -->
-  <rect width="512" height="512" fill="url(#bgGrad)"/>
-  <circle cx="256" cy="160" r="240" fill="url(#auroraGlow)"/>
+  <!-- 1. Bright Pastel Background -->
+  <rect width="512" height="512" fill="url(#bgPastel)"/>
+  <circle cx="256" cy="240" r="240" fill="url(#centerGlow)"/>
 
-  <!-- Twinkling Stars & Snowflakes -->
-  <g fill="#ffffff">
-    <circle cx="78" cy="82" r="4" opacity="0.8"/>
-    <circle cx="436" cy="76" r="3.5" opacity="0.75"/>
-    <circle cx="136" cy="52" r="2.5" opacity="0.6"/>
-    <circle cx="382" cy="48" r="3" opacity="0.65"/>
-    <circle cx="64" cy="186" r="4.5" opacity="0.7"/>
-    <circle cx="448" cy="172" r="5" opacity="0.75"/>
-    <circle cx="108" cy="138" r="3" opacity="0.5"/>
-    <circle cx="406" cy="128" r="3.5" opacity="0.55"/>
-    <!-- 4-point Sparkle Left -->
-    <path d="M 92,98 Q 92,114 76,114 Q 92,114 92,130 Q 92,114 108,114 Q 92,114 92,98 Z" fill="#fef08a" opacity="0.9"/>
-    <!-- 4-point Sparkle Right -->
-    <path d="M 418,86 Q 418,100 404,100 Q 418,100 418,114 Q 418,100 432,100 Q 418,100 418,86 Z" fill="#fef08a" opacity="0.85"/>
+  <!-- 2. Big Crisp Snowflakes & Sparkles in Upper Corners -->
+  <g fill="#ffffff" opacity="0.92">
+    <circle cx="68" cy="112" r="10"/>
+    <circle cx="444" cy="108" r="10"/>
+    <circle cx="48" cy="216" r="7"/>
+    <circle cx="462" cy="220" r="7"/>
+    <!-- 4-Point Star Sparkle Left -->
+    <path d="M 104,52 Q 104,76 80,76 Q 104,76 104,100 Q 104,76 128,76 Q 104,76 104,52 Z"/>
+    <!-- 4-Point Star Sparkle Right -->
+    <path d="M 408,52 Q 408,76 384,76 Q 408,76 408,100 Q 408,76 432,76 Q 408,76 408,52 Z"/>
   </g>
 
-  <!-- Distant Snowy Mount Yotei / Biei Pines -->
-  <path d="M -20,410 Q 110,330 230,385 T 532,375 L 532,512 L -20,512 Z" fill="#1e3a6d" opacity="0.55"/>
-  <!-- Cute Mini Biei Christmas Tree on Left Horizon -->
-  <g transform="translate(56, 286)" opacity="0.85">
-    <polygon points="24,0 4,34 15,34 -2,64 11,64 -6,92 54,92 37,64 50,64 33,34 44,34" fill="#1e293b"/>
-    <polygon points="24,0 10,23 38,23" fill="#f8fafc" opacity="0.9"/>
-    <circle cx="24" cy="-3" r="4" fill="#fde047"/>
-  </g>
-  <!-- Cute Mini Pine on Right Horizon -->
-  <g transform="translate(414, 298)" opacity="0.85">
-    <polygon points="20,0 3,28 12,28 -2,54 38,54 28,28 37,28" fill="#1e293b"/>
-    <polygon points="20,0 8,19 32,19" fill="#f8fafc" opacity="0.9"/>
+  <!-- 3. Big Center Love Heart (Top Center, Bold & Clear) -->
+  <g transform="translate(256, 98)" filter="url(#cardShadow)">
+    <path d="M 0,44 C -12,34 -58,2 -58,-28 C -58,-54 -36,-68 -16,-68 C -2,-68 0,-52 0,-52 C 0,-52 2,-68 16,-68 C 36,-68 58,-54 58,-28 C 58,2 12,34 0,44 Z"
+          fill="url(#heartFill)" stroke="#3d2314" stroke-width="13" stroke-linejoin="round"/>
+    <!-- Cute White Highlight on Heart -->
+    <ellipse cx="-20" cy="-38" rx="11" ry="6" transform="rotate(-28 -20 -38)" fill="#ffffff" opacity="0.75"/>
   </g>
 
-  <!-- Floating Wedding Veil Behind Bride (Right Fairy Bird / Snow Couple) -->
-  <path d="M 332,188 Q 415,196 456,286 Q 468,325 438,358 Q 396,356 368,320 Z" fill="#ffffff" opacity="0.42"/>
-  <path d="M 340,196 Q 405,212 436,294 Q 410,318 372,298 Z" fill="#ffffff" opacity="0.62"/>
+  <!-- 4. Bride's Translucent Flowing Veil (Behind Right Character) -->
+  <path d="M 356,196 C 430,198 486,256 492,342 C 462,368 424,366 396,342 Z"
+        fill="#ffffff" fill-opacity="0.78" stroke="#3d2314" stroke-width="12" stroke-linejoin="round"/>
 
-  <!-- Center Floating Love Heart with Warm Glow -->
-  <circle cx="256" cy="134" r="56" fill="url(#heartGlow)"/>
-  <g transform="translate(256, 134)" filter="url(#dropShadow)">
-    <path d="M 0,32 C -8,24 -42,-2 -42,-24 C -42,-42 -26,-52 -12,-52 C -2,-52 0,-42 0,-42 C 0,-42 2,-52 12,-52 C 26,-52 42,-42 42,-24 C 42,-2 8,24 0,32 Z" fill="url(#heartGrad)"/>
-    <ellipse cx="-14" cy="-32" rx="8" ry="4.5" transform="rotate(-25 -14 -32)" fill="#ffffff" opacity="0.45"/>
-  </g>
+  <!-- 5. LEFT CHARACTER: Chubby Mochi Groom (Kanahei Piske-inspired Round Snow Bird) -->
+  <g filter="url(#cardShadow)">
+    <!-- Big Round Squishy Mochi Body -->
+    <path d="M 28,392 C 24,262 72,194 166,194 C 252,194 292,258 288,392 C 286,462 238,500 158,500 C 78,500 30,462 28,392 Z"
+          fill="#ffffff" stroke="#3d2314" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- ============ LEFT: GROOM SHIMA-ENAGA (北海道雪之妖精・新郎) ============ -->
-  <g filter="url(#dropShadow)">
-    <!-- Chubby Round Snow-Fairy Body -->
-    <path d="M 74,326 C 74,238 126,192 186,192 C 244,192 276,240 276,322 C 276,376 238,408 176,408 C 110,408 74,376 74,326 Z" fill="url(#fluffGradL)"/>
-    <!-- Cute Dark Wing on Outer Left -->
-    <path d="M 80,282 C 58,308 62,354 88,368 C 98,348 96,310 80,282 Z" fill="#1e293b"/>
-    <path d="M 76,298 C 66,318 68,346 84,358" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.85"/>
-
-    <!-- Cute Groom Top Hat (Slightly Tilted) -->
-    <g transform="translate(168, 178) rotate(-8)">
-      <ellipse cx="0" cy="14" rx="46" ry="10" fill="#0f172a"/>
-      <path d="M -30,12 L -26,-34 C -26,-40 26,-40 26,-34 L 30,12 Z" fill="#1e293b"/>
-      <rect x="-28" y="-2" width="56" height="9" rx="3" fill="#38bdf8"/>
+    <!-- Cute Groom Top Hat (Jaunty Tilt, High Contrast) -->
+    <g transform="translate(148, 184) rotate(-9)">
+      <path d="M -38,6 L -32,-46 C -32,-56 32,-56 32,-46 L 38,6 Z"
+            fill="#334155" stroke="#3d2314" stroke-width="13" stroke-linejoin="round"/>
+      <!-- Sky Blue Satin Hat Ribbon -->
+      <rect x="-35" y="-14" width="70" height="16" rx="4" fill="#38bdf8" stroke="#3d2314" stroke-width="10"/>
+      <!-- Hat Brim -->
+      <ellipse cx="0" cy="8" rx="58" ry="13" fill="#1e293b" stroke="#3d2314" stroke-width="13"/>
     </g>
 
-    <!-- Rosy Cheeks -->
-    <ellipse cx="134" cy="296" rx="16" ry="10" fill="#fb7185" opacity="0.48" filter="url(#softBlur)"/>
-    <ellipse cx="228" cy="296" rx="16" ry="10" fill="#fb7185" opacity="0.48" filter="url(#softBlur)"/>
+    <!-- Big Rosy Pink Blush Cheeks -->
+    <ellipse cx="88" cy="316" rx="26" ry="17" fill="#fb7185" opacity="0.65"/>
+    <ellipse cx="232" cy="316" rx="26" ry="17" fill="#fb7185" opacity="0.65"/>
 
-    <!-- Happy Curved Eyes & Cute Tiny Beak -->
-    <circle cx="146" cy="274" r="9.5" fill="#0f172a"/>
-    <circle cx="143" cy="270" r="3.5" fill="#ffffff"/>
-    <circle cx="218" cy="274" r="9.5" fill="#0f172a"/>
-    <circle cx="215" cy="270" r="3.5" fill="#ffffff"/>
-    <!-- Tiny Diamond Beak -->
-    <polygon points="182,277 174,285 182,292 190,285" fill="#f59e0b"/>
+    <!-- Cute Kanahei-style Eyes (Close to Beak) -->
+    <circle cx="118" cy="288" r="12" fill="#3d2314"/>
+    <circle cx="114" cy="283" r="4.5" fill="#ffffff"/>
+    <circle cx="204" cy="288" r="12" fill="#3d2314"/>
+    <circle cx="200" cy="283" r="4.5" fill="#ffffff"/>
 
-    <!-- Groom Bow Tie -->
-    <g transform="translate(184, 330)">
-      <polygon points="0,0 -24,-13 -24,13" fill="#0f172a"/>
-      <polygon points="0,0 24,-13 24,13" fill="#0f172a"/>
-      <rect x="-6" y="-6" width="12" height="12" rx="4" fill="#38bdf8"/>
+    <!-- Plump Golden-Orange Beak -->
+    <ellipse cx="161" cy="294" rx="16" ry="11" fill="#fbbf24" stroke="#3d2314" stroke-width="11"/>
+
+    <!-- Cute Groom Bow Tie -->
+    <g transform="translate(161, 366)">
+      <path d="M 0,0 L -36,-20 L -36,20 Z" fill="#0284c7" stroke="#3d2314" stroke-width="12" stroke-linejoin="round"/>
+      <path d="M 0,0 L 36,-20 L 36,20 Z" fill="#0284c7" stroke="#3d2314" stroke-width="12" stroke-linejoin="round"/>
+      <circle cx="0" cy="0" r="11" fill="#38bdf8" stroke="#3d2314" stroke-width="11"/>
     </g>
   </g>
 
-  <!-- ============ RIGHT: BRIDE SHIMA-ENAGA (北海道雪之妖精・新娘) ============ -->
-  <g filter="url(#dropShadow)">
-    <!-- Chubby Round Snow-Fairy Body Snuggling Groom -->
-    <path d="M 238,330 C 238,244 274,198 334,198 C 394,198 438,244 438,330 C 438,378 400,408 336,408 C 272,408 238,378 238,330 Z" fill="url(#fluffGradR)"/>
-    <!-- Cute Dark Wing on Outer Right -->
-    <path d="M 432,286 C 454,312 450,356 424,370 C 414,350 416,312 432,286 Z" fill="#1e293b"/>
-    <path d="M 436,302 C 446,322 444,348 428,360" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+  <!-- 6. RIGHT CHARACTER: Chubby Pink Bunny/Snow-Fairy Bride Snuggling Groom -->
+  <g filter="url(#cardShadow)">
+    <!-- Cute Chubby Lop Bunny Ears (Gives Instant Recognizable Silhouette!) -->
+    <path d="M 296,210 C 276,136 306,108 328,136 C 342,154 338,194 328,212 Z"
+          fill="#ffe4e6" stroke="#3d2314" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M 382,212 C 396,138 434,120 444,154 C 452,180 426,210 408,222 Z"
+          fill="#ffe4e6" stroke="#3d2314" stroke-width="14" stroke-linejoin="round"/>
+    <!-- Inner Pink Ear Shading -->
+    <ellipse cx="312" cy="166" rx="8" ry="22" transform="rotate(-10 312 166)" fill="#fda4af"/>
+    <ellipse cx="414" cy="172" rx="8" ry="22" transform="rotate(18 414 172)" fill="#fda4af"/>
 
-    <!-- Bride Crown / Tiara & Pearl Veil -->
-    <g transform="translate(336, 192) rotate(6)">
-      <path d="M -32,8 L -24,-18 L -10,-4 L 0,-26 L 10,-4 L 24,-18 L 32,8 Z" fill="#fde047" stroke="#f59e0b" stroke-width="2.5" stroke-linejoin="round"/>
-      <circle cx="0" cy="-26" r="4.5" fill="#ffffff"/>
-      <circle cx="-24" cy="-18" r="3.5" fill="#fb7185"/>
-      <circle cx="24" cy="-18" r="3.5" fill="#fb7185"/>
+    <!-- Big Round Squishy Pastel-Pink Mochi Body (Overlapping Snuggle) -->
+    <path d="M 224,400 C 220,272 268,204 358,204 C 446,204 488,272 484,400 C 482,464 434,500 354,500 C 274,500 226,464 224,400 Z"
+          fill="#ffe4e6" stroke="#3d2314" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- White Tummy Patch -->
+    <ellipse cx="354" cy="420" rx="68" ry="54" fill="#ffffff"/>
+
+    <!-- Cute Golden Bridal Crown / Tiara -->
+    <g transform="translate(356, 198) rotate(4)">
+      <path d="M -38,8 L -28,-26 L -10,-6 L 0,-34 L 10,-6 L 28,-26 L 38,8 Z"
+            fill="#fde047" stroke="#3d2314" stroke-width="12" stroke-linejoin="round"/>
+      <circle cx="0" cy="-34" r="7" fill="#fb7185" stroke="#3d2314" stroke-width="8"/>
     </g>
 
-    <!-- Rosy Cheeks -->
-    <ellipse cx="286" cy="300" rx="16" ry="10" fill="#fb7185" opacity="0.55" filter="url(#softBlur)"/>
-    <ellipse cx="378" cy="300" rx="16" ry="10" fill="#fb7185" opacity="0.55" filter="url(#softBlur)"/>
+    <!-- Big Rosy Pink Blush Cheeks -->
+    <ellipse cx="282" cy="326" rx="27" ry="18" fill="#fb7185" opacity="0.72"/>
+    <ellipse cx="426" cy="326" rx="27" ry="18" fill="#fb7185" opacity="0.72"/>
 
-    <!-- Happy Smiling Arc Eyes (or Sparkly Eyes) & Tiny Beak -->
-    <path d="M 288,278 Q 298,264 308,278" stroke="#0f172a" stroke-width="5.5" stroke-linecap="round" fill="none"/>
-    <path d="M 356,278 Q 366,264 376,278" stroke="#0f172a" stroke-width="5.5" stroke-linecap="round" fill="none"/>
-    <!-- Tiny Beak -->
-    <polygon points="332,280 324,287 332,294 340,287" fill="#f59e0b"/>
+    <!-- Happy Smiling Arc Eyes (^ ^) -->
+    <path d="M 296,298 Q 312,276 328,298" fill="none" stroke="#3d2314" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 382,298 Q 398,276 414,298" fill="none" stroke="#3d2314" stroke-width="13" stroke-linecap="round"/>
 
-    <!-- Pearl Necklace -->
-    <g fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2">
-      <circle cx="308" cy="326" r="4.5"/>
-      <circle cx="320" cy="331" r="4.8"/>
-      <circle cx="332" cy="333" r="5"/>
-      <circle cx="344" cy="331" r="4.8"/>
-      <circle cx="356" cy="326" r="4.5"/>
-    </g>
+    <!-- Cute Bunny Nose & W-Mouth (Kanahei Usagi Style!) -->
+    <ellipse cx="355" cy="304" rx="9" ry="6.5" fill="#fb7185"/>
+    <path d="M 341,316 Q 348,326 355,314 Q 362,326 369,316" fill="none" stroke="#3d2314" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Bride's Pearl & Pink Heart Necklace -->
+    <path d="M 304,358 Q 355,384 406,358" fill="none" stroke="#3d2314" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="355" cy="374" r="12" fill="#fb7185" stroke="#3d2314" stroke-width="9"/>
   </g>
 
-  <!-- Cute Pink Wedding Bouquet Between Them -->
-  <g transform="translate(256, 362)" filter="url(#dropShadow)">
-    <polygon points="0,34 -18,4 18,4" fill="#fef3c7" stroke="#fde68a" stroke-width="2"/>
-    <path d="M -10,18 Q 0,24 10,18" stroke="#fb7185" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <!-- Leaves -->
-    <circle cx="-18" cy="-2" r="10" fill="#34d399"/>
-    <circle cx="18" cy="-2" r="10" fill="#34d399"/>
-    <!-- Roses -->
-    <circle cx="-10" cy="-6" r="13" fill="#fb7185"/>
-    <circle cx="12" cy="-5" r="12" fill="#f43f5e"/>
-    <circle cx="0" cy="-14" r="13" fill="#fda4af"/>
-    <circle cx="-2" cy="-2" r="11" fill="#fef08a"/>
-  </g>
+  <!-- 7. Cute Snuggling Paws in the Middle & Bottom Snow Rim -->
+  <ellipse cx="242" cy="360" rx="22" ry="16" transform="rotate(20 242 360)" fill="#ffffff" stroke="#3d2314" stroke-width="13"/>
+  <ellipse cx="262" cy="378" rx="22" ry="16" transform="rotate(-20 262 378)" fill="#ffe4e6" stroke="#3d2314" stroke-width="13"/>
 
-  <!-- Foreground Fluffy Snow Cushion -->
-  <path d="M -20,398 Q 130,372 256,392 T 532,388 L 532,512 L -20,512 Z" fill="url(#snowGrad)"/>
-
-  <!-- Subtle "00OO" Badge on Snow Bottom -->
-  <rect x="176" y="424" width="160" height="46" rx="23" fill="#0f172a" opacity="0.88"/>
-  <text x="256" y="455" text-anchor="middle" font-family="'M PLUS Rounded 1c', 'Rounded Mplus 1c', sans-serif" font-weight="900" font-size="26" letter-spacing="4" fill="#f8fafc">00 ♥ OO</text>
+  <!-- Fluffy White Snow Foreground Curve at Very Bottom -->
+  <path d="M -20,468 Q 130,442 256,462 T 532,456 L 532,530 L -20,530 Z"
+        fill="#ffffff" stroke="#3d2314" stroke-width="13"/>
 </svg>
