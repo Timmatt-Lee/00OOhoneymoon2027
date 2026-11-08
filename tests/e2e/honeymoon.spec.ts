@@ -24,6 +24,13 @@ test.describe('00OO 北海道蜜月 2027 — Visual & Interaction E2E Suite', ()
     const railLineBox = await page.locator('#timeline-line').boundingBox();
     expect(railLineBox).not.toBeNull();
 
+    // Ensure timeline time labels and top story-bar leftmost chip are strictly left-aligned
+    const storyTrackBox = await page.locator('#story-bar-track').boundingBox();
+    const railBox = await page.locator('#timeline-rail').boundingBox();
+    expect(storyTrackBox).not.toBeNull();
+    expect(railBox).not.toBeNull();
+    expect(storyTrackBox!.x).toBe(railBox!.x);
+
     for (let dayIdx = 0; dayIdx < 12; dayIdx++) {
       const slot = page.locator(`.story-slot[data-day="${dayIdx}"]`);
       await slot.dispatchEvent('pointerdown', { button: 0, clientX: 0, clientY: 0, pointerId: 1 });
