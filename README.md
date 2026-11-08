@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="public/icon.svg" width="96" height="96" alt="00OO App Icon" />
+
 # 00OO — Hokkaido Winter Honeymoon 2027
 
 [![Deploy to GitHub Pages](https://github.com/Timmatt-Lee/00OOhoneymoon2027/actions/workflows/deploy.yml/badge.svg)](https://github.com/Timmatt-Lee/00OOhoneymoon2027/actions/workflows/deploy.yml)
