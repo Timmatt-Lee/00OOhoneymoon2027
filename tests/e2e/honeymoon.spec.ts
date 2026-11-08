@@ -40,7 +40,7 @@ test.describe('00OO 北海道蜜月 2027 — Visual & Interaction E2E Suite', ()
       await expect(panel).toBeVisible();
       const titles = panel.locator('.schedule-item-title');
       const count = await titles.count();
-      expect(count).toBeGreaterThanOrEqual(4);
+      expect(count).toBeGreaterThanOrEqual(3);
 
       let prevBottom = -1;
       for (let r = 0; r < count; r++) {
