@@ -39,22 +39,40 @@ test.describe('00OO 北海道蜜月 2027 — Visual & Interaction E2E Suite', ()
       const panel = page.locator(`.day-schedule-panel[data-day="${dayIdx}"]`);
       await expect(panel).toBeVisible();
       const titles = panel.locator('.schedule-item-title');
+      const subtitles = panel.locator('.schedule-item-subtitle');
       const count = await titles.count();
       expect(count).toBeGreaterThanOrEqual(3);
 
       let prevBottom = -1;
       for (let r = 0; r < count; r++) {
-        const tBox = await titles.nth(r).boundingBox();
+        const titleEl = titles.nth(r);
+        const tBox = await titleEl.boundingBox();
         expect(tBox).not.toBeNull();
-        // Title must have visible rendered height and width (guards against flex-shrink:1 / height:0 clipping)
-        expect(tBox!.height).toBeGreaterThan(18);
+        // Title must have visible rendered height and width and fit on a single line without truncation
+        expect(tBox!.height).toBeGreaterThan(16);
+        expect(tBox!.height).toBeLessThanOrEqual(28);
         expect(tBox!.width).toBeGreaterThan(80);
-        // Title must start to the right of the timeline rail line and stay inside the 400px viewport
-        expect(tBox!.x).toBeGreaterThan(railLineBox!.x + railLineBox!.width + 8);
+        const titleOverflow = await titleEl.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+        expect(titleOverflow, `Day ${dayIdx + 1} row ${r + 1} title overflow`).toBe(false);
+
+        // Title must start to the right of the timeline rail line and stay inside the viewport
+        expect(tBox!.x).toBeGreaterThan(railLineBox!.x + railLineBox!.width + 6);
         expect(tBox!.x + tBox!.width).toBeLessThanOrEqual(390);
         // Strictly increasing Y with zero vertical overlap between rows
         expect(tBox!.y).toBeGreaterThan(prevBottom);
-        prevBottom = tBox!.y + tBox!.height;
+
+        const subEl = subtitles.nth(r);
+        if (await subEl.count() > 0) {
+          const sBox = await subEl.boundingBox();
+          expect(sBox).not.toBeNull();
+          // Subtitle must fit cleanly on a single line (no 2-line wrap and no ellipsis truncation)
+          expect(sBox!.height, `Day ${dayIdx + 1} row ${r + 1} subtitle wrapped (${await subEl.textContent()})`).toBeLessThanOrEqual(22);
+          const subOverflow = await subEl.evaluate((el) => el.scrollWidth > el.clientWidth + 1);
+          expect(subOverflow, `Day ${dayIdx + 1} row ${r + 1} subtitle overflow (${await subEl.textContent()})`).toBe(false);
+          prevBottom = sBox!.y + sBox!.height;
+        } else {
+          prevBottom = tBox!.y + tBox!.height;
+        }
       }
 
       const fileName = `day-${String(dayIdx + 1).padStart(2, '0')}.png`;

@@ -160,15 +160,15 @@ html, body {
   position: absolute;
   top: calc(#{$rail-top} + var(--sat) * 0.5);
   bottom: $rail-bottom;
-  left: 20px;
-  width: 78px;
+  left: 16px;
+  width: 74px;
   z-index: 35;
   pointer-events: none;
 }
 
 #timeline-line {
   position: absolute;
-  left: 64px;
+  left: 60px;
   top: 0;
   bottom: 0;
   width: 2.5px;
@@ -196,7 +196,7 @@ html, body {
 }
 
 .tl-time-wrap {
-  width: 52px;
+  width: 50px;
   height: 24px;
   position: relative;
 }
@@ -207,7 +207,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 900;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -218,7 +218,7 @@ html, body {
 
 .tl-dot {
   position: absolute;
-  left: 65.25px;
+  left: 61.25px;
   width: 11px;
   height: 11px;
   margin-left: -5.5px;
@@ -243,8 +243,8 @@ html, body {
   position: absolute;
   top: calc(#{$rail-top} + var(--sat) * 0.5);
   bottom: $rail-bottom;
-  left: 104px;
-  right: 18px;
+  left: 92px;
+  right: 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -264,15 +264,13 @@ html, body {
 .schedule-item-title {
   flex-shrink: 0;
   font-weight: 900;
-  line-height: 1.35;
+  line-height: 1.3;
   letter-spacing: -0.025em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 
-  &.size-normal { font-size: 18px; }
-  &.size-compact { font-size: 16.5px; }
-  &.size-dense { font-size: 15.5px; }
+  &.size-normal { font-size: 17px; }
+  &.size-compact { font-size: 16px; }
+  &.size-dense { font-size: 15px; }
 
   &.theme-dark {
     color: #ffffff;
@@ -287,15 +285,13 @@ html, body {
 .schedule-item-subtitle {
   flex-shrink: 0;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.32;
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: -0.015em;
 
-  &.size-normal { font-size: 14.5px; }
-  &.size-compact { font-size: 13.5px; }
-  &.size-dense { font-size: 13px; }
+  &.size-normal { font-size: 12.5px; }
+  &.size-compact { font-size: 12px; }
+  &.size-dense { font-size: 11.5px; }
 
   &.theme-dark {
     color: #e2e8f0;
