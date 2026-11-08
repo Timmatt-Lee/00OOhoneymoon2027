@@ -15,7 +15,7 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: $font-stack;
-  background: $bg-deep;
+  background: var(--sky-top-color, $bg-deep);
   touch-action: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -27,12 +27,12 @@ html, body {
   width: 100vw;
   height: 100dvh;
   overflow: hidden;
+  background: $bg-deep;
 
   // Theme-driven Timeline & Story-bar Variables in pure SCSS
   &.theme-dark {
     --tl-line-bg: rgba(255, 255, 255, 0.38);
     --tl-text-color: #ffffff;
-    --tl-text-shadow: none;
     --tl-dot-bg: #f43f5e;
     --seg-past-bg: rgba(255, 255, 255, 0.85);
     --seg-past-border: rgba(255, 255, 255, 0.95);
@@ -44,7 +44,6 @@ html, body {
   &.theme-light {
     --tl-line-bg: rgba(15, 23, 42, 0.28);
     --tl-text-color: #0f172a;
-    --tl-text-shadow: none;
     --tl-dot-bg: #0f172a;
     --seg-past-bg: rgba(15, 23, 42, 0.50);
     --seg-past-border: rgba(255, 255, 255, 0.90);
@@ -59,6 +58,7 @@ html, body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  background: $bg-deep;
 }
 
 .sky-layer {
@@ -128,11 +128,15 @@ html, body {
   &.is-active-pill {
     width: auto;
     height: auto;
-    padding: 4px 14px;
+    padding: 5px 14px;
     background: #0f172a;
     color: #ffffff;
+    font-family: $font-stack;
     font-size: 17px;
-    font-weight: 900;
+    font-weight: 700;
+    -webkit-text-stroke: 0.7px currentColor;
+    paint-order: stroke fill;
+    letter-spacing: 0.015em;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
     border: 2px solid #ffffff;
     display: flex;
@@ -176,13 +180,15 @@ html, body {
   position: absolute;
   left: 0;
   right: 0;
+  top: 0;
   height: 28px;
   margin-top: -14px;
   display: flex;
   align-items: center;
-  top: var(--node-top, 0%);
-  opacity: var(--node-opacity, 0);
-  will-change: top, opacity;
+  transform: translate3d(0, 0px, 0);
+  opacity: 0;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .tl-time-wrap {
@@ -197,12 +203,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  font-size: 16px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-family: $font-stack;
+  font-size: 17px;
+  font-weight: 700;
+  -webkit-text-stroke: 0.65px currentColor;
+  paint-order: stroke fill;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--tl-text-color);
-  text-shadow: var(--tl-text-shadow);
   will-change: opacity;
 }
 
@@ -215,7 +223,7 @@ html, body {
   border-radius: 9999px;
   background-color: var(--tl-dot-bg);
   border: 2px solid #ffffff;
-  transform: scale(var(--dot-scale, 1));
+  transform: scale(1);
   will-change: transform, background-color;
 }
 
@@ -253,28 +261,28 @@ html, body {
 
 .schedule-item-title {
   flex-shrink: 0;
-  font-family: $font-cjk;
-  font-size: 17.5px;
+  font-family: $font-stack;
+  font-size: 17px;
   font-weight: 700;
+  -webkit-text-stroke: 0.7px currentColor;
+  paint-order: stroke fill;
   line-height: 1.32;
   letter-spacing: 0.015em;
   white-space: nowrap;
 
   &.theme-dark {
     color: #ffffff;
-    text-shadow: none;
   }
   &.theme-light {
     color: #0f172a;
-    text-shadow: none;
   }
 }
 
 .schedule-item-subtitle {
   flex-shrink: 0;
-  font-family: $font-cjk;
+  font-family: $font-stack;
   font-size: 13.5px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.35;
   margin-top: 2px;
   letter-spacing: 0.005em;
@@ -282,11 +290,9 @@ html, body {
 
   &.theme-dark {
     color: #cbd5e1;
-    text-shadow: none;
   }
   &.theme-light {
     color: #334155;
-    text-shadow: none;
   }
 }
 
@@ -309,7 +315,6 @@ html, body {
   height: 100%;
 }
 
-// Pure SCSS calc() Parallax Engine driven by --clip-x and --pan-shift
 .scene-group-clip {
   position: absolute;
   inset: 0;
@@ -368,14 +373,13 @@ html, body {
   pointer-events: none;
   z-index: 30;
   will-change: transform, opacity;
+  backface-visibility: hidden;
 
   &.plane-arrive {
     top: 14px;
     left: 28px;
     width: 108px;
     height: 37px;
-    opacity: calc(1 - var(--arrive-p, 0) * 1.05);
-    transform: translate3d(calc(var(--arrive-p, 0) * 180px), calc(var(--arrive-p, 0) * 32px), 0) rotate(6deg);
   }
 
   &.plane-depart {
@@ -383,8 +387,6 @@ html, body {
     left: 248px;
     width: 108px;
     height: 37px;
-    opacity: calc(var(--depart-p, 0) * 1.15);
-    transform: translate3d(calc((1 - var(--depart-p, 0)) * -160px), calc((1 - var(--depart-p, 0)) * 34px), 0) rotate(-11deg);
   }
 }
 

@@ -5,10 +5,11 @@
   "description": "2027.03.02 - 03.13 北海道婚紗蜜月互動行程",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "orientation": "portrait",
-  "background_color": "#070b14",
-  "theme_color": "#070b14",
+  "background_color": "#f8fafc",
+  "theme_color": "#070B19",
   "icons": [
     {
       "src": "./apple-touch-icon.png",

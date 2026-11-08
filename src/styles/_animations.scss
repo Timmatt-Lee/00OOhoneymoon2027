@@ -9,7 +9,7 @@
   }
 }
 
-.water-shimmer {
+.scene-group-clip.is-visible .water-shimmer {
   animation: waterShimmer 3.6s ease-in-out infinite;
 }
 
@@ -22,8 +22,13 @@
   }
 }
 
-.ferris-wheel-spin {
+.scene-group-clip.is-visible .ferris-wheel-spin {
   transform-box: fill-box;
   transform-origin: center;
   animation: ferrisRotate 24s linear infinite;
+}
+
+#app-shell.is-swiping .water-shimmer,
+#app-shell.is-swiping .ferris-wheel-spin {
+  animation-play-state: paused;
 }
