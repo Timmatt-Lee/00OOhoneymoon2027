@@ -2,17 +2,29 @@ export interface ScheduleItem {
   time: string;
   title: string;
   subtitle: string;
+  mapQuery?: string;
 }
 
-export interface SceneVisualPreset {
+export type PlaneAction = 'none' | 'arrive' | 'depart';
+
+export interface RawSceneVisualPreset {
   day: number;
+  date: string;
   csvFile: string;
   label: string;
   isDark: boolean;
+  isSnowTinted: boolean;
+  isOnsenSteam: boolean;
+  isNightGlow: boolean;
+  planeAction: PlaneAction;
   groupIdx: number;
   localIdx: number;
   mapQuery: string;
   skyGrad: string;
+}
+
+export interface SceneVisualPreset extends RawSceneVisualPreset {
+  topSkyHex: string;
 }
 
 export interface DayData extends SceneVisualPreset {
@@ -28,12 +40,6 @@ export interface SceneGroupConfig {
 }
 
 export interface PresetsDocument {
-  days: SceneVisualPreset[];
+  days: RawSceneVisualPreset[];
   sceneGroups: SceneGroupConfig[];
-}
-
-export interface GroupLayerElements {
-  bg: HTMLElement | null;
-  mid: HTMLElement | null;
-  fg: HTMLElement | null;
 }
