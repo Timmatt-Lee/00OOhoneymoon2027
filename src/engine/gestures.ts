@@ -2,55 +2,62 @@ import type { DayData } from '../types/schedule';
 import type { RendererRefs } from './renderer';
 import type { TimelineController } from './timeline';
 import type { ParallaxController } from './parallax';
+import { closestElement, getRequiredElementById, trySetPointerCapture } from '../utils/dom';
+import { buildGoogleMapsUrl } from '../utils/themeColor';
+import { formatDayHash, parseDayHash, resolveInitialDayIndex } from '../utils/tripDate';
 
 export interface GestureEngine {
   getCurrentDayFloat(): number;
   glideToDay(nextTargetIdx: number): void;
 }
 
-const TOP_SKY_HEX: string[] = [
-  '#070B19', // Day 1
-  '#090D1E', // Day 2
-  '#0B1024', // Day 3
-  '#BAE6FD', // Day 4
-  '#FBCFE8', // Day 5
-  '#0C192C', // Day 6
-  '#090A10', // Day 7
-  '#93C5FD', // Day 8
-  '#091326', // Day 9
-  '#130D26', // Day 10
-  '#0D1326', // Day 11
-  '#FDBA74'  // Day 12
-];
-
 export function bindGesturesAndPhysics(
   daysData: DayData[],
   renderer: RendererRefs,
   timeline: TimelineController,
-  parallax: ParallaxController
+  parallax: ParallaxController,
+  now: Date = new Date()
 ): GestureEngine {
-  const maxIdx = daysData.length - 1;
-  const shell = document.getElementById('app-shell')!;
-  const skyStack = document.getElementById('sky-stack')!;
-  const track = document.getElementById('story-bar-track')!;
-  const footerEl = document.getElementById('cityscape-footer')!;
+  const dayCount = daysData.length;
+  const maxIdx = dayCount - 1;
+  const shell = getRequiredElementById('app-shell');
+  const skyStack = getRequiredElementById('sky-stack');
+  const track = getRequiredElementById('story-bar-track');
+  const footerEl = getRequiredElementById('cityscape-footer');
+  const stageFrame = document.getElementById('stage-frame');
   const themeMeta = document.getElementById('theme-color-meta') as HTMLMetaElement | null;
 
-  let targetDayIdx = 0;
-  let currentPos = 0;
+  const initialIdx = resolveInitialDayIndex(daysData, window.location.hash, now);
+  let targetDayIdx = initialIdx;
+  let currentPos = initialIdx;
   let isDragging = false;
   let rafId: number | null = null;
   let lastFrameTime = 0;
-  let vw = shell.clientWidth || 400;
+  let viewportWidth = shell.clientWidth || 400;
+  let stageWidth = stageFrame?.clientWidth || viewportWidth;
   let lastNearestDay = -1;
   let lastSkyIdxA = -1;
 
-  window.addEventListener('resize', () => { vw = shell.clientWidth || 400; });
+  const reducedMotionQuery =
+    typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null;
+
+  function checkIsReducedMotion(): boolean {
+    return reducedMotionQuery ? reducedMotionQuery.matches : false;
+  }
+
+  function syncUrlHash(dayIdx: number): void {
+    const nextHash = formatDayHash(dayIdx);
+    if (window.location.hash !== nextHash) {
+      window.history.replaceState(null, '', nextHash);
+    }
+  }
 
   function syncSystemBars(nearestIdx: number): void {
     if (nearestIdx === lastNearestDay) return;
     lastNearestDay = nearestIdx;
-    const hex = TOP_SKY_HEX[nearestIdx] || '#070B19';
+    const hex = daysData[nearestIdx].topSkyHex;
     document.documentElement.style.setProperty('--sky-top-color', hex);
     if (themeMeta && themeMeta.content !== hex) {
       themeMeta.content = hex;
@@ -70,8 +77,8 @@ export function bindGesturesAndPhysics(
 
     for (let i = 0; i <= maxIdx; i++) {
       const el = renderer.skyLayerEls[i];
-      const active = i === idxA || i === idxB;
-      if (active) {
+      const isSkyActive = i === idxA || i === idxB;
+      if (isSkyActive) {
         if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
         el.style.opacity = (i === idxA ? 1 - t : t).toFixed(3);
       } else if (el.style.visibility !== 'hidden') {
@@ -82,33 +89,34 @@ export function bindGesturesAndPhysics(
 
     for (let i = 0; i <= maxIdx; i++) {
       const panel = renderer.schedulePanelEls[i];
-      const active = i === idxA || i === idxB;
-      if (active) {
+      const isPanelActive = i === idxA || i === idxB;
+      if (isPanelActive) {
         if (panel.style.visibility !== 'visible') panel.style.visibility = 'visible';
         const offset = i - pos;
         panel.style.opacity = Math.max(0, 1 - Math.abs(offset) * 0.85).toFixed(3);
-        panel.style.transform = `translate3d(${(offset * vw).toFixed(1)}px, 0, 0)`;
+        panel.style.transform = `translate3d(${(offset * stageWidth).toFixed(1)}px, 0, 0)`;
       } else if (panel.style.visibility !== 'hidden') {
         panel.style.visibility = 'hidden';
       }
     }
 
     timeline.renderInterpolation(idxA, idxB, t);
-    parallax.renderParallax(clamped, idxA, idxB, t, vw);
+    parallax.renderParallax(clamped, idxA, idxB, t, viewportWidth);
     const nearest = Math.round(clamped);
     renderer.updateTopStoryBar(nearest, daysData[nearest].isDark);
     syncSystemBars(nearest);
   }
 
-  function stepSpring(now: number): void {
+  function stepSpring(frameNow: number): void {
     rafId = null;
     if (isDragging) {
-      lastFrameTime = now;
+      lastFrameTime = frameNow;
       shell.classList.add('is-swiping');
-      return renderAtPos(currentPos);
+      renderAtPos(currentPos);
+      return;
     }
-    const dt = lastFrameTime > 0 ? Math.min(32, Math.max(4, now - lastFrameTime)) : 16.67;
-    lastFrameTime = now;
+    const dt = lastFrameTime > 0 ? Math.min(32, Math.max(4, frameNow - lastFrameTime)) : 16.67;
+    lastFrameTime = frameNow;
     const diff = targetDayIdx - currentPos;
     if (Math.abs(diff) > 0.0015) {
       const alpha = 1 - Math.pow(1 - 0.26, dt / 16.67);
@@ -118,26 +126,66 @@ export function bindGesturesAndPhysics(
     } else {
       lastFrameTime = 0;
       shell.classList.remove('is-swiping');
-      renderAtPos((currentPos = targetDayIdx));
+      currentPos = targetDayIdx;
+      renderAtPos(currentPos);
     }
   }
 
   function glideToDay(idx: number): void {
-    targetDayIdx = Math.max(0, Math.min(maxIdx, idx));
-    if (!rafId) {
+    const clampedIdx = Math.max(0, Math.min(maxIdx, idx));
+    targetDayIdx = clampedIdx;
+    syncUrlHash(clampedIdx);
+
+    if (checkIsReducedMotion()) {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      lastFrameTime = 0;
+      shell.classList.remove('is-swiping');
+      currentPos = clampedIdx;
+      renderAtPos(currentPos);
+      return;
+    }
+
+    if (rafId === null) {
       lastFrameTime = performance.now();
       rafId = requestAnimationFrame(stepSpring);
     }
   }
 
-  // 1. Top Story Bar Scrub & Slot Click
+  window.addEventListener('resize', () => {
+    viewportWidth = shell.clientWidth || 400;
+    stageWidth = stageFrame?.clientWidth || viewportWidth;
+    renderAtPos(currentPos);
+  });
+
+  window.addEventListener('hashchange', () => {
+    const hashIdx = parseDayHash(window.location.hash, dayCount);
+    if (hashIdx !== null && hashIdx !== targetDayIdx) {
+      glideToDay(hashIdx);
+    }
+  });
+
+  // 1. Top Story Bar Scrub, Slot Click & Keyboard Button Activation
   let scrubId: number | null = null;
   const resolveSlotDay = (clientX: number, targetEl?: EventTarget | null): number => {
-    const slotEl = (targetEl as HTMLElement | null)?.closest?.('[data-day]') as HTMLElement | null;
-    if (slotEl?.dataset.day !== undefined && (clientX === 0 || scrubId === null)) return Number(slotEl.dataset.day);
+    const slotEl = closestElement(targetEl, '[data-day]');
+    if (slotEl?.dataset.day !== undefined && (clientX === 0 || scrubId === null)) {
+      return Number(slotEl.dataset.day);
+    }
     const r = track.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(0.9999, (clientX - r.left) / Math.max(1, r.width)));
-    return (ratio * daysData.length) | 0;
+    return (ratio * dayCount) | 0;
+  };
+
+  const jumpImmediatelyToDay = (dayIdx: number): void => {
+    isDragging = false;
+    shell.classList.remove('is-swiping');
+    currentPos = dayIdx;
+    targetDayIdx = dayIdx;
+    syncUrlHash(dayIdx);
+    renderAtPos(dayIdx);
   };
 
   track.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -145,31 +193,70 @@ export function bindGesturesAndPhysics(
     e.stopPropagation();
     const day = resolveSlotDay(e.clientX, e.target);
     scrubId = e.pointerId;
-    try { track.setPointerCapture(e.pointerId); } catch {}
-    isDragging = false;
-    shell.classList.remove('is-swiping');
-    renderAtPos((currentPos = targetDayIdx = day));
+    trySetPointerCapture(track, e.pointerId);
+    jumpImmediatelyToDay(day);
   });
 
   track.addEventListener('pointermove', (e: PointerEvent) => {
     if (scrubId !== e.pointerId) return;
-    renderAtPos((currentPos = targetDayIdx = resolveSlotDay(e.clientX)));
+    jumpImmediatelyToDay(resolveSlotDay(e.clientX));
   });
-  track.addEventListener('pointerup', () => { scrubId = null; });
-  track.addEventListener('pointercancel', () => { scrubId = null; });
+  track.addEventListener('pointerup', () => {
+    scrubId = null;
+  });
+  track.addEventListener('pointercancel', () => {
+    scrubId = null;
+  });
 
-  // 2. Stage Swipe, Left/Right Tap & Footer Google Maps Link
+  // Keyboard activation (Enter / Space) on story-slot <button> elements triggers click with detail === 0
+  track.addEventListener('click', (e: MouseEvent) => {
+    if (e.detail !== 0) return;
+    const slotEl = closestElement(e.target, '[data-day]');
+    if (slotEl?.dataset.day !== undefined) {
+      jumpImmediatelyToDay(Number(slotEl.dataset.day));
+    }
+  });
+
+  // 2. Stage Swipe, Left/Right Tap, Item Map Links & Footer Google Maps Link
   let activeId: number | null = null;
-  let startX = 0, startY = 0, dragStart = 0, inFooter = false, horiz = false, lastTap = -1000;
+  let startX = 0;
+  let startY = 0;
+  let dragStart = 0;
+  let isInFooter = false;
+  let isHorizontal = false;
+  let isSuppressNextClick = false;
+  let lastTap = -1000;
+
+  shell.addEventListener(
+    'click',
+    (e: MouseEvent) => {
+      if (isSuppressNextClick) {
+        isSuppressNextClick = false;
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
+    true
+  );
+
+  renderer.cityscapeMapLinkEl.addEventListener('click', (e: MouseEvent) => {
+    e.preventDefault();
+    const settled = Math.round(currentPos);
+    window.open(buildGoogleMapsUrl(daysData[settled].mapQuery), '_blank', 'noopener,noreferrer');
+  });
 
   shell.addEventListener('pointerdown', (e: PointerEvent) => {
-    if (e.button || (e.target as HTMLElement | null)?.closest?.('#story-bar-track')) return;
+    if (e.button || closestElement(e.target, '#story-bar-track')) return;
     activeId = e.pointerId;
-    try { shell.setPointerCapture(e.pointerId); } catch {}
-    vw = shell.clientWidth || 400;
-    inFooter = e.clientY >= footerEl.getBoundingClientRect().top + 16;
+    if (!closestElement(e.target, 'a[href]')) {
+      trySetPointerCapture(shell, e.pointerId);
+    }
+    viewportWidth = shell.clientWidth || 400;
+    stageWidth = stageFrame?.clientWidth || viewportWidth;
+    isInFooter = e.clientY >= footerEl.getBoundingClientRect().top + 16;
     isDragging = true;
-    horiz = false;
+    isHorizontal = false;
+    isSuppressNextClick = false;
     startX = e.clientX;
     startY = e.clientY;
     dragStart = currentPos;
@@ -179,36 +266,52 @@ export function bindGesturesAndPhysics(
     if (activeId !== e.pointerId) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    if (!horiz && (Math.abs(dx) <= 5 || Math.abs(dx) < Math.abs(dy) * 0.75)) return;
-    horiz = true;
+    if (!isHorizontal && (Math.abs(dx) <= 5 || Math.abs(dx) < Math.abs(dy) * 0.75)) return;
+    if (!isHorizontal) {
+      isHorizontal = true;
+      isSuppressNextClick = true;
+      trySetPointerCapture(shell, e.pointerId);
+    }
     shell.classList.add('is-swiping');
-    const raw = dragStart - dx / vw;
+    const raw = dragStart - dx / stageWidth;
     currentPos = raw < 0 ? raw * 0.2 : raw > maxIdx ? maxIdx + (raw - maxIdx) * 0.2 : raw;
-    if (!rafId) rafId = requestAnimationFrame(stepSpring);
+    if (rafId === null) {
+      rafId = requestAnimationFrame(stepSpring);
+    }
   });
 
-  const endSwipe = (e: PointerEvent) => {
+  const endSwipe = (e: PointerEvent): void => {
     if (activeId !== e.pointerId) return;
     activeId = null;
     isDragging = false;
     const dx = e.clientX - startX;
     const dist = Math.hypot(dx, e.clientY - startY);
     const settled = Math.round(dragStart);
+    const targetAnchor = closestElement(e.target, 'a[href]');
 
-    if (horiz) {
+    if (isHorizontal) {
       glideToDay(dx < -36 ? settled + 1 : dx > 36 ? settled - 1 : Math.round(currentPos));
+    } else if (targetAnchor) {
+      // Allow native <a> click handler to navigate without advancing day
+      return;
     } else if (dist < 10 && performance.now() - lastTap > 200) {
       lastTap = performance.now();
-      if (inFooter) {
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(daysData[settled].mapQuery)}`, '_blank', 'noopener,noreferrer');
+      if (isInFooter) {
+        window.open(
+          buildGoogleMapsUrl(daysData[settled].mapQuery),
+          '_blank',
+          'noopener,noreferrer'
+        );
       } else {
-        const relX = (e.clientX - shell.getBoundingClientRect().left) / vw;
+        const frameEl = stageFrame ?? shell;
+        const relX = (e.clientX - frameEl.getBoundingClientRect().left) / stageWidth;
         glideToDay(relX >= 0.65 ? settled + 1 : relX <= 0.35 ? settled - 1 : settled);
       }
     } else {
       glideToDay(Math.round(currentPos));
     }
   };
+
   shell.addEventListener('pointerup', endSwipe);
   shell.addEventListener('pointercancel', endSwipe);
 
@@ -217,6 +320,6 @@ export function bindGesturesAndPhysics(
     else if (e.key === 'ArrowLeft') glideToDay(targetDayIdx - 1);
   });
 
-  renderAtPos(0);
+  renderAtPos(initialIdx);
   return { getCurrentDayFloat: () => currentPos, glideToDay };
 }

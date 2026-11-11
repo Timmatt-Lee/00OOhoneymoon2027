@@ -1,107 +1,153 @@
 import type { DayData } from '../types/schedule';
+import { getRequiredElementById } from '../utils/dom';
 
 export interface TimelineController {
   renderInterpolation(dayIdxA: number, dayIdxB: number, t: number): void;
 }
 
+interface CachedTimelineNode {
+  nodeEl: HTMLDivElement;
+  dotEl: HTMLDivElement;
+  timeAEl: HTMLSpanElement;
+  timeBEl: HTMLSpanElement;
+  lastY: number;
+  lastOp: string;
+  lastScale: string;
+  lastStrA: string;
+  lastStrB: string;
+  lastOpA: string;
+  lastOpB: string;
+}
+
 export function mountTimelineRail(daysData: DayData[]): TimelineController {
-  const maxNodes = Math.max(1, ...daysData.map((d) => d.items.length));
-  const container = document.getElementById('timeline-nodes-container')!;
+  const maxNodeCount = Math.max(1, ...daysData.map((d) => d.items.length));
+  const container = getRequiredElementById('timeline-nodes-container');
+  container.replaceChildren();
 
-  container.innerHTML = Array.from({ length: maxNodes }, () => `
-    <div class="tl-node">
-      <div class="tl-time-wrap">
-        <span class="tl-time-label tl-time-a">00:00</span>
-        <span class="tl-time-label tl-time-b" style="opacity:0">00:00</span>
-      </div>
-      <div class="tl-dot"></div>
-    </div>`).join('');
+  const cachedNodes: CachedTimelineNode[] = Array.from({ length: maxNodeCount }, () => {
+    const nodeEl = document.createElement('div');
+    nodeEl.className = 'tl-node';
 
-  let railHeight = container.clientHeight || 460;
-  window.addEventListener('resize', () => {
-    railHeight = container.clientHeight || 460;
+    const wrapEl = document.createElement('div');
+    wrapEl.className = 'tl-time-wrap';
+
+    const timeAEl = document.createElement('span');
+    timeAEl.className = 'tl-time-label tl-time-a';
+    timeAEl.textContent = '00:00';
+
+    const timeBEl = document.createElement('span');
+    timeBEl.className = 'tl-time-label tl-time-b';
+    timeBEl.style.opacity = '0';
+    timeBEl.textContent = '00:00';
+
+    const dotEl = document.createElement('div');
+    dotEl.className = 'tl-dot';
+
+    wrapEl.append(timeAEl, timeBEl);
+    nodeEl.append(wrapEl, dotEl);
+    container.appendChild(nodeEl);
+
+    return {
+      nodeEl,
+      dotEl,
+      timeAEl,
+      timeBEl,
+      lastY: -9999,
+      lastOp: '',
+      lastScale: '',
+      lastStrA: '',
+      lastStrB: '',
+      lastOpA: '',
+      lastOpB: ''
+    };
   });
 
-  const cachedNodes = Array.from(container.querySelectorAll<HTMLElement>('.tl-node')).map((nodeEl) => ({
-    nodeEl,
-    dotEl: nodeEl.querySelector<HTMLElement>('.tl-dot')!,
-    timeAEl: nodeEl.querySelector<HTMLElement>('.tl-time-a')!,
-    timeBEl: nodeEl.querySelector<HTMLElement>('.tl-time-b')!,
-    lastY: -9999,
-    lastOp: '',
-    lastScale: '',
-    lastStrA: '',
-    lastStrB: '',
-    lastOpA: '',
-    lastOpB: ''
-  }));
+  let railHeight = container.clientHeight || 460;
+  let lastDayA = 0;
+  let lastDayB = 0;
+  let lastT = 0;
 
-  return {
-    renderInterpolation(dayIdxA: number, dayIdxB: number, t: number) {
-      if (railHeight <= 0) railHeight = container.clientHeight || 460;
-      const itemsA = daysData[dayIdxA].items;
-      const itemsB = daysData[dayIdxB].items;
-      const countA = itemsA.length;
-      const countB = itemsB.length;
-      const maxCount = Math.max(countA, countB);
-      const denomA = Math.max(1, countA - 1);
-      const denomB = Math.max(1, countB - 1);
+  function renderInterpolation(dayIdxA: number, dayIdxB: number, t: number): void {
+    lastDayA = dayIdxA;
+    lastDayB = dayIdxB;
+    lastT = t;
 
-      for (let i = 0; i < maxNodes; i++) {
-        const n = cachedNodes[i];
-        if (i >= maxCount) {
-          if (n.lastOp !== '0') {
-            n.nodeEl.style.opacity = '0';
-            n.lastOp = '0';
-          }
-          continue;
-        }
-        const ratioA = Math.min(i, countA - 1) / denomA;
-        const ratioB = Math.min(i, countB - 1) / denomB;
-        const curRatio = ratioA + (ratioB - ratioA) * t;
-        const yPx = curRatio * railHeight;
+    const currentHeight = container.clientHeight;
+    if (currentHeight > 0) {
+      railHeight = currentHeight;
+    }
 
-        const inA = i < countA;
-        const inB = i < countB;
-        const opacityStr = (inA && !inB ? 1 - t : !inA && inB ? t : 1).toFixed(3);
-        const scaleStr = (inA && !inB ? 1 - 0.25 * t : !inA && inB ? 0.75 + 0.25 * t : 1).toFixed(2);
+    const itemsA = daysData[dayIdxA].items;
+    const itemsB = daysData[dayIdxB].items;
+    const itemACount = itemsA.length;
+    const itemBCount = itemsB.length;
+    const maxItemCount = Math.max(itemACount, itemBCount);
+    const denomA = Math.max(1, itemACount - 1);
+    const denomB = Math.max(1, itemBCount - 1);
 
-        if (Math.abs(yPx - n.lastY) > 0.05) {
-          n.nodeEl.style.transform = `translate3d(0, ${yPx.toFixed(1)}px, 0)`;
-          n.lastY = yPx;
+    for (let i = 0; i < maxNodeCount; i++) {
+      const n = cachedNodes[i];
+      if (i >= maxItemCount) {
+        if (n.lastOp !== '0') {
+          n.nodeEl.style.opacity = '0';
+          n.lastOp = '0';
         }
-        if (n.lastOp !== opacityStr) {
-          n.nodeEl.style.opacity = opacityStr;
-          n.lastOp = opacityStr;
-        }
-        if (n.lastScale !== scaleStr) {
-          n.dotEl.style.transform = `scale(${scaleStr})`;
-          n.lastScale = scaleStr;
-        }
+        continue;
+      }
+      const ratioA = Math.min(i, itemACount - 1) / denomA;
+      const ratioB = Math.min(i, itemBCount - 1) / denomB;
+      const curRatio = ratioA + (ratioB - ratioA) * t;
+      const yPx = curRatio * railHeight;
 
-        const strA = itemsA[Math.min(i, countA - 1)].time;
-        const strB = itemsB[Math.min(i, countB - 1)].time;
+      const isInA = i < itemACount;
+      const isInB = i < itemBCount;
+      const opacityStr = (isInA && !isInB ? 1 - t : !isInA && isInB ? t : 1).toFixed(3);
+      const scaleStr = (
+        isInA && !isInB ? 1 - 0.25 * t : !isInA && isInB ? 0.75 + 0.25 * t : 1
+      ).toFixed(2);
 
-        if (n.lastStrA !== strA) {
-          n.timeAEl.textContent = strA;
-          n.lastStrA = strA;
-        }
-        if (n.lastStrB !== strB) {
-          n.timeBEl.textContent = strB;
-          n.lastStrB = strB;
-        }
+      if (Math.abs(yPx - n.lastY) > 0.05) {
+        n.nodeEl.style.transform = `translate3d(0, ${yPx.toFixed(1)}px, 0)`;
+        n.lastY = yPx;
+      }
+      if (n.lastOp !== opacityStr) {
+        n.nodeEl.style.opacity = opacityStr;
+        n.lastOp = opacityStr;
+      }
+      if (n.lastScale !== scaleStr) {
+        n.dotEl.style.transform = `scale(${scaleStr})`;
+        n.lastScale = scaleStr;
+      }
 
-        const opA = strA === strB ? '1' : (1 - t).toFixed(3);
-        const opB = strA === strB ? '0' : t.toFixed(3);
-        if (n.lastOpA !== opA) {
-          n.timeAEl.style.opacity = opA;
-          n.lastOpA = opA;
-        }
-        if (n.lastOpB !== opB) {
-          n.timeBEl.style.opacity = opB;
-          n.lastOpB = opB;
-        }
+      const strA = itemsA[Math.min(i, itemACount - 1)].time;
+      const strB = itemsB[Math.min(i, itemBCount - 1)].time;
+
+      if (n.lastStrA !== strA) {
+        n.timeAEl.textContent = strA;
+        n.lastStrA = strA;
+      }
+      if (n.lastStrB !== strB) {
+        n.timeBEl.textContent = strB;
+        n.lastStrB = strB;
+      }
+
+      const opA = strA === strB ? '1' : (1 - t).toFixed(3);
+      const opB = strA === strB ? '0' : t.toFixed(3);
+      if (n.lastOpA !== opA) {
+        n.timeAEl.style.opacity = opA;
+        n.lastOpA = opA;
+      }
+      if (n.lastOpB !== opB) {
+        n.timeBEl.style.opacity = opB;
+        n.lastOpB = opB;
       }
     }
-  };
+  }
+
+  window.addEventListener('resize', () => {
+    railHeight = container.clientHeight || 460;
+    renderInterpolation(lastDayA, lastDayB, lastT);
+  });
+
+  return { renderInterpolation };
 }

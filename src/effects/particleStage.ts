@@ -1,44 +1,79 @@
+import type { DayData } from '../types/schedule';
 import { SnowfallEffect } from './snowfallEffect';
 import { OnsenSteamEffect } from './onsenSteamEffect';
 import { NightGlowEffect } from './nightGlowEffect';
 
-export function startParticleStage(getDayFloat: () => number): void {
+export function startParticleStage(daysData: readonly DayData[], getDayFloat: () => number): void {
   const canvas = document.getElementById('fx-canvas') as HTMLCanvasElement | null;
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  let w = (canvas.width = canvas.offsetWidth || 400);
-  let h = (canvas.height = canvas.offsetHeight || 844);
+  const snowTintedIndices = daysData
+    .map((d, idx) => (d.isSnowTinted ? idx : -1))
+    .filter((idx) => idx >= 0);
+  const onsenSteamIndices = daysData
+    .map((d, idx) => (d.isOnsenSteam ? idx : -1))
+    .filter((idx) => idx >= 0);
+  const nightGlowIndices = daysData
+    .map((d, idx) => (d.isNightGlow ? idx : -1))
+    .filter((idx) => idx >= 0);
 
-  window.addEventListener('resize', () => {
-    w = canvas.width = canvas.offsetWidth || 400;
-    h = canvas.height = canvas.offsetHeight || 844;
-  });
+  let cssWidth = canvas.offsetWidth || 400;
+  let cssHeight = canvas.offsetHeight || 844;
+  let dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
 
-  const snowfall = new SnowfallEffect(44, w, h);
-  const onsenSteam = new OnsenSteamEffect(18);
-  const nightGlow = new NightGlowEffect(12);
-  const isAutomated = Boolean(navigator.webdriver);
+  const syncCanvasBackingStore = (): void => {
+    dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  syncCanvasBackingStore();
+
+  const snowfall = new SnowfallEffect(44, cssWidth, cssHeight);
+  const onsenSteam = new OnsenSteamEffect(18, onsenSteamIndices);
+  const nightGlow = new NightGlowEffect(12, nightGlowIndices);
+
+  const isAutomated = navigator.webdriver;
+  const reducedMotionQuery =
+    typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null;
+
   let lastRenderedDay = -999;
   let rafId: number | null = null;
 
-  const renderFrame = (advance: boolean): void => {
+  const checkIsSnowTinted = (dayFloat: number): boolean =>
+    snowTintedIndices.some((idx) => Math.abs(dayFloat - idx) < 0.7);
+
+  const renderFrame = (isAdvancing: boolean): void => {
     const dayFloat = getDayFloat();
-    if (!advance && dayFloat === lastRenderedDay) return;
+    if (!isAdvancing && dayFloat === lastRenderedDay) return;
     lastRenderedDay = dayFloat;
-    ctx.clearRect(0, 0, w, h);
-    snowfall.render(ctx, w, h, dayFloat, advance);
-    onsenSteam.render(ctx, w, h, dayFloat, advance);
-    nightGlow.render(ctx, w, h, dayFloat, advance);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    snowfall.render(ctx, cssWidth, cssHeight, checkIsSnowTinted(dayFloat), isAdvancing);
+    onsenSteam.render(ctx, cssWidth, cssHeight, dayFloat, isAdvancing);
+    nightGlow.render(ctx, cssWidth, cssHeight, dayFloat, isAdvancing);
   };
+
+  window.addEventListener('resize', () => {
+    cssWidth = canvas.offsetWidth || 400;
+    cssHeight = canvas.offsetHeight || 844;
+    syncCanvasBackingStore();
+    snowfall.resize(cssWidth, cssHeight);
+    lastRenderedDay = -999;
+    renderFrame(false);
+  });
 
   const tick = (): void => {
     if (document.hidden) {
       rafId = null;
       return;
     }
-    renderFrame(!isAutomated);
+    const isReducedMotion = reducedMotionQuery ? reducedMotionQuery.matches : false;
+    renderFrame(!isAutomated && !isReducedMotion);
     rafId = requestAnimationFrame(tick);
   };
 

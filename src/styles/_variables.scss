@@ -1,12 +1,16 @@
 :root {
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
-  --sky-top-color: #070B19;
+  --sky-top-color: #070b19;
 }
 
-$bg-deep: #070B19;
+$bg-deep: #070b19;
 $snow-white: #f8fafc;
-$font-stack: 'Huninn', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-stack:
+  'Huninn',
+  -apple-system,
+  BlinkMacSystemFont,
+  sans-serif;
 $rail-top: 14.5%;
 $rail-bottom: 29.5%;
 $footer-height: 205px;

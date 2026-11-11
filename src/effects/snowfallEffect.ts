@@ -1,3 +1,5 @@
+import { createPrng } from '../utils/prng';
+
 interface Snowflake {
   x: number;
   y: number;
@@ -8,24 +10,18 @@ interface Snowflake {
   phase: number;
 }
 
-function createPrng(seed: number): () => number {
-  let s = seed >>> 0;
-  return () => {
-    s = (s + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 export class SnowfallEffect {
   private readonly flakes: Snowflake[];
   private readonly rand = createPrng(20270302);
+  private lastWidth: number;
+  private lastHeight: number;
 
-  constructor(count: number, w: number, h: number) {
-    this.flakes = Array.from({ length: count }, () => ({
-      x: this.rand() * w,
-      y: this.rand() * h,
+  constructor(flakeCount: number, width: number, height: number) {
+    this.lastWidth = Math.max(1, width);
+    this.lastHeight = Math.max(1, height);
+    this.flakes = Array.from({ length: flakeCount }, () => ({
+      x: this.rand() * this.lastWidth,
+      y: this.rand() * this.lastHeight,
       r: this.rand() * 2.1 + 0.9,
       vy: this.rand() * 0.52 + 0.24,
       vx: (this.rand() - 0.5) * 0.3,
@@ -34,11 +30,29 @@ export class SnowfallEffect {
     }));
   }
 
-  public render(ctx: CanvasRenderingContext2D, w: number, h: number, dayFloat: number, advance = true): void {
-    ctx.fillStyle = Math.abs(dayFloat - 4) < 0.7 ? 'rgba(255, 245, 250, 0.92)' : '#FFFFFF';
-    for (let i = 0; i < this.flakes.length; i++) {
-      const f = this.flakes[i];
-      if (advance) {
+  public resize(nextWidth: number, nextHeight: number): void {
+    const safeW = Math.max(1, nextWidth);
+    const safeH = Math.max(1, nextHeight);
+    const scaleX = safeW / this.lastWidth;
+    const scaleY = safeH / this.lastHeight;
+    for (const f of this.flakes) {
+      f.x *= scaleX;
+      f.y *= scaleY;
+    }
+    this.lastWidth = safeW;
+    this.lastHeight = safeH;
+  }
+
+  public render(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    isTinted: boolean,
+    isAdvancing = true
+  ): void {
+    ctx.fillStyle = isTinted ? 'rgba(255, 245, 250, 0.92)' : '#FFFFFF';
+    for (const f of this.flakes) {
+      if (isAdvancing) {
         f.phase += 0.015;
         f.y += f.vy;
         f.x += f.vx + Math.sin(f.phase) * 0.18;

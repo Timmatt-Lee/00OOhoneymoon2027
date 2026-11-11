@@ -1,5 +1,6 @@
 @keyframes waterShimmer {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.45;
     transform: translate3d(-3px, 0, 0);
   }
@@ -10,7 +11,9 @@
 }
 
 .scene-group-clip.is-visible .water-shimmer {
-  animation: waterShimmer 3.6s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: waterShimmer 3.6s ease-in-out infinite;
+  }
 }
 
 @keyframes ferrisRotate {
@@ -25,7 +28,10 @@
 .scene-group-clip.is-visible .ferris-wheel-spin {
   transform-box: fill-box;
   transform-origin: center;
-  animation: ferrisRotate 24s linear infinite;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: ferrisRotate 24s linear infinite;
+  }
 }
 
 #app-shell.is-swiping .water-shimmer,

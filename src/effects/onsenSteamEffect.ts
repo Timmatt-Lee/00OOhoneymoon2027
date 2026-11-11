@@ -1,3 +1,5 @@
+import { createPrng } from '../utils/prng';
+
 interface SteamWisp {
   xRatio: number;
   yOffset: number;
@@ -5,16 +7,6 @@ interface SteamWisp {
   vy: number;
   alpha: number;
   phase: number;
-}
-
-function createPrng(seed: number): () => number {
-  let s = seed >>> 0;
-  return () => {
-    s = (s + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 function createSteamPuffSprite(): HTMLCanvasElement {
@@ -36,31 +28,44 @@ function createSteamPuffSprite(): HTMLCanvasElement {
 export class OnsenSteamEffect {
   private readonly wisps: SteamWisp[];
   private readonly sprite: HTMLCanvasElement;
+  private readonly activeDayIndices: readonly number[];
   private readonly rand = createPrng(20270307);
 
-  constructor(count = 18) {
+  constructor(wispCount = 18, activeDayIndices: readonly number[] = [5, 6]) {
     this.sprite = createSteamPuffSprite();
-    this.wisps = Array.from({ length: count }, (_, idx) => ({
-      // Concentrate 75% of steam directly over the outdoor rock rotenburo (xRatio 0.68..0.94), plus gentle ambient mist
-      xRatio: idx < 14 ? 0.68 + this.rand() * 0.25 : 0.22 + this.rand() * 0.42,
-      yOffset: (idx / count) * 125 + this.rand() * 18,
+    this.activeDayIndices = activeDayIndices;
+    const primaryCount = Math.round(wispCount * 0.78);
+    this.wisps = Array.from({ length: wispCount }, (_, idx) => ({
+      xRatio: idx < primaryCount ? 0.68 + this.rand() * 0.25 : 0.22 + this.rand() * 0.42,
+      yOffset: (idx / Math.max(1, wispCount)) * 125 + this.rand() * 18,
       radius: 16 + this.rand() * 22,
       vy: 0.28 + this.rand() * 0.3,
-      alpha: idx < 14 ? 0.34 + this.rand() * 0.22 : 0.16 + this.rand() * 0.12,
+      alpha: idx < primaryCount ? 0.34 + this.rand() * 0.22 : 0.16 + this.rand() * 0.12,
       phase: this.rand() * Math.PI * 2
     }));
   }
 
-  public render(ctx: CanvasRenderingContext2D, w: number, h: number, dayFloat: number, advance = true): void {
-    const dist = Math.min(Math.abs(dayFloat - 5), Math.abs(dayFloat - 6));
-    if (dist >= 1.15) return;
+  public render(
+    ctx: CanvasRenderingContext2D,
+    w: number,
+    h: number,
+    dayFloat: number,
+    isAdvancing = true
+  ): void {
+    if (this.activeDayIndices.length === 0) return;
 
-    const strength = 1 - dist / 1.15;
+    let minDist = Infinity;
+    for (const idx of this.activeDayIndices) {
+      const d = Math.abs(dayFloat - idx);
+      if (d < minDist) minDist = d;
+    }
+    if (minDist >= 1.15) return;
+
+    const strength = 1 - minDist / 1.15;
     const baseY = h - 36;
 
-    for (let i = 0; i < this.wisps.length; i++) {
-      const s = this.wisps[i];
-      if (advance) {
+    for (const s of this.wisps) {
+      if (isAdvancing) {
         s.phase += 0.02;
         s.yOffset += s.vy;
         if (s.yOffset > 135) {

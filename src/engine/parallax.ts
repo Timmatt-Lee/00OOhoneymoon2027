@@ -1,4 +1,5 @@
 import type { DayData, SceneGroupConfig } from '../types/schedule';
+import { getRequiredElementById, parseTrustedSvgElement } from '../utils/dom';
 import group0Bg from '../assets/scenes/group0-bg.svg?raw';
 import group0Mid from '../assets/scenes/group0-mid.svg?raw';
 import group0Fg from '../assets/scenes/group0-fg.svg?raw';
@@ -18,51 +19,123 @@ import jetlinerArriveSvg from '../assets/scenes/jetliner-arrive.svg?raw';
 import jetlinerDepartSvg from '../assets/scenes/jetliner-depart.svg?raw';
 import snowGroundSvg from '../assets/scenes/snow-ground.svg?raw';
 
-const GROUP_SVG_ASSETS = [
-  { bg: group0Bg, mid: group0Mid, fg: group0Fg, planeId: 'day1-arriving-plane', planeCls: 'plane-arrive', planeSvg: jetlinerArriveSvg },
+interface GroupSvgAssetBundle {
+  bg: string;
+  mid: string;
+  fg: string;
+  planeId: string | null;
+  planeCls: string;
+  planeSvg: string;
+}
+
+const DEFAULT_GROUP_SVG_ASSETS: readonly GroupSvgAssetBundle[] = [
+  {
+    bg: group0Bg,
+    mid: group0Mid,
+    fg: group0Fg,
+    planeId: 'day1-arriving-plane',
+    planeCls: 'plane-arrive',
+    planeSvg: jetlinerArriveSvg
+  },
   { bg: group1Bg, mid: group1Mid, fg: group1Fg, planeId: null, planeCls: '', planeSvg: '' },
   { bg: group2Bg, mid: group2Mid, fg: group2Fg, planeId: null, planeCls: '', planeSvg: '' },
   { bg: group3Bg, mid: group3Mid, fg: group3Fg, planeId: null, planeCls: '', planeSvg: '' },
-  { bg: group4Bg, mid: group4Mid, fg: group4Fg, planeId: 'day12-departing-plane', planeCls: 'plane-depart', planeSvg: jetlinerDepartSvg }
+  {
+    bg: group4Bg,
+    mid: group4Mid,
+    fg: group4Fg,
+    planeId: 'day12-departing-plane',
+    planeCls: 'plane-depart',
+    planeSvg: jetlinerDepartSvg
+  }
 ];
 
 export interface ParallaxController {
-  renderParallax(clamped: number, idxA: number, idxB: number, t: number, viewportWidth: number): void;
+  renderParallax(
+    clamped: number,
+    idxA: number,
+    idxB: number,
+    t: number,
+    viewportWidth: number
+  ): void;
 }
 
-export function mountParallaxScenes(daysData: DayData[], sceneGroups: SceneGroupConfig[]): ParallaxController {
-  const snowSlot = document.getElementById('snow-ground-slot');
-  if (snowSlot) snowSlot.innerHTML = snowGroundSvg;
+interface CachedGroupRefs {
+  clipEl: HTMLDivElement;
+  bgEl: HTMLDivElement;
+  midEl: HTMLDivElement;
+  fgEl: HTMLDivElement;
+  isVisible: boolean;
+  lastClipX: number;
+  lastPan: number;
+  lastWidthPx: number;
+}
 
-  const footerEl = document.getElementById('cityscape-footer')!;
-  const container = document.getElementById('scene-groups-container')!;
-  container.innerHTML = sceneGroups
-    .map((grp, idx) => {
-      const a = GROUP_SVG_ASSETS[idx];
-      const w = `${grp.widthPx}px`;
-      const planeHtml = a.planeId ? `<div id="${a.planeId}" class="plane-actor ${a.planeCls}">${a.planeSvg}</div>` : '';
-      return `
-        <div class="scene-group-clip" data-group="${grp.groupIdx}">
-          <div class="parallax-layer parallax-bg" style="width:${w}">${a.bg}</div>
-          <div class="parallax-layer parallax-mid" style="width:${w}">${a.mid}</div>
-          <div class="parallax-layer parallax-fg" style="width:${w}">${a.fg}</div>
-          ${planeHtml}
-        </div>`;
-    })
-    .join('');
+function createParallaxLayer(cls: string, widthPx: number, rawSvg: string): HTMLDivElement {
+  const layer = document.createElement('div');
+  layer.className = `parallax-layer ${cls}`;
+  layer.style.width = `${widthPx}px`;
+  layer.appendChild(parseTrustedSvgElement(rawSvg));
+  return layer;
+}
 
-  const cachedGroups = Array.from(container.querySelectorAll<HTMLElement>('.scene-group-clip')).map((clipEl) => ({
-    clipEl,
-    bgEl: clipEl.querySelector<HTMLElement>('.parallax-bg')!,
-    midEl: clipEl.querySelector<HTMLElement>('.parallax-mid')!,
-    fgEl: clipEl.querySelector<HTMLElement>('.parallax-fg')!,
-    visible: false,
-    lastClipX: -99999,
-    lastPan: -99999
-  }));
+export function mountParallaxScenes(
+  daysData: DayData[],
+  sceneGroups: SceneGroupConfig[],
+  assetBundles: readonly GroupSvgAssetBundle[] = DEFAULT_GROUP_SVG_ASSETS
+): ParallaxController {
+  const snowSlot = getRequiredElementById('snow-ground-slot');
+  snowSlot.replaceChildren(parseTrustedSvgElement(snowGroundSvg));
 
-  const planeArriveEl = document.getElementById('day1-arriving-plane');
-  const planeDepartEl = document.getElementById('day12-departing-plane');
+  const footerEl = getRequiredElementById('cityscape-footer');
+  const container = getRequiredElementById('scene-groups-container');
+  container.replaceChildren();
+
+  let planeArriveEl: HTMLDivElement | null = null;
+  let planeDepartEl: HTMLDivElement | null = null;
+
+  const cachedGroups: CachedGroupRefs[] = sceneGroups.map((grp, idx) => {
+    const asset = assetBundles[idx];
+    const clipEl = document.createElement('div');
+    clipEl.className = 'scene-group-clip';
+    clipEl.dataset.group = String(grp.groupIdx);
+
+    const bgEl = createParallaxLayer('parallax-bg', grp.widthPx, asset.bg);
+    const midEl = createParallaxLayer('parallax-mid', grp.widthPx, asset.mid);
+    const fgEl = createParallaxLayer('parallax-fg', grp.widthPx, asset.fg);
+    clipEl.append(bgEl, midEl, fgEl);
+
+    if (asset.planeId && asset.planeSvg) {
+      const planeEl = document.createElement('div');
+      planeEl.id = asset.planeId;
+      planeEl.className = `plane-actor ${asset.planeCls}`;
+      planeEl.appendChild(parseTrustedSvgElement(asset.planeSvg));
+      clipEl.appendChild(planeEl);
+
+      if (asset.planeCls === 'plane-arrive') {
+        planeArriveEl = planeEl;
+      } else if (asset.planeCls === 'plane-depart') {
+        planeDepartEl = planeEl;
+      }
+    }
+
+    container.appendChild(clipEl);
+
+    return {
+      clipEl,
+      bgEl,
+      midEl,
+      fgEl,
+      isVisible: false,
+      lastClipX: -99999,
+      lastPan: -99999,
+      lastWidthPx: grp.widthPx
+    };
+  });
+
+  const arriveDayIdx = daysData.findIndex((d) => d.planeAction === 'arrive');
+  const departDayIdx = daysData.findIndex((d) => d.planeAction === 'depart');
+
   let lastArriveP = -1;
   let lastDepartP = -1;
 
@@ -78,20 +151,32 @@ export function mountParallaxScenes(daysData: DayData[], sceneGroups: SceneGroup
         const isGroupB = g === groupB;
 
         if (!isGroupA && !isGroupB) {
-          if (cg.visible) {
+          if (cg.isVisible) {
             cg.clipEl.classList.remove('is-visible');
-            cg.visible = false;
+            cg.isVisible = false;
           }
           continue;
         }
 
-        if (!cg.visible) {
+        if (!cg.isVisible) {
           cg.clipEl.classList.add('is-visible');
-          cg.visible = true;
+          cg.isVisible = true;
         }
 
-        const clipX = groupA === groupB ? 0 : isGroupA ? -t * viewportWidth : (1 - t) * viewportWidth;
-        const localDayOffset = (groupA === groupB ? clamped : isGroupA ? idxA : idxB) - grp.startDay;
+        const maxPanPx = (grp.endDay - grp.startDay) * grp.panStepPx;
+        const effectiveWidthPx = Math.max(grp.widthPx, Math.ceil(viewportWidth + maxPanPx));
+        if (effectiveWidthPx !== cg.lastWidthPx) {
+          const widthStr = `${effectiveWidthPx}px`;
+          cg.bgEl.style.width = widthStr;
+          cg.midEl.style.width = widthStr;
+          cg.fgEl.style.width = widthStr;
+          cg.lastWidthPx = effectiveWidthPx;
+        }
+
+        const clipX =
+          groupA === groupB ? 0 : isGroupA ? -t * viewportWidth : (1 - t) * viewportWidth;
+        const localDayOffset =
+          (groupA === groupB ? clamped : isGroupA ? idxA : idxB) - grp.startDay;
         const panShift = -localDayOffset * grp.panStepPx;
 
         if (Math.abs(clipX - cg.lastClipX) > 0.05) {
@@ -110,21 +195,21 @@ export function mountParallaxScenes(daysData: DayData[], sceneGroups: SceneGroup
         }
       }
 
-      const arriveP = Math.max(0, Math.min(1, clamped));
-      if (Math.abs(arriveP - lastArriveP) > 0.001) {
-        lastArriveP = arriveP;
-        footerEl.style.setProperty('--arrive-p', arriveP.toFixed(3));
-        if (planeArriveEl) {
+      if (arriveDayIdx >= 0 && planeArriveEl) {
+        const arriveP = Math.max(0, Math.min(1, clamped - arriveDayIdx));
+        if (Math.abs(arriveP - lastArriveP) > 0.001) {
+          lastArriveP = arriveP;
+          footerEl.style.setProperty('--arrive-p', arriveP.toFixed(3));
           planeArriveEl.style.opacity = Math.max(0, 1 - arriveP * 1.05).toFixed(3);
           planeArriveEl.style.transform = `translate3d(${(arriveP * 180).toFixed(1)}px, ${(arriveP * 32).toFixed(1)}px, 0) rotate(6deg)`;
         }
       }
 
-      const departP = Math.max(0, Math.min(1, clamped - 10));
-      if (Math.abs(departP - lastDepartP) > 0.001) {
-        lastDepartP = departP;
-        footerEl.style.setProperty('--depart-p', departP.toFixed(3));
-        if (planeDepartEl) {
+      if (departDayIdx >= 1 && planeDepartEl) {
+        const departP = Math.max(0, Math.min(1, clamped - (departDayIdx - 1)));
+        if (Math.abs(departP - lastDepartP) > 0.001) {
+          lastDepartP = departP;
+          footerEl.style.setProperty('--depart-p', departP.toFixed(3));
           const inv = 1 - departP;
           planeDepartEl.style.opacity = Math.min(1, departP * 1.15).toFixed(3);
           planeDepartEl.style.transform = `translate3d(${(inv * -160).toFixed(1)}px, ${(inv * 34).toFixed(1)}px, 0) rotate(-11deg)`;

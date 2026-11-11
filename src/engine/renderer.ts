@@ -1,67 +1,163 @@
 import type { DayData } from '../types/schedule';
+import { getRequiredAnchorById, getRequiredElementById } from '../utils/dom';
+import { buildGoogleMapsUrl } from '../utils/themeColor';
 
 export interface RendererRefs {
   skyLayerEls: HTMLElement[];
-  storySlotEls: HTMLElement[];
+  storySlotEls: HTMLButtonElement[];
   schedulePanelEls: HTMLElement[];
+  cityscapeMapLinkEl: HTMLAnchorElement;
   updateTopStoryBar(activeDayIdx: number, isDarkSky: boolean): void;
 }
 
 export function mountStageDOM(daysData: DayData[]): RendererRefs {
-  const shellEl = document.getElementById('app-shell')!;
-  const skyStack = document.getElementById('sky-stack')!;
-  skyStack.innerHTML = daysData
-    .map((d, idx) => `<div class="sky-layer" style="background:${d.skyGrad};opacity:${idx === 0 ? 1 : 0};visibility:${idx === 0 ? 'visible' : 'hidden'}"></div>`)
-    .join('');
-  const skyLayerEls = Array.from(skyStack.querySelectorAll<HTMLElement>('.sky-layer'));
+  const shellEl = getRequiredElementById('app-shell');
+  const skyStack = getRequiredElementById('sky-stack');
+  const track = getRequiredElementById('story-bar-track');
+  const stage = getRequiredElementById('schedule-stage');
+  const cityscapeMapLinkEl = getRequiredAnchorById('cityscape-map-link');
 
-  const track = document.getElementById('story-bar-track')!;
-  track.innerHTML = daysData
-    .map((_, idx) => `<div data-day="${idx}" class="story-slot"><div class="story-seg"></div></div>`)
-    .join('');
-  const storySlotEls = Array.from(track.querySelectorAll<HTMLElement>('.story-slot'));
+  skyStack.replaceChildren();
+  const skyLayerEls = daysData.map((day, idx) => {
+    const layer = document.createElement('div');
+    layer.className = 'sky-layer';
+    layer.style.background = day.skyGrad;
+    layer.style.opacity = idx === 0 ? '1' : '0';
+    layer.style.visibility = idx === 0 ? 'visible' : 'hidden';
+    skyStack.appendChild(layer);
+    return layer;
+  });
 
-  const stage = document.getElementById('schedule-stage')!;
-  stage.innerHTML = daysData
-    .map((d, dayIdx) => {
-      const themeCls = d.isDark ? 'theme-dark' : 'theme-light';
-      const rowsHtml = d.items
-        .map((item) => `
-          <div class="schedule-item-row">
-            <div class="schedule-item-title ${themeCls}">${item.title}</div>
-            ${item.subtitle ? `<div class="schedule-item-subtitle ${themeCls}">${item.subtitle}</div>` : ''}
-          </div>`)
-        .join('');
-      return `<div class="day-schedule-panel" data-day="${dayIdx}" style="opacity:${dayIdx === 0 ? 1 : 0};transform:translate3d(${dayIdx === 0 ? 0 : 100}%,0,0)">${rowsHtml}</div>`;
-    })
-    .join('');
-  const schedulePanelEls = Array.from(stage.querySelectorAll<HTMLElement>('.day-schedule-panel'));
+  track.replaceChildren();
+  const storySlotEls = daysData.map((day, idx) => {
+    const slotBtn = document.createElement('button');
+    slotBtn.type = 'button';
+    slotBtn.dataset.day = String(idx);
+    slotBtn.className = 'story-slot';
+    slotBtn.setAttribute('aria-label', `Day ${day.day} ${day.label}`);
+
+    const seg = document.createElement('span');
+    seg.className = 'story-seg';
+    slotBtn.appendChild(seg);
+    track.appendChild(slotBtn);
+    return slotBtn;
+  });
+
+  stage.replaceChildren();
+  const schedulePanelEls = daysData.map((day, dayIdx) => {
+    const isInitialActive = dayIdx === 0;
+    const themeCls = day.isDark ? 'theme-dark' : 'theme-light';
+
+    const panel = document.createElement('section');
+    panel.className = 'day-schedule-panel';
+    panel.dataset.day = String(dayIdx);
+    panel.setAttribute('aria-label', `Day ${day.day} ${day.label}`);
+    panel.style.opacity = isInitialActive ? '1' : '0';
+    panel.style.visibility = isInitialActive ? 'visible' : 'hidden';
+    panel.style.transform = `translate3d(${isInitialActive ? 0 : 100}%,0,0)`;
+    panel.inert = !isInitialActive;
+
+    const listEl = document.createElement('ol');
+    listEl.className = 'day-schedule-list';
+    listEl.setAttribute('role', 'list');
+
+    for (const item of day.items) {
+      const rowEl = document.createElement('li');
+      rowEl.className = 'schedule-item-row';
+
+      const timeEl = document.createElement('time');
+      timeEl.className = 'visually-hidden';
+      timeEl.dateTime = item.time;
+      timeEl.textContent = `${item.time} `;
+      rowEl.appendChild(timeEl);
+
+      if (item.mapQuery) {
+        const titleLink = document.createElement('a');
+        titleLink.className = `schedule-item-title is-map-link ${themeCls}`;
+        titleLink.href = buildGoogleMapsUrl(item.mapQuery);
+        titleLink.target = '_blank';
+        titleLink.rel = 'noopener noreferrer';
+        titleLink.textContent = item.title;
+        rowEl.appendChild(titleLink);
+      } else {
+        const titleDiv = document.createElement('div');
+        titleDiv.className = `schedule-item-title ${themeCls}`;
+        titleDiv.textContent = item.title;
+        rowEl.appendChild(titleDiv);
+      }
+
+      if (item.subtitle) {
+        const subtitleDiv = document.createElement('div');
+        subtitleDiv.className = `schedule-item-subtitle ${themeCls}`;
+        subtitleDiv.textContent = item.subtitle;
+        rowEl.appendChild(subtitleDiv);
+      }
+
+      listEl.appendChild(rowEl);
+    }
+
+    panel.appendChild(listEl);
+    stage.appendChild(panel);
+    return panel;
+  });
 
   let lastTopBarDay = -1;
-  let lastTopBarDark: boolean | null = null;
+  let isLastTopBarDark: boolean | null = null;
 
   function updateTopStoryBar(activeDayIdx: number, isDarkSky: boolean): void {
-    if (activeDayIdx === lastTopBarDay && isDarkSky === lastTopBarDark) return;
+    if (activeDayIdx === lastTopBarDay && isDarkSky === isLastTopBarDark) {
+      return;
+    }
     lastTopBarDay = activeDayIdx;
-    lastTopBarDark = isDarkSky;
+    isLastTopBarDark = isDarkSky;
 
     shellEl.classList.toggle('theme-dark', isDarkSky);
     shellEl.classList.toggle('theme-light', !isDarkSky);
 
-    storySlotEls.forEach((slot, i) => {
+    const activeDay = daysData[activeDayIdx];
+    cityscapeMapLinkEl.href = buildGoogleMapsUrl(activeDay.mapQuery);
+    cityscapeMapLinkEl.setAttribute(
+      'aria-label',
+      `Explore Day ${activeDay.day} ${activeDay.mapQuery} on Google Maps`
+    );
+
+    storySlotEls.forEach((slot, idx) => {
       const seg = slot.firstElementChild as HTMLElement;
-      if (i === activeDayIdx) {
-        const d = daysData[i];
+      const isActive = idx === activeDayIdx;
+      if (isActive) {
+        const d = daysData[idx];
         slot.className = 'story-slot is-active';
+        slot.setAttribute('aria-current', 'step');
         seg.className = 'story-seg is-active-pill';
-        seg.innerHTML = `<span class="pill-day-tag">Day ${d.day}</span><span>${d.label}</span>`;
+
+        const dayTag = document.createElement('span');
+        dayTag.className = 'pill-day-tag';
+        dayTag.textContent = `Day ${d.day}`;
+
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = d.label;
+
+        seg.replaceChildren(dayTag, labelSpan);
       } else {
-        slot.className = `story-slot ${i < activeDayIdx ? 'is-past' : 'is-future'}`;
+        slot.className = `story-slot ${idx < activeDayIdx ? 'is-past' : 'is-future'}`;
+        slot.removeAttribute('aria-current');
         seg.className = 'story-seg';
-        if (seg.innerHTML) seg.innerHTML = '';
+        if (seg.childNodes.length > 0) {
+          seg.replaceChildren();
+        }
       }
+    });
+
+    schedulePanelEls.forEach((panel, idx) => {
+      panel.inert = idx !== activeDayIdx;
     });
   }
 
-  return { skyLayerEls, storySlotEls, schedulePanelEls, updateTopStoryBar };
+  return {
+    skyLayerEls,
+    storySlotEls,
+    schedulePanelEls,
+    cityscapeMapLinkEl,
+    updateTopStoryBar
+  };
 }

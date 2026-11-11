@@ -1,52 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>00OO 北海道蜜月 2027</title>
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="00OO 北海道蜜月 2027" />
-  <meta name="theme-color" id="theme-color-meta" content="#070B19" />
-  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="preload" href="./fonts/Huninn-Regular.woff2" as="font" type="font/woff2" crossorigin />
-  <style>
-    @font-face {
-      font-family: 'Huninn';
-      src: url('./fonts/Huninn-Regular.woff2') format('woff2');
-      font-weight: 400;
-      font-style: normal;
-      font-display: block;
-    }
-  </style>
-</head>
-<body>
-  <div id="app-shell" class="theme-dark">
-    <div id="sky-stack"></div>
-    <header id="top-header">
-      <div id="story-bar-track"></div>
-    </header>
-    <footer id="cityscape-footer" title="點擊探索當日景點 Google Maps">
-      <div id="scene-groups-container"></div>
-      <div id="snow-ground-slot"></div>
-    </footer>
-    <canvas id="fx-canvas"></canvas>
-    <div id="timeline-rail">
-      <div id="timeline-line"></div>
-      <div id="timeline-nodes-container"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>00OO 北海道蜜月 2027</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="00OO 北海道蜜月 2027" />
+    <meta name="theme-color" id="theme-color-meta" content="#070B19" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.json" />
+    <link
+      rel="preload"
+      href="./fonts/Huninn-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <style>
+      @font-face {
+        font-family: 'Huninn';
+        src: url('./fonts/Huninn-Regular.woff2') format('woff2');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app-shell" class="theme-dark">
+      <div id="sky-stack" aria-hidden="true"></div>
+      <canvas id="fx-canvas" aria-hidden="true"></canvas>
+      <div id="stage-frame">
+        <header id="top-header">
+          <h1 class="visually-hidden">00OO 北海道蜜月 2027</h1>
+          <nav id="story-bar-track" aria-label="Hokkaido 12-day itinerary navigation"></nav>
+        </header>
+        <div id="timeline-rail" aria-hidden="true">
+          <div id="timeline-line"></div>
+          <div id="timeline-nodes-container"></div>
+        </div>
+        <main id="schedule-stage"></main>
+      </div>
+      <footer id="cityscape-footer">
+        <div id="scene-groups-container" aria-hidden="true"></div>
+        <div id="snow-ground-slot" aria-hidden="true"></div>
+        <a
+          id="cityscape-map-link"
+          href="https://www.google.com/maps/search/?api=1&query=Sapporo%20Station"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Explore Day 1 Sapporo Station on Google Maps"
+        ></a>
+      </footer>
     </div>
-    <main id="schedule-stage"></main>
-  </div>
-  <script type="module" src="/src/main.ts"></script>
-  <script>
-    if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
-    }
-  </script>
-</body>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

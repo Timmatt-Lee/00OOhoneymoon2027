@@ -7,7 +7,20 @@
   -webkit-user-select: none;
 }
 
-html, body {
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+html,
+body {
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
@@ -15,8 +28,9 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: $font-stack;
+  font-size-adjust: from-font;
   background: var(--sky-top-color, $bg-deep);
-  touch-action: none;
+  touch-action: pan-y;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -28,8 +42,8 @@ html, body {
   height: 100dvh;
   overflow: hidden;
   background: $bg-deep;
+  touch-action: pan-y;
 
-  // Theme-driven Timeline & Story-bar Variables in pure SCSS
   &.theme-dark {
     --tl-line-bg: rgba(255, 255, 255, 0.38);
     --tl-text-color: #ffffff;
@@ -39,17 +53,30 @@ html, body {
     --seg-future-bg: rgba(255, 255, 255, 0.55);
     --seg-future-border: rgba(255, 255, 255, 0.88);
     --seg-shadow: 0 1px 4px rgba(0, 0, 0, 0.38);
+    --focus-ring-color: #38bdf8;
   }
 
   &.theme-light {
     --tl-line-bg: rgba(15, 23, 42, 0.28);
     --tl-text-color: #0f172a;
     --tl-dot-bg: #0f172a;
-    --seg-past-bg: rgba(15, 23, 42, 0.50);
-    --seg-past-border: rgba(255, 255, 255, 0.90);
+    --seg-past-bg: rgba(15, 23, 42, 0.5);
+    --seg-past-border: rgba(255, 255, 255, 0.9);
     --seg-future-bg: rgba(30, 41, 59, 0.28);
-    --seg-future-border: rgba(255, 255, 255, 0.80);
+    --seg-future-border: rgba(255, 255, 255, 0.8);
     --seg-shadow: none;
+    --focus-ring-color: #0284c7;
+  }
+}
+
+#stage-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  @media (min-width: 560px) {
+    max-width: 480px;
+    margin-inline: auto;
   }
 }
 
@@ -88,18 +115,31 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 40px;
+  min-block-size: 40px;
   cursor: ew-resize;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 .story-slot {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 10px 0;
+  min-block-size: 28px;
   flex: 1 1 0%;
   min-width: 8px;
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+    border-radius: 9999px;
+  }
 
   &.is-active {
     flex: 0 0 auto;
@@ -128,13 +168,15 @@ html, body {
   &.is-active-pill {
     width: auto;
     height: auto;
+    min-block-size: 32px;
     padding: 5px 14px;
     background: #0f172a;
     color: #ffffff;
     font-family: $font-stack;
-    font-size: 17px;
-    font-weight: 700;
-    -webkit-text-stroke: 0.7px currentColor;
+    font-size: 1.0625rem;
+    font-weight: 400;
+    font-synthesis: none;
+    -webkit-text-stroke: 0.34px currentColor;
     paint-order: stroke fill;
     letter-spacing: 0.015em;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
@@ -181,7 +223,7 @@ html, body {
   left: 0;
   right: 0;
   top: 0;
-  height: 28px;
+  min-block-size: 28px;
   margin-top: -14px;
   display: flex;
   align-items: center;
@@ -193,7 +235,7 @@ html, body {
 
 .tl-time-wrap {
   width: 50px;
-  height: 24px;
+  min-block-size: 24px;
   position: relative;
 }
 
@@ -204,9 +246,10 @@ html, body {
   align-items: center;
   justify-content: flex-start;
   font-family: $font-stack;
-  font-size: 17px;
-  font-weight: 700;
-  -webkit-text-stroke: 0.65px currentColor;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  font-synthesis: none;
+  -webkit-text-stroke: 0.32px currentColor;
   paint-order: stroke fill;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
@@ -243,13 +286,21 @@ html, body {
   bottom: $rail-bottom;
   left: 90px;
   right: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
   pointer-events: none;
   visibility: hidden;
   will-change: transform, opacity;
   backface-visibility: hidden;
+}
+
+.day-schedule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .schedule-item-row {
@@ -262,9 +313,10 @@ html, body {
 .schedule-item-title {
   flex-shrink: 0;
   font-family: $font-stack;
-  font-size: 17px;
-  font-weight: 700;
-  -webkit-text-stroke: 0.7px currentColor;
+  font-size: clamp(0.95rem, 0.45rem + 2.5vw, 1.0625rem);
+  font-weight: 400;
+  font-synthesis: none;
+  -webkit-text-stroke: 0.34px currentColor;
   paint-order: stroke fill;
   line-height: 1.32;
   letter-spacing: 0.015em;
@@ -276,12 +328,37 @@ html, body {
   &.theme-light {
     color: #0f172a;
   }
+
+  &.is-map-link {
+    display: inline-flex;
+    align-items: baseline;
+    width: fit-content;
+    max-width: 100%;
+    text-decoration: none;
+    pointer-events: auto;
+    cursor: pointer;
+
+    &::after {
+      content: ' ↗';
+      content: ' ↗' / '';
+      font-size: 0.72em;
+      opacity: 0.72;
+      margin-inline-start: 3px;
+      -webkit-text-stroke: 0;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
 }
 
 .schedule-item-subtitle {
   flex-shrink: 0;
   font-family: $font-stack;
-  font-size: 13.5px;
+  font-size: clamp(0.75rem, 0.4rem + 1.8vw, 0.84375rem);
   font-weight: 400;
   line-height: 1.35;
   margin-top: 2px;
@@ -306,6 +383,19 @@ html, body {
   overflow: hidden;
   pointer-events: auto;
   cursor: pointer;
+}
+
+#cityscape-map-link {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: block;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid var(--focus-ring-color);
+    outline-offset: -4px;
+  }
 }
 
 #scene-groups-container {
@@ -341,9 +431,15 @@ html, body {
   backface-visibility: hidden;
   pointer-events: none;
 
-  &.parallax-bg  { transform: translate3d(calc(var(--pan-shift, 0px) * 0.38), 0, 0); }
-  &.parallax-mid { transform: translate3d(calc(var(--pan-shift, 0px) * 0.68), 0, 0); }
-  &.parallax-fg  { transform: translate3d(calc(var(--pan-shift, 0px) * 1.00), 0, 0); }
+  &.parallax-bg {
+    transform: translate3d(calc(var(--pan-shift, 0px) * 0.38), 0, 0);
+  }
+  &.parallax-mid {
+    transform: translate3d(calc(var(--pan-shift, 0px) * 0.68), 0, 0);
+  }
+  &.parallax-fg {
+    transform: translate3d(calc(var(--pan-shift, 0px) * 1), 0, 0);
+  }
 }
 
 .scene-svg {
@@ -384,7 +480,7 @@ html, body {
 
   &.plane-depart {
     top: 14px;
-    left: 248px;
+    right: 34px;
     width: 108px;
     height: 37px;
   }
