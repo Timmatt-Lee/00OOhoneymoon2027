@@ -4,11 +4,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "prepare": "husky",
     "dev": "vite",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test:unit": "vitest run tests/unit",
+    "test:unit": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test": "npm run typecheck && npm run test:unit && npm run test:e2e",
+    "test": "npm run lint && npm run format:check && npm run typecheck && npm run test:unit && npm run build && npm run test:e2e",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },
@@ -17,12 +21,21 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.0.0",
     "@types/papaparse": "^5.3.15",
+    "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "happy-dom": "^21.0.4",
+    "husky": "^9.1.7",
+    "jiti": "^2.7.0",
+    "prettier": "^3.10.0",
     "sass": "^1.80.0",
     "typescript": "^5.6.3",
+    "typescript-eslint": "^8.72.2",
     "vite": "^6.0.0",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.9"
   }
 }
