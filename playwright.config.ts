@@ -3,7 +3,13 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: '/tmp/honeymoon2027-playwright-results',
+  snapshotPathTemplate: '{testDir}/../screenshots/{arg}{ext}',
   timeout: 30000,
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.035
+    }
+  },
   use: {
     baseURL: 'http://localhost:4173',
     viewport: { width: 390, height: 844 },
