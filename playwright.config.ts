@@ -7,7 +7,8 @@ export default defineConfig({
   timeout: 30000,
   expect: {
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.035
+      // Strict 0.5% pixel tolerance on baseline macOS; 8% cross-OS tolerance for Linux FreeType vs CoreText CJK rasterization
+      maxDiffPixelRatio: process.platform === 'darwin' ? 0.005 : 0.08
     }
   },
   use: {
