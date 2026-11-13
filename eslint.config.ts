@@ -5,7 +5,13 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'public/sw.js']
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'node_modules/**',
+      'playwright-report/**',
+      'test-results/**'
+    ]
   },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -18,6 +24,8 @@ export default defineConfig(
     },
     rules: {
       'no-empty': ['error', { allowEmptyCatch: false }],
+      eqeqeq: ['error', 'always'],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
       '@typescript-eslint/only-throw-error': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
@@ -27,17 +35,18 @@ export default defineConfig(
       '@typescript-eslint/restrict-template-expressions': [
         'error',
         { allowNumber: true, allowBoolean: true }
-      ]
-    }
-  },
-  {
-    files: ['src/**/*.ts'],
-    ignores: ['src/**/*.test.ts'],
-    rules: {
+      ],
       '@typescript-eslint/naming-convention': [
         'error',
         {
-          selector: ['variable', 'parameter', 'classProperty', 'typeProperty'],
+          selector: [
+            'variable',
+            'parameter',
+            'parameterProperty',
+            'classProperty',
+            'typeProperty',
+            'accessor'
+          ],
           types: ['boolean'],
           format: ['PascalCase'],
           prefix: ['is']

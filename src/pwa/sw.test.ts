@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   bindServiceWorkerLifecycle,
   bootstrapServiceWorkerGlobal,
+  tryCachePut,
   type ExtendableEventLike,
   type FetchEventLike,
   type ServiceWorkerScopeLike,
@@ -16,14 +17,17 @@ function createMockSwHarness() {
   const cacheObj: SwCacheLike = {
     addAll: vi.fn(async (urls: readonly string[]) => {
       for (const u of urls) {
-        const normalized = u.startsWith('./') ? `https://timmatt-lee.github.io/${u.slice(2)}` : u;
+        const normalized = u.startsWith('./')
+          ? `https://timmatt-lee.github.io/00OOhoneymoon2027/${u.slice(2)}`
+          : u;
         store.set(normalized, new Response(`precached:${u}`, { status: 200 }));
         store.set(u, new Response(`precached:${u}`, { status: 200 }));
       }
       await Promise.resolve();
     }),
-    match: vi.fn(async (req: Request | string) => {
-      const key = typeof req === 'string' ? req : req.url;
+    match: vi.fn(async (req: Request | string, opts?: MultiCacheQueryOptions) => {
+      const rawKey = typeof req === 'string' ? req : req.url;
+      const key = opts?.ignoreSearch ? rawKey.split('?')[0] : rawKey;
       const found = store.get(key);
       await Promise.resolve();
       return found ? found.clone() : undefined;
@@ -51,7 +55,9 @@ function createMockSwHarness() {
         await Promise.resolve();
         return true;
       }),
-      match: vi.fn(async (req: Request | string) => cacheObj.match(req))
+      match: vi.fn(async (req: Request | string, opts?: MultiCacheQueryOptions) =>
+        cacheObj.match(req, opts)
+      )
     },
     clients: {
       claim: vi.fn(async () => {
@@ -73,10 +79,10 @@ function createMockSwHarness() {
   return { scope, store, cacheObj, deletedCaches, listeners };
 }
 
-describe('Service Worker lifecycle & caching strategies', () => {
+describe('Service Worker lifecycle, quota resilience & caching strategies', () => {
   it('precaches manifest on install and purges stale caches on activate', async () => {
     const h = createMockSwHarness();
-    bindServiceWorkerLifecycle(h.scope, 'honeymoon-2027-v3', ['./', './index.html']);
+    bindServiceWorkerLifecycle(h.scope, 'honeymoon-2027-v3', ['./index.html']);
 
     let installPromise: Promise<unknown> = Promise.resolve();
     const installEv: ExtendableEventLike = {
@@ -86,7 +92,7 @@ describe('Service Worker lifecycle & caching strategies', () => {
     };
     h.listeners.get('install')?.(installEv);
     await installPromise;
-    expect(h.cacheObj.addAll).toHaveBeenCalledWith(['./', './index.html']);
+    expect(h.cacheObj.addAll).toHaveBeenCalledWith(['./index.html']);
     expect(h.scope.skipWaiting).toHaveBeenCalled();
 
     let activatePromise: Promise<unknown> = Promise.resolve();
@@ -101,10 +107,11 @@ describe('Service Worker lifecycle & caching strategies', () => {
     expect(h.scope.clients.claim).toHaveBeenCalled();
   });
 
-  it('handles navigation NetworkFirst, static CacheFirst, generic GET fallback, and ignores POST / cross-origin', async () => {
+  it('handles navigation skew-safe NetworkFirst, static CacheFirst with match recovery, Range/POST/cross-origin bypass, and generic GET fallback', async () => {
     const h = createMockSwHarness();
-    bindServiceWorkerLifecycle(h.scope, 'honeymoon-2027-v3', ['./', './index.html']);
+    bindServiceWorkerLifecycle(h.scope, 'honeymoon-2027-v3', ['./index.html']);
 
+    const pendingWaitUntils: Promise<unknown>[] = [];
     const dispatchFetch = async (
       url: string,
       init?: RequestInit,
@@ -121,36 +128,51 @@ describe('Service Worker lifecycle & caching strategies', () => {
       const captured: { value: Promise<Response> | Response | null } = { value: null };
       const ev: FetchEventLike = {
         request: req,
-        waitUntil: () => {},
+        waitUntil: (p) => {
+          pendingWaitUntils.push(p);
+        },
         respondWith: (r) => {
           captured.value = r;
         }
       };
       h.listeners.get('fetch')?.(ev);
-      return captured.value ? await captured.value : null;
+      const resolved = captured.value ? await captured.value : null;
+      await Promise.all(pendingWaitUntils.splice(0));
+      return resolved;
     };
 
-    // Non-GET and cross-origin requests are ignored
+    // Non-GET, Range, and cross-origin requests are ignored cleanly
     expect(await dispatchFetch('https://timmatt-lee.github.io/api', { method: 'POST' })).toBeNull();
+    expect(
+      await dispatchFetch('https://timmatt-lee.github.io/media.mp4', {
+        headers: { Range: 'bytes=0-1023' }
+      })
+    ).toBeNull();
     expect(await dispatchFetch('https://maps.googleapis.com/maps')).toBeNull();
 
-    // Online navigation caches 200 response (and skips caching non-200)
+    // Online navigation returns live response WITHOUT poisoning precached shell
     const navOnline = await dispatchFetch(
-      'https://timmatt-lee.github.io/00OOhoneymoon2027/',
+      'https://timmatt-lee.github.io/00OOhoneymoon2027/?utm_source=line',
       undefined,
       'navigate'
     );
     expect(await navOnline?.text()).toContain('live:');
+    expect(h.cacheObj.put).not.toHaveBeenCalled();
 
-    vi.mocked(h.scope.fetch).mockResolvedValueOnce(new Response('not found', { status: 404 }));
-    const nav404 = await dispatchFetch(
-      'https://timmatt-lee.github.io/missing',
+    // Offline navigation matches ignoreSearch URL first, then ./index.html, then ./, or throws
+    h.store.set(
+      'https://timmatt-lee.github.io/00OOhoneymoon2027/',
+      new Response('cached-subpath-shell', { status: 200 })
+    );
+    vi.mocked(h.scope.fetch).mockRejectedValueOnce(new Error('offline'));
+    const navOfflineQuery = await dispatchFetch(
+      'https://timmatt-lee.github.io/00OOhoneymoon2027/?utm_source=ig',
       undefined,
       'navigate'
     );
-    expect(nav404?.status).toBe(404);
+    expect(await navOfflineQuery?.text()).toBe('cached-subpath-shell');
 
-    // Offline navigation falls back to precached ./index.html or ./, and throws if completely empty
+    h.store.clear();
     h.store.set('./index.html', new Response('cached-shell', { status: 200 }));
     vi.mocked(h.scope.fetch).mockRejectedValueOnce(new Error('offline'));
     const navOffline = await dispatchFetch(
@@ -176,7 +198,21 @@ describe('Service Worker lifecycle & caching strategies', () => {
       dispatchFetch('https://timmatt-lee.github.io/unvisited3', undefined, 'navigate')
     ).rejects.toThrow(/no cached application shell/);
 
-    // Static assets use CacheFirst (miss fetches & caches, subsequent hit serves from cache, non-200 not cached)
+    // Static assets use CacheFirst, recover when caches.match rejects, and survive QuotaExceededError
+    vi.mocked(h.scope.caches.match).mockRejectedValueOnce(
+      new DOMException('Private mode blocked', 'SecurityError')
+    );
+    vi.mocked(h.cacheObj.put).mockRejectedValueOnce(
+      new DOMException('Quota full', 'QuotaExceededError')
+    );
+    const assetQuotaSafe = await dispatchFetch(
+      'https://timmatt-lee.github.io/assets/app-quota.js',
+      undefined,
+      'cors',
+      'script'
+    );
+    expect(await assetQuotaSafe?.text()).toContain('live:');
+
     const assetMiss = await dispatchFetch(
       'https://timmatt-lee.github.io/assets/app-123.js',
       undefined,
@@ -192,6 +228,12 @@ describe('Service Worker lifecycle & caching strategies', () => {
     );
     expect(await assetHit?.text()).toContain('live:');
 
+    // Pathname /assets/ fallback when destination is empty string
+    const rawAssetPathHit = await dispatchFetch(
+      'https://timmatt-lee.github.io/assets/raw-data.bin'
+    );
+    expect(await rawAssetPathHit?.text()).toContain('live:');
+
     vi.mocked(h.scope.fetch).mockResolvedValueOnce(new Response('err', { status: 500 }));
     const asset500 = await dispatchFetch(
       'https://timmatt-lee.github.io/assets/bad.js',
@@ -201,7 +243,7 @@ describe('Service Worker lifecycle & caching strategies', () => {
     );
     expect(asset500?.status).toBe(500);
 
-    // Generic same-origin GET (e.g. JSON) uses NetworkFirst + offline fallback
+    // Generic same-origin GET uses NetworkFirst + background tryCachePut + offline fallback
     const jsonOnline = await dispatchFetch('https://timmatt-lee.github.io/data.json');
     expect(await jsonOnline?.text()).toContain('live:');
 
@@ -218,12 +260,29 @@ describe('Service Worker lifecycle & caching strategies', () => {
     );
   });
 
+  it('swallows DOMException in tryCachePut and wraps unexpected non-DOM errors', async () => {
+    const h = createMockSwHarness();
+
+    vi.mocked(h.cacheObj.put).mockRejectedValueOnce(
+      new DOMException('Quota exceeded', 'QuotaExceededError')
+    );
+    await expect(tryCachePut(h.scope, 'c1', './a.js', new Response('ok'))).resolves.toBeUndefined();
+
+    vi.mocked(h.cacheObj.put).mockRejectedValueOnce(new Error('disk hardware fault'));
+    await expect(tryCachePut(h.scope, 'c1', './a.js', new Response('ok'))).rejects.toThrow(
+      'disk hardware fault'
+    );
+
+    vi.mocked(h.cacheObj.put).mockRejectedValueOnce('raw string fault');
+    await expect(tryCachePut(h.scope, 'c1', './a.js', new Response('ok'))).rejects.toThrow(
+      'raw string fault'
+    );
+  });
+
   it('bootstraps only when ServiceWorkerGlobalScope is present on global object', () => {
     const h = createMockSwHarness();
-    // Non-SW environment -> no-op
     bootstrapServiceWorkerGlobal({});
 
-    // Simulated SW global environment with fallback constants and injected constants
     const fakeGlobal = {
       ...h.scope,
       ServiceWorkerGlobalScope: function SwCtor() {}
@@ -232,7 +291,7 @@ describe('Service Worker lifecycle & caching strategies', () => {
     expect(h.listeners.has('install')).toBe(true);
 
     vi.stubGlobal('__SW_CACHE_NAME__', 'honeymoon-2027-injected');
-    vi.stubGlobal('__SW_PRECACHE_URLS__', ['./', './manifest.json']);
+    vi.stubGlobal('__SW_PRECACHE_URLS__', ['./index.html', './manifest.json']);
     bootstrapServiceWorkerGlobal(fakeGlobal);
     vi.unstubAllGlobals();
   });

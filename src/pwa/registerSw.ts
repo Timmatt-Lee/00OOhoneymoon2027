@@ -3,17 +3,25 @@ export interface SwLocationLike {
   readonly search: string;
 }
 
+export interface SwRegisterOptions {
+  readonly updateViaCache?: 'all' | 'imports' | 'none';
+}
+
 export interface SwNavigatorLike {
   readonly serviceWorker?: {
-    register(scriptURL: string): Promise<unknown>;
+    register(scriptURL: string, options?: SwRegisterOptions): Promise<unknown>;
   };
+}
+
+function defaultReportSwError(error: Error): void {
+  console.warn('[PWA] Service Worker registration failed:', error.message);
 }
 
 export function registerOfflineServiceWorker(
   win: Pick<Window, 'addEventListener'> = window,
   nav: SwNavigatorLike = navigator,
   loc: SwLocationLike = window.location,
-  onRegisterError?: (error: Error) => void
+  onRegisterError: (error: Error) => void = defaultReportSwError
 ): void {
   const isSwSupported = Boolean(nav.serviceWorker);
   if (!isSwSupported || !nav.serviceWorker) return;
@@ -24,9 +32,9 @@ export function registerOfflineServiceWorker(
 
   const swContainer = nav.serviceWorker;
   win.addEventListener('load', () => {
-    swContainer.register('./sw.js').catch((err: unknown) => {
+    swContainer.register('./sw.js', { updateViaCache: 'none' }).catch((err: unknown) => {
       const normalized = err instanceof Error ? err : new Error(String(err));
-      onRegisterError?.(normalized);
+      onRegisterError(normalized);
     });
   });
 }

@@ -3,12 +3,13 @@
   "name": "00OO 北海道蜜月 2027",
   "short_name": "00OO 北海道蜜月 2027",
   "description": "2027.03.02 - 03.13 北海道婚紗蜜月互動行程",
+  "lang": "zh-TW",
+  "dir": "ltr",
   "start_url": "./",
   "scope": "./",
-  "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
+  "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f8fafc",
+  "background_color": "#070B19",
   "theme_color": "#070B19",
   "icons": [
     {
@@ -24,7 +25,7 @@
       "purpose": "any"
     },
     {
-      "src": "./icon-192.png",
+      "src": "./icon-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
@@ -36,7 +37,7 @@
       "purpose": "any"
     },
     {
-      "src": "./icon-512.png",
+      "src": "./icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

@@ -38,6 +38,24 @@ declare const __SW_PRECACHE_URLS__: readonly string[] | undefined;
 
 const STATIC_DESTINATIONS = new Set(['style', 'script', 'font', 'image', 'manifest']);
 
+export async function tryCachePut(
+  scope: Pick<ServiceWorkerScopeLike, 'caches'>,
+  cacheName: string,
+  key: Request | string,
+  response: Response
+): Promise<void> {
+  try {
+    const cache = await scope.caches.open(cacheName);
+    await cache.put(key, response);
+  } catch (err: unknown) {
+    // QuotaExceededError or Private Mode SecurityError is non-fatal for live 200 responses.
+    if (err instanceof DOMException) {
+      return;
+    }
+    throw err instanceof Error ? err : new Error(String(err));
+  }
+}
+
 export function bindServiceWorkerLifecycle(
   scope: ServiceWorkerScopeLike,
   cacheName: string,
@@ -70,31 +88,29 @@ export function bindServiceWorkerLifecycle(
     const isGetRequest = req.method === 'GET';
     if (!isGetRequest) return;
 
+    const isRangeRequest = req.headers.has('range');
+    if (isRangeRequest) return;
+
     const reqUrl = new URL(req.url);
     const isSameOrigin = reqUrl.origin === scope.location.origin;
     if (!isSameOrigin) return;
 
     const isNavigation = req.mode === 'navigate';
     if (isNavigation) {
-      // NetworkFirst for HTML documents, falling back to precached shell when offline
+      // NetworkFirst without overwriting precached shell inside older cacheName (prevents version skew)
       event.respondWith(
-        scope
-          .fetch(req)
-          .then(async (networkRes) => {
-            if (networkRes.status === 200) {
-              const cache = await scope.caches.open(cacheName);
-              await cache.put(req, networkRes.clone());
-            }
-            return networkRes;
-          })
-          .catch(async () => {
-            const cachedDoc =
-              (await scope.caches.match(req, { ignoreVary: true })) ??
-              (await scope.caches.match('./index.html', { ignoreVary: true })) ??
-              (await scope.caches.match('./', { ignoreVary: true }));
+        scope.fetch(req).catch(async () => {
+          const fallbackKeys: readonly (Request | string)[] = [req, './index.html', './'];
+          for (const key of fallbackKeys) {
+            const isRequestObj = typeof key !== 'string';
+            const cachedDoc = await scope.caches.match(
+              key,
+              isRequestObj ? { ignoreVary: true, ignoreSearch: true } : { ignoreVary: true }
+            );
             if (cachedDoc) return cachedDoc;
-            throw new Error('Offline and no cached application shell available.');
-          })
+          }
+          throw new Error('Offline and no cached application shell available.');
+        })
       );
       return;
     }
@@ -102,17 +118,19 @@ export function bindServiceWorkerLifecycle(
     const isStaticAsset =
       STATIC_DESTINATIONS.has(req.destination) || reqUrl.pathname.includes('/assets/');
     if (isStaticAsset) {
-      // CacheFirst for versioned bundles, fonts, and icons (ignoreVary handles CORS Vary: Origin)
+      // CacheFirst for versioned bundles, fonts, and icons with quota-safe background writes
       event.respondWith(
-        scope.caches.match(req, { ignoreVary: true }).then(async (cached) => {
-          if (cached) return cached;
-          const networkRes = await scope.fetch(req);
-          if (networkRes.status === 200) {
-            const cache = await scope.caches.open(cacheName);
-            await cache.put(req, networkRes.clone());
-          }
-          return networkRes;
-        })
+        scope.caches
+          .match(req, { ignoreVary: true })
+          .catch(() => undefined)
+          .then(async (cached) => {
+            if (cached) return cached;
+            const networkRes = await scope.fetch(req);
+            if (networkRes.status === 200) {
+              event.waitUntil(tryCachePut(scope, cacheName, req, networkRes.clone()));
+            }
+            return networkRes;
+          })
       );
       return;
     }
@@ -121,10 +139,9 @@ export function bindServiceWorkerLifecycle(
     event.respondWith(
       scope
         .fetch(req)
-        .then(async (networkRes) => {
+        .then((networkRes) => {
           if (networkRes.status === 200) {
-            const cache = await scope.caches.open(cacheName);
-            await cache.put(req, networkRes.clone());
+            event.waitUntil(tryCachePut(scope, cacheName, req, networkRes.clone()));
           }
           return networkRes;
         })
@@ -142,7 +159,8 @@ export function bootstrapServiceWorkerGlobal(globalObj: object): void {
   if (!isSwRuntime) return;
   const resolvedCacheName =
     typeof __SW_CACHE_NAME__ === 'string' ? __SW_CACHE_NAME__ : 'honeymoon-2027-v3';
-  const resolvedUrls = typeof __SW_PRECACHE_URLS__ !== 'undefined' ? __SW_PRECACHE_URLS__ : ['./'];
+  const resolvedUrls =
+    typeof __SW_PRECACHE_URLS__ !== 'undefined' ? __SW_PRECACHE_URLS__ : ['./index.html'];
   bindServiceWorkerLifecycle(
     globalObj as unknown as ServiceWorkerScopeLike,
     resolvedCacheName,
