@@ -2,7 +2,11 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="description" content="2027.03.02 - 03.13 北海道婚紗蜜月互動行程" />
     <title>00OO 北海道蜜月 2027</title>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -19,15 +23,6 @@
       type="font/woff2"
       crossorigin
     />
-    <style>
-      @font-face {
-        font-family: 'Huninn';
-        src: url('./fonts/Huninn-Regular.woff2') format('woff2');
-        font-weight: 400;
-        font-style: normal;
-        font-display: swap;
-      }
-    </style>
   </head>
   <body>
     <div id="app-shell" class="theme-dark">
@@ -38,6 +33,13 @@
           <h1 class="visually-hidden">00OO 北海道蜜月 2027</h1>
           <nav id="story-bar-track" aria-label="Hokkaido 12-day itinerary navigation"></nav>
         </header>
+        <div
+          id="day-live-status"
+          class="visually-hidden"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        ></div>
         <div id="timeline-rail" aria-hidden="true">
           <div id="timeline-line"></div>
           <div id="timeline-nodes-container"></div>

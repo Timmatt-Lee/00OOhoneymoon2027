@@ -1,37 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
-  <path d="M 142,205 L 162,166 Q 290,162 490,165 L 490,205 Z" fill="#e2e8f0"/>
-  <rect x="106" y="158" width="48" height="4" rx="1.5" fill="#334155"/>
-  <rect x="114" y="162" width="4" height="18" fill="#1e293b"/>
-  <rect x="138" y="162" width="4" height="18" fill="#1e293b"/>
-  <rect x="112" y="142" width="3.5" height="16" fill="#1e293b"/>
-  <circle cx="113.7" cy="139" r="4.5" fill="#fde047"/>
-  <!-- Lakeside Ryokan Suimeikaku (x: 164..276) -->
-  <path d="M 164,168 L 164,120 L 220,96 L 276,120 L 276,168 Z" fill="#0f172a"/>
-  <polyline points="158,121 220,94 282,121" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
+  <path d="M 136,205 L 156,166 Q 290,162 490,165 Q 920,162 1360,166 T 1880,165 L 1880,205 Z" fill="#e2e8f0"/>
+  <rect x="98" y="158" width="48" height="4" rx="1.5" fill="#334155"/>
+  <rect x="106" y="162" width="4" height="18" fill="#1e293b"/>
+  <rect x="130" y="162" width="4" height="18" fill="#1e293b"/>
+  <rect x="104" y="142" width="3.5" height="16" fill="#1e293b"/>
+  <circle cx="105.7" cy="139" r="4.5" fill="#fde047"/>
+  <!-- Lakeside Timber Ryokan Silhouette -->
+  <path d="M 154,168 L 154,120 L 208,96 L 262,120 L 262,168 Z" fill="#0f172a"/>
+  <polyline points="148,121 208,94 268,121" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   <g fill="#fde047" opacity="0.9">
-    <rect x="180" y="126" width="20" height="11" rx="1.5"/>
-    <rect x="210" y="126" width="20" height="11" rx="1.5"/>
-    <rect x="240" y="126" width="20" height="11" rx="1.5"/>
-    <rect x="192" y="144" width="56" height="10" rx="1.5"/>
+    <rect x="169" y="126" width="19" height="11" rx="1.5"/>
+    <rect x="198.5" y="126" width="19" height="11" rx="1.5"/>
+    <rect x="228" y="126" width="19" height="11" rx="1.5"/>
+    <rect x="180" y="144" width="56" height="10" rx="1.5"/>
   </g>
-  <!-- Open-Air Lakeside Rock Rotenburo (x: 290..386, cx=338 — 100% inside 400px viewport!) -->
-  <polygon points="288,148 279,155 297,155" fill="#ffffff"/>
-  <rect x="285" y="155" width="6" height="7" rx="1" fill="#fde047"/>
-  <rect x="286" y="162" width="4" height="6" fill="#1e293b"/>
-  <ellipse cx="340" cy="169" rx="42" ry="7.5" fill="#0284c7"/>
-  <ellipse cx="340" cy="168.5" rx="36" ry="5.5" fill="#38bdf8"/>
+  <!-- Open-Air Lakeside Rock Rotenburo -->
+  <polygon points="274,148 265,155 283,155" fill="#ffffff"/>
+  <rect x="271" y="155" width="6" height="7" rx="1" fill="#fde047"/>
+  <rect x="272" y="162" width="4" height="6" fill="#1e293b"/>
+  <ellipse cx="316" cy="169" rx="34" ry="7" fill="#0284c7"/>
+  <ellipse cx="316" cy="168.5" rx="29" ry="5" fill="#38bdf8"/>
   <g fill="#334155">
-    <ellipse cx="298" cy="169" rx="8.5" ry="5.5"/>
-    <ellipse cx="315" cy="175" rx="10.5" ry="5"/>
-    <ellipse cx="338" cy="176.5" rx="12.5" ry="5"/>
-    <ellipse cx="361" cy="175" rx="10.5" ry="5"/>
-    <ellipse cx="378" cy="169" rx="8.5" ry="5.5"/>
+    <ellipse cx="282" cy="169" rx="7.5" ry="5"/>
+    <ellipse cx="297" cy="174.5" rx="9" ry="4.8"/>
+    <ellipse cx="316" cy="176" rx="10.5" ry="4.8"/>
+    <ellipse cx="335" cy="174.5" rx="9" ry="4.8"/>
+    <ellipse cx="350" cy="169" rx="7.5" ry="5"/>
   </g>
   <g fill="#ffffff" opacity="0.92">
-    <ellipse cx="298" cy="166" rx="6" ry="2"/>
-    <ellipse cx="315" cy="172.5" rx="7.5" ry="2"/>
-    <ellipse cx="338" cy="174" rx="9" ry="2"/>
-    <ellipse cx="361" cy="172.5" rx="7.5" ry="2"/>
-    <ellipse cx="378" cy="166" rx="6" ry="2"/>
+    <ellipse cx="282" cy="166.5" rx="5" ry="1.8"/>
+    <ellipse cx="297" cy="172" rx="6.5" ry="1.8"/>
+    <ellipse cx="316" cy="173.5" rx="7.5" ry="1.8"/>
+    <ellipse cx="335" cy="172" rx="6.5" ry="1.8"/>
+    <ellipse cx="350" cy="166.5" rx="5" ry="1.8"/>
   </g>
 </svg>

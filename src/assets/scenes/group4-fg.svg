@@ -1,13 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
   <defs>
     <clipPath id="g4-pines-clip">
-      <polygon points="1116,118 1094,190 1138,190"/>
-      <polygon points="1156,124 1136,190 1176,190"/>
+      <polygon points="-112,120 -134,190 -90,190"/>
+      <polygon points="-52,126 -72,190 -32,190"/>
+      <polygon points="1036,118 1014,190 1058,190"/>
+      <polygon points="1076,124 1056,190 1096,190"/>
+      <polygon points="1276,120 1254,190 1298,190"/>
+      <polygon points="1336,126 1316,190 1356,190"/>
     </clipPath>
   </defs>
-  <path d="M -20,205 L -20,166 Q 180,158 380,166 T 780,164 T 1220,166 L 1220,205 Z" fill="#f1f5f9"/>
+  <path d="M -1400,205 L -1400,166 Q -920,158 -440,166 T -20,166 Q 180,158 380,166 T 780,164 T 1220,166 Q 1720,158 2200,166 L 2600,166 L 2600,205 Z" fill="#f1f5f9"/>
 
-  <!-- 1. Day 8 Foreground (shift 0, visible 0..400): Lake Hill Farm Red Barn, Silo & Pasture Fence (x: 42..210) -->
+  <!-- Ambient Flanking Snow Pines Beyond Stage Edges -->
+  <g fill="#0f172a">
+    <polygon points="-112,120 -134,190 -90,190"/>
+    <polygon points="-52,126 -72,190 -32,190"/>
+    <polygon points="1276,120 1254,190 1298,190"/>
+    <polygon points="1336,126 1316,190 1356,190"/>
+  </g>
+
+  <!-- 1. Day 8 Foreground (shift 0): Lake Hill Farm Red Barn, Silo & Pasture Fence (x: 42..210) -->
   <g id="day8-lake-hill-farm" transform="translate(42, 112)">
     <path d="M 0,76 L 0,28 L 14,10 L 42,0 L 70,10 L 84,28 L 84,76 Z" fill="#991b1b"/>
     <polyline points="-3,29 14,9 42,-1 70,9 87,29" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -24,102 +36,102 @@
     <rect x="162" y="48" width="4" height="28" fill="#1e293b"/>
   </g>
 
-  <!-- 2. Day 9 Foreground (shift -200, visible 200..600): JR Coastal Train + Otaru Gas Lamps & Music Box Steam Clock (x: 244..456) -->
-  <g id="jr-train" transform="translate(244, 132)">
-    <rect x="0" y="0" width="118" height="36" rx="7" fill="#0f172a"/>
-    <line x1="4" y1="0" x2="114" y2="0" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
-    <rect x="0" y="21" width="118" height="4" fill="#f43f5e"/>
-    <rect x="10" y="6" width="17" height="11" rx="2" fill="#fde047"/>
-    <rect x="32" y="6" width="17" height="11" rx="2" fill="#fde047"/>
-    <rect x="54" y="6" width="17" height="11" rx="2" fill="#fde047"/>
-    <rect x="76" y="6" width="17" height="11" rx="2" fill="#fde047"/>
-    <rect x="98" y="5" width="14" height="13" rx="2" fill="#bae6fd"/>
-    <circle cx="25" cy="37" r="7.5" fill="#1e293b" stroke="#ffffff" stroke-width="2.5"/>
-    <circle cx="92" cy="37" r="7.5" fill="#1e293b" stroke="#ffffff" stroke-width="2.5"/>
+  <!-- 2. Day 9 Foreground (shift -200): JR Coastal Train + Otaru Gas Lamps & Music Box Steam Clock (x: 236..438) -->
+  <g id="jr-train" transform="translate(236, 132)">
+    <rect x="0" y="0" width="114" height="36" rx="7" fill="#0f172a"/>
+    <line x1="4" y1="0" x2="110" y2="0" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+    <rect x="0" y="21" width="114" height="4" fill="#f43f5e"/>
+    <rect x="10" y="6" width="16" height="11" rx="2" fill="#fde047"/>
+    <rect x="31" y="6" width="16" height="11" rx="2" fill="#fde047"/>
+    <rect x="52" y="6" width="16" height="11" rx="2" fill="#fde047"/>
+    <rect x="73" y="6" width="16" height="11" rx="2" fill="#fde047"/>
+    <rect x="94" y="5" width="14" height="13" rx="2" fill="#bae6fd"/>
+    <circle cx="24" cy="37" r="7.5" fill="#1e293b" stroke="#ffffff" stroke-width="2.5"/>
+    <circle cx="89" cy="37" r="7.5" fill="#1e293b" stroke="#ffffff" stroke-width="2.5"/>
   </g>
   <g id="otaru-steam-clock-and-lamps">
-    <rect x="382" y="122" width="4.5" height="66" fill="#0f172a"/>
-    <circle cx="384.2" cy="118" r="9" fill="#fde047" opacity="0.32"/>
-    <circle cx="384.2" cy="118" r="5" fill="#fef08a"/>
-    <rect x="404" y="108" width="26" height="80" fill="#7f1d1d"/>
-    <polygon points="401,108 417,92 433,108" fill="#0f172a"/>
-    <polyline points="401,108 417,92 433,108" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="417" cy="122" r="7.5" fill="#fef08a" stroke="#0f172a" stroke-width="2"/>
-    <rect x="446" y="122" width="4.5" height="66" fill="#0f172a"/>
-    <circle cx="448.2" cy="118" r="9" fill="#fde047" opacity="0.32"/>
-    <circle cx="448.2" cy="118" r="5" fill="#fef08a"/>
+    <rect x="368" y="122" width="4.5" height="66" fill="#0f172a"/>
+    <circle cx="370.2" cy="118" r="9" fill="#fde047" opacity="0.32"/>
+    <circle cx="370.2" cy="118" r="5" fill="#fef08a"/>
+    <rect x="390" y="108" width="26" height="80" fill="#7f1d1d"/>
+    <polygon points="387,108 403,92 419,108" fill="#0f172a"/>
+    <polyline points="387,108 403,92 419,108" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="403" cy="122" r="7.5" fill="#fef08a" stroke="#0f172a" stroke-width="2"/>
+    <rect x="432" y="122" width="4.5" height="66" fill="#0f172a"/>
+    <circle cx="434.2" cy="118" r="9" fill="#fde047" opacity="0.32"/>
+    <circle cx="434.2" cy="118" r="5" fill="#fef08a"/>
   </g>
 
-  <!-- 3. Day 10 Foreground (shift -400, visible 400..800): Former Hokkaido Government Red-Brick Office (巴洛克紅磚廳舍, x: 516..628) -->
+  <!-- 3. Day 10 Foreground (shift -400): Neo-Baroque Red-Brick Civic Hall (x: 468..580) -->
   <g id="akarenga-office">
-    <path d="M 516,192 L 516,118 L 552,118 L 562,82 L 582,82 L 592,118 L 628,118 L 628,192 Z" fill="#7f1d1d"/>
-    <path d="M 554,118 Q 572,68 590,118 Z" fill="#0f172a"/>
-    <line x1="572" y1="56" x2="572" y2="73" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-    <circle cx="572" cy="99" r="4.5" fill="#f43f5e"/>
-    <polyline points="513,118 552,118 562,82 582,82 592,118 631,118" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 468,192 L 468,118 L 504,118 L 514,82 L 534,82 L 544,118 L 580,118 L 580,192 Z" fill="#7f1d1d"/>
+    <path d="M 506,118 Q 524,68 542,118 Z" fill="#0f172a"/>
+    <line x1="524" y1="56" x2="524" y2="73" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="524" cy="99" r="4.5" fill="#f43f5e"/>
+    <polyline points="465,118 504,118 514,82 534,82 544,118 583,118" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
     <g fill="#fde047" opacity="0.92">
-      <rect x="526" y="128" width="12" height="11" rx="1.5"/>
-      <rect x="544" y="128" width="12" height="11" rx="1.5"/>
-      <rect x="566" y="126" width="12" height="15" rx="2"/>
-      <rect x="588" y="128" width="12" height="11" rx="1.5"/>
-      <rect x="606" y="128" width="12" height="11" rx="1.5"/>
+      <rect x="478" y="128" width="12" height="11" rx="1.5"/>
+      <rect x="496" y="128" width="12" height="11" rx="1.5"/>
+      <rect x="518" y="126" width="12" height="15" rx="2"/>
+      <rect x="540" y="128" width="12" height="11" rx="1.5"/>
+      <rect x="558" y="128" width="12" height="11" rx="1.5"/>
     </g>
   </g>
 
-  <!-- 4. Day 11 Foreground (shift -600, visible 600..1000): Clock Tower (x: 654..728), Odori TV Tower (x: 758..804) & Susukino NORBESA Rooftop Ferris Wheel (x: 838..906) -->
+  <!-- 4. Day 11 Foreground (shift -600): Historic Clock Tower (x: 610..676), Odori TV Tower (x: 694..734) & Susukino Rooftop Ferris Wheel (x: 744..794 <= 795) -->
   <g id="sapporo-clock-tv-and-norbesa">
-    <!-- Left: Sapporo Clock Tower (時計台) -->
-    <path d="M 654,192 L 654,124 L 673,106 L 673,78 L 691,58 L 709,78 L 709,106 L 728,124 L 728,192 Z" fill="#1e293b"/>
-    <polyline points="669,79 691,56 713,79" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="650,125 673,106 709,106 732,125" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="691" cy="88" r="8" fill="#fef08a" stroke="#0f172a" stroke-width="2"/>
-    <polygon points="691,64 693,70 699,70 694,74 696,80 691,76 686,80 688,74 683,70 689,70" fill="#f43f5e"/>
+    <!-- Left: Historic Wooden Clock Tower -->
+    <path d="M 610,192 L 610,124 L 627,106 L 627,78 L 643,58 L 659,78 L 659,106 L 676,124 L 676,192 Z" fill="#1e293b"/>
+    <polyline points="623,79 643,56 663,79" fill="none" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="607,125 627,106 659,106 679,125" fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="643" cy="88" r="7.5" fill="#fef08a" stroke="#0f172a" stroke-width="2"/>
+    <polygon points="643,64 645,70 651,70 646,74 648,80 643,76 638,80 640,74 635,70 641,70" fill="#f43f5e"/>
     <g fill="#fde047" opacity="0.9">
-      <rect x="664" y="134" width="13" height="10" rx="1.5"/>
-      <rect x="684.5" y="134" width="13" height="10" rx="1.5"/>
-      <rect x="705" y="134" width="13" height="10" rx="1.5"/>
+      <rect x="619" y="134" width="11" height="10" rx="1.5"/>
+      <rect x="637.5" y="134" width="11" height="10" rx="1.5"/>
+      <rect x="656" y="134" width="11" height="10" rx="1.5"/>
     </g>
 
-    <!-- Center: Odori Sapporo TV Tower Illuminated Lattice Spire -->
-    <path d="M 758,192 L 773,86 L 781,34 L 789,86 L 804,192 Z" fill="#0f172a"/>
-    <line x1="781" y1="34" x2="773" y2="86" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-    <circle cx="781" cy="32" r="3.5" fill="#f43f5e"/>
-    <rect x="769" y="86" width="24" height="8" rx="1.5" fill="#fde047"/>
-    <rect x="772" y="102" width="18" height="5" rx="1" fill="#34d399"/>
+    <!-- Center: Illuminated Lattice Observation Spire -->
+    <path d="M 694,192 L 707,86 L 714,34 L 721,86 L 734,192 Z" fill="#0f172a"/>
+    <line x1="714" y1="34" x2="707" y2="86" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="714" cy="32" r="3.5" fill="#f43f5e"/>
+    <rect x="703" y="86" width="22" height="8" rx="1.5" fill="#fde047"/>
+    <rect x="706" y="102" width="16" height="5" rx="1" fill="#34d399"/>
 
-    <!-- Right: Susukino NORBESA Building & Rooftop Ferris Wheel "nORIA" (Grounded on rooftop, cleanly separated at x: 838..906) -->
-    <circle class="ferris-wheel-spin" cx="872" cy="108" r="22" fill="none" stroke="#f43f5e" stroke-width="3" stroke-dasharray="6 4"/>
-    <circle cx="872" cy="108" r="13.5" fill="none" stroke="#fde047" stroke-width="1.5"/>
-    <circle cx="872" cy="108" r="3.5" fill="#fde047"/>
-    <line x1="872" y1="108" x2="858" y2="136" stroke="#0f172a" stroke-width="3"/>
-    <line x1="872" y1="108" x2="886" y2="136" stroke="#0f172a" stroke-width="3"/>
-    <rect x="838" y="134" width="68" height="58" rx="2" fill="#0f172a"/>
-    <line x1="836" y1="134" x2="908" y2="134" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+    <!-- Right: Urban Commercial Rooftop Ferris Wheel (x: 744..794, clears < 800 on Day 12) -->
+    <circle class="ferris-wheel-spin" cx="769" cy="110" r="19" fill="none" stroke="#f43f5e" stroke-width="3" stroke-dasharray="6 4"/>
+    <circle cx="769" cy="110" r="11.5" fill="none" stroke="#fde047" stroke-width="1.5"/>
+    <circle cx="769" cy="110" r="3" fill="#fde047"/>
+    <line x1="769" y1="110" x2="757" y2="135" stroke="#0f172a" stroke-width="2.8"/>
+    <line x1="769" y1="110" x2="781" y2="135" stroke="#0f172a" stroke-width="2.8"/>
+    <rect x="744" y="134" width="50" height="58" rx="2" fill="#0f172a"/>
+    <line x1="742" y1="134" x2="795" y2="134" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
     <g fill="#fde047" opacity="0.88">
-      <rect x="848" y="144" width="12" height="7" rx="1"/>
-      <rect x="866" y="144" width="12" height="7" rx="1"/>
-      <rect x="884" y="144" width="12" height="7" rx="1"/>
-      <rect x="848" y="156" width="12" height="7" rx="1"/>
-      <rect x="866" y="156" width="12" height="7" rx="1"/>
-      <rect x="884" y="156" width="12" height="7" rx="1"/>
+      <rect x="751" y="144" width="9" height="7" rx="1"/>
+      <rect x="764.5" y="144" width="9" height="7" rx="1"/>
+      <rect x="778" y="144" width="9" height="7" rx="1"/>
+      <rect x="751" y="156" width="9" height="7" rx="1"/>
+      <rect x="764.5" y="156" width="9" height="7" rx="1"/>
+      <rect x="778" y="156" width="9" height="7" rx="1"/>
     </g>
   </g>
 
-  <!-- 5. Day 12 Foreground (shift -800, visible 800..1200): New Chitose Control Tower, Curved Glass Terminal & Snow Pines (x: 976..1176) -->
+  <!-- 5. Day 12 Foreground (shift -800): Control Tower, Curved Glass Airport Terminal & Snow Pines (x: 894..1096) -->
   <g id="new-chitose-terminal">
-    <path d="M 990,132 L 994,78 L 984,66 L 1014,66 L 1004,78 L 1008,132 Z" fill="#1e293b"/>
-    <line x1="982" y1="66" x2="1016" y2="66" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-    <rect x="988" y="70" width="22" height="5" rx="1" fill="#38bdf8"/>
-    <path d="M 978,192 L 978,126 Q 1036,108 1094,126 L 1094,192 Z" fill="#0f172a"/>
-    <path d="M 974,126 Q 1036,106 1098,126" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
+    <path d="M 910,132 L 914,78 L 904,66 L 934,66 L 924,78 L 928,132 Z" fill="#1e293b"/>
+    <line x1="902" y1="66" x2="936" y2="66" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+    <rect x="908" y="70" width="22" height="5" rx="1" fill="#38bdf8"/>
+    <path d="M 898,192 L 898,126 Q 956,108 1014,126 L 1014,192 Z" fill="#0f172a"/>
+    <path d="M 894,126 Q 956,106 1018,126" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
     <g fill="#fde047" opacity="0.9">
-      <rect x="992" y="134" width="19" height="9" rx="1.5"/>
-      <rect x="1017" y="134" width="19" height="9" rx="1.5"/>
-      <rect x="1042" y="134" width="19" height="9" rx="1.5"/>
-      <rect x="1067" y="134" width="15" height="9" rx="1.5"/>
+      <rect x="912" y="134" width="19" height="9" rx="1.5"/>
+      <rect x="937" y="134" width="19" height="9" rx="1.5"/>
+      <rect x="962" y="134" width="19" height="9" rx="1.5"/>
+      <rect x="987" y="134" width="15" height="9" rx="1.5"/>
     </g>
-    <polygon points="1116,118 1094,190 1138,190" fill="#0f172a"/>
-    <polygon points="1156,124 1136,190 1176,190" fill="#0f172a"/>
-    <rect x="1090" y="116" width="90" height="24" fill="#ffffff" clip-path="url(#g4-pines-clip)"/>
+    <polygon points="1036,118 1014,190 1058,190" fill="#0f172a"/>
+    <polygon points="1076,124 1056,190 1096,190" fill="#0f172a"/>
   </g>
+  <rect x="-140" y="116" width="1510" height="24" fill="#ffffff" clip-path="url(#g4-pines-clip)"/>
 </svg>
