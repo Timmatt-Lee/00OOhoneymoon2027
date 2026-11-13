@@ -2,26 +2,64 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-test.describe('Post-Build Smoke, Accessibility, Trip Date Routing & Offline PWA Suite', () => {
-  test('1. verifies built dist/sw.js precache manifest includes hashed bundles and Huninn font', () => {
-    const swPath = path.resolve(process.cwd(), 'dist/sw.js');
+test.describe('Post-Build Smoke, Payload Budget, CSP, Offline PWA & Accessibility Suite', () => {
+  test('1. enforces precache payload budget (< 220 KB), subset WOFF2 budget (< 120 KB), and production CSP meta tag', () => {
+    const distDir = path.resolve(process.cwd(), 'dist');
+    const swPath = path.join(distDir, 'sw.js');
+    const indexHtmlPath = path.join(distDir, 'index.html');
+    const subsetFontPath = path.join(distDir, 'fonts/Huninn-Regular.woff2');
+
     expect(fs.existsSync(swPath)).toBe(true);
+    expect(fs.existsSync(indexHtmlPath)).toBe(true);
+    expect(fs.existsSync(subsetFontPath)).toBe(true);
+
+    const distHtml = fs.readFileSync(indexHtmlPath, 'utf8').replaceAll('&#39;', "'");
+    expect(distHtml).toContain('http-equiv="Content-Security-Policy"');
+    expect(distHtml).toContain("default-src 'none'");
+    expect(distHtml).toContain("style-src 'self'");
+
+    const fontByteCount = fs.statSync(subsetFontPath).size;
+    expect(fontByteCount).toBeGreaterThan(20 * 1024);
+    expect(fontByteCount).toBeLessThan(120 * 1024);
+
     const swContent = fs.readFileSync(swPath, 'utf8');
     expect(swContent).toContain('honeymoon-2027-');
-    expect(swContent).toContain('./index.html');
-    expect(swContent).toContain('./fonts/Huninn-Regular.woff2');
-    expect(swContent).toMatch(/\.\/assets\/index-[A-Za-z0-9_-]+\.js/);
-    expect(swContent).toMatch(/\.\/assets\/index-[A-Za-z0-9_-]+\.css/);
+
+    const precacheArrayMatch = /\["\.\/[^"]+?"(?:,"\.\/[^"]+?")*\]/.exec(swContent);
+    expect(precacheArrayMatch).not.toBeNull();
+    const rawUrls: unknown = JSON.parse(precacheArrayMatch?.[0] ?? '[]');
+    expect(Array.isArray(rawUrls)).toBe(true);
+    const precacheUrls = (rawUrls as string[]).map(String);
+
+    expect(precacheUrls).toContain('./index.html');
+    expect(precacheUrls).toContain('./manifest.json');
+    expect(precacheUrls).toContain('./fonts/Huninn-Regular.woff2');
+    expect(precacheUrls.some((u) => /^\.\/assets\/index-[A-Za-z0-9_-]+\.js$/.test(u))).toBe(true);
+    expect(precacheUrls.some((u) => /^\.\/assets\/index-[A-Za-z0-9_-]+\.css$/.test(u))).toBe(true);
+
+    let totalPrecacheByteCount = 0;
+    for (const relUrl of precacheUrls) {
+      const assetPath = path.join(distDir, relUrl.slice(2));
+      expect(fs.existsSync(assetPath), `Missing precached asset: ${relUrl}`).toBe(true);
+      totalPrecacheByteCount += fs.statSync(assetPath).size;
+    }
+
+    expect(totalPrecacheByteCount).toBeLessThan(220 * 1024);
   });
 
-  test('2. verifies cold offline reload via Service Worker precache with zero network errors', async ({
+  test('2. verifies cold offline reload on deep-linked /?sw=1#day-6 with cached Huninn font and zero errors', async ({
     page,
     context
   }) => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        errors.push(msg.text());
+      }
+    });
 
-    await page.goto('/?sw=1');
+    await page.goto('/?sw=1#day-6');
     await page.evaluate(async () => {
       await navigator.serviceWorker.ready;
       if (!navigator.serviceWorker.controller) {
@@ -37,23 +75,32 @@ test.describe('Post-Build Smoke, Accessibility, Trip Date Routing & Offline PWA 
       }
     });
 
-    // Simulate losing cellular signal in rural Hokkaido and reloading cold
+    // Simulate losing cellular signal in rural Hokkaido and reloading cold on Day 6
     await context.setOffline(true);
     await page.reload();
+    await page.evaluate(() => document.fonts.ready);
 
     await expect(page).toHaveTitle('00OO 北海道蜜月 2027');
-    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 1');
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 6');
+
+    const isHuninnLoaded = await page.evaluate(() => document.fonts.check('16px Huninn'));
+    expect(isHuninnLoaded).toBe(true);
+
     await context.setOffline(false);
     expect(errors).toEqual([]);
   });
 
-  test('3. verifies Asia/Tokyo honeymoon date auto-selection, URL hash routing, per-item map links, and keyboard a11y', async ({
+  test('3. verifies Asia/Tokyo honeymoon date auto-selection, per-item map links, Home/End keys, and #day-live-status announcements', async ({
     page
   }) => {
     // Simulate opening the app on 2027-03-07 JST (Day 6: Lake Shikotsu)
     await page.clock.install({ time: new Date('2027-03-07T02:00:00Z') });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
+
+    const liveStatus = page.locator('#day-live-status');
     await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 6');
+    await expect(liveStatus).toHaveText('');
 
     // Inactive panels are marked inert; active panel is interactive
     const isDay1Inert = await page
@@ -65,18 +112,30 @@ test.describe('Post-Build Smoke, Accessibility, Trip Date Routing & Offline PWA 
     expect(isDay1Inert).toBe(true);
     expect(isDay6Inert).toBe(false);
 
-    // Verify per-item Google Maps link on Day 6 ("搭車前往支笏湖" -> Lake Shikotsu)
-    const shikotsuLink = page
-      .locator('.day-schedule-panel[data-day="5"] a.is-map-link')
-      .filter({ hasText: '支笏湖' });
-    await expect(shikotsuLink).toHaveAttribute('href', /Lake%20Shikotsu/);
+    // Verify per-item Google Maps link on Day 6 (Lake Shikotsu)
+    const shikotsuLink = page.locator(
+      '.day-schedule-panel[data-day="5"] a.is-map-link[href*="Lake%20Shikotsu"]'
+    );
+    await expect(shikotsuLink).toBeVisible();
+    await expect(shikotsuLink).toHaveAttribute('target', '_blank');
 
-    // Verify keyboard focus & Enter activation on Story Bar button slots + prefers-reduced-motion
-    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // Verify keyboard focus & Enter activation on Story Bar button slots updates #day-live-status
     const day5Btn = page.locator('.story-slot[data-day="4"]');
     await day5Btn.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 5');
+    await expect(liveStatus).toContainText('Day 5');
     expect(page.url()).toContain('#day-5');
+
+    // Verify End / Home keys jump to Day 12 and Day 1 while updating #day-live-status
+    await page.keyboard.press('End');
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 12');
+    await expect(liveStatus).toContainText('Day 12');
+    expect(page.url()).toContain('#day-12');
+
+    await page.keyboard.press('Home');
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 1');
+    await expect(liveStatus).toContainText('Day 1');
+    expect(page.url()).toContain('#day-1');
   });
 });

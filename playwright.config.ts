@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: './tests/e2e',
   outputDir: '/tmp/honeymoon2027-playwright-results',
   snapshotPathTemplate: '{testDir}/../screenshots/{arg}{ext}',
+  forbidOnly: Boolean(process.env.CI),
   timeout: 30000,
   expect: {
     toHaveScreenshot: {
@@ -14,7 +15,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 2
+    deviceScaleFactor: 2,
+    trace: 'retain-on-failure'
   },
   webServer: {
     command: 'npm run preview -- --port 4173',

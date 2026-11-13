@@ -31,6 +31,22 @@ describe('application bootstrap', () => {
   });
 
   it('bootstraps immediately when DOM is ready, defers when loading, and logs SW registration warnings', () => {
+    const mockCtx = {
+      fillStyle: '',
+      globalAlpha: 1,
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      drawImage: vi.fn(),
+      createRadialGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
+      fillRect: vi.fn()
+    } as unknown as CanvasRenderingContext2D;
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => mockCtx);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 1);
+
     initWhenReady({ readyState: 'complete' }, window);
     expect(document.querySelectorAll('.story-slot')).toHaveLength(12);
 

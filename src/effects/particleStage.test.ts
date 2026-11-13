@@ -69,15 +69,17 @@ describe('startParticleStage', () => {
 
     let isReducedMotion = false;
     const motionListeners: Array<() => void> = [];
+    const mockMql = {
+      addEventListener: (_event: string, cb: () => void) => {
+        motionListeners.push(cb);
+      }
+    };
+    Object.defineProperty(mockMql, 'matches', {
+      get: () => isReducedMotion,
+      configurable: true
+    });
     Object.defineProperty(window, 'matchMedia', {
-      value: vi.fn().mockImplementation(() => ({
-        get matches(): boolean {
-          return isReducedMotion;
-        },
-        addEventListener: (_event: string, cb: () => void) => {
-          motionListeners.push(cb);
-        }
-      })),
+      value: vi.fn().mockImplementation(() => mockMql),
       configurable: true
     });
 

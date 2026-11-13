@@ -16,6 +16,7 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
   const track = getRequiredElementById('story-bar-track');
   const stage = getRequiredElementById('schedule-stage');
   const cityscapeMapLinkEl = getRequiredAnchorById('cityscape-map-link');
+  cityscapeMapLinkEl.draggable = false;
   const liveStatusEl = document.getElementById('day-live-status');
 
   skyStack.replaceChildren();
@@ -89,6 +90,7 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
         titleLink.href = buildGoogleMapsUrl(item.mapQuery);
         titleLink.target = '_blank';
         titleLink.rel = 'noopener noreferrer';
+        titleLink.draggable = false;
         titleLink.textContent = item.title;
         rowEl.appendChild(titleLink);
       } else {

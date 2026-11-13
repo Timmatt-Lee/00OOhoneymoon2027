@@ -7,11 +7,11 @@
 [![Quality Gate](https://github.com/Timmatt-Lee/00OOhoneymoon2027/actions/workflows/ci.yml/badge.svg)](https://github.com/Timmatt-Lee/00OOhoneymoon2027/actions/workflows/ci.yml)
 [![Deploy to GitHub Pages](https://github.com/Timmatt-Lee/00OOhoneymoon2027/actions/workflows/deploy.yml/badge.svg)](https://github.com/Timmatt-Lee/00OOhoneymoon2027/actions/workflows/deploy.yml)
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Interactive_Web_App-38bdf8?style=flat&logo=github)](https://timmatt-lee.github.io/00OOhoneymoon2027/)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.6_Strict-3178c6?style=flat&logo=typescript&logoColor=white)
-![Vitest](https://img.shields.io/badge/Coverage-%E2%89%A599%25-6e9f18?style=flat&logo=vitest&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9_Strict-3178c6?style=flat&logo=typescript&logoColor=white)
+![Vitest](https://img.shields.io/badge/Coverage-100%25-6e9f18?style=flat&logo=vitest&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-Visual_E2E-2ead33?style=flat&logo=playwright&logoColor=white)
 
-A bespoke, mobile-first interactive itinerary and multi-layer parallax visual experience crafted for a 12-day winter journey across Hokkaido (`2027.03.02 – 03.13`).
+A bespoke, portrait-first interactive itinerary and multi-layer parallax visual experience crafted for a 12-day winter journey across Hokkaido (`2027.03.02 – 03.13`).
 
 [**Explore Live Experience ↗**](https://timmatt-lee.github.io/00OOhoneymoon2027/)
 
@@ -33,11 +33,11 @@ A bespoke, mobile-first interactive itinerary and multi-layer parallax visual ex
 
 ## Engineering Highlights
 
-- **Continuous Gesture & Wide-Viewport Parallax Engine** — Sub-pixel pointer interpolation driving 3-layer SVG vector landscapes (`0.38x` / `0.68x` / `1.0x`) that dynamically expand across mobile and ultra-wide desktop viewports, paired with cross-fading atmospheric sky gradients and synchronized timeline rail transitions at 60 FPS.
-- **HiDPI Zero-Allocation Canvas Particle Physics** — `devicePixelRatio`-scaled backing store and pre-allocated particle pools powered by a seeded `Mulberry32` PRNG, rendering crisp snowfall, lakeside _rotenburo_ steam wisps, and urban night-glow bokeh while honoring `prefers-reduced-motion`.
-- **True Offline-First Typed PWA** — Custom Vite build plugin compiles `src/pwa/sw.ts` with a deterministic SHA-256 cache version and full precache manifest (hashed JS/CSS bundles, `Huninn-Regular.woff2`, icons, and HTML shell) for reliable offline access across rural Hokkaido.
-- **Context-Aware Routing & Semantic Accessibility** — Automatic `Asia/Tokyo` honeymoon date detection, `#day-1`..`#day-12` deep-linking, inline Google Maps landmark anchors (preserving surprise blind-box items), semantic `<button>` story slots, `inert` background panels, and crisp CJK stroke-first typography (`font-synthesis: none`).
-- **99%+ Coverage & Visual Regression Gate** — Enforced via strict TypeScript, ESLint (`strictTypeChecked`), Vitest V8 unit coverage (`≥ 99%` across lines, branches, functions, and statements), and Playwright visual regression + smoke suites on every commit and PR.
+- **60 Hz iOS Low Power Mode Compositor Architecture** — Settle glides run off the main thread on WebKit's CoreAnimation compositor (`#app-shell.is-gliding` `transform` + `opacity` transitions), paired with bidirectional Porter-Duff sky cross-fading (`opacity: 1` base + fractional upper layer, zero runtime CSS gradient repaints), pre-built story-pill DOM nodes (zero mid-swipe layout thrashing), and 3-layer `xMidYMax meet` vector landscapes (`0.38x` / `0.68x` / `1.0x`) spanning mobile and ultra-wide viewports.
+- **2x-Capped HiDPI Zero-Allocation Particle Stage** — Pre-allocated `Mulberry32`-seeded particle pools with offscreen radial-gradient sprite caches, capped at `2x` DPR on `3x` Retina screens and automatically paused via `MutationObserver` during active swipes and glides while honoring `prefers-reduced-motion`.
+- **Zero-Runtime-Dependency Offline PWA (`~176 KiB` Precache)** — Zero runtime npm dependencies (`dependencies: {}`). Build-time Vite plugins minify raw SVGs, dynamically subset `Huninn-Regular.woff2` (`~91 KiB`) across repository glyphs via `subset-font`, inject a strict `default-src 'none'` Content Security Policy, and compile `src/pwa/sw.ts` with a SHA-256 content-addressed precache (`~176 KiB` total) for instant cold-offline startups across rural Hokkaido.
+- **Native Universal Links, Blind-Box Privacy & Semantic Accessibility** — Automatic `Asia/Tokyo` honeymoon date routing, `#day-1`..`#day-12` deep-linking, native `<a target="_blank" rel="noopener noreferrer">` Google Maps Universal Links on schedule items and the cityscape footer (with swipe click suppression and spoiler-free surprise blind-box rows), `<button>` story slots, `Home`/`End` keyboard shortcuts, `aria-live="polite"` announcements, and `inert` background panels.
+- **100% Per-File V8 Coverage & Real-Browser Visual/WCAG Gate** — Enforced via strict TypeScript, ESLint (`strictTypeChecked` + `is*` boolean naming invariants), `100.00%` per-file Vitest V8 coverage across statements, branches, functions, and lines, plus Playwright visual regression snapshots, real-browser WCAG 2.1 AA (`>= 4.5:1`) computed-style contrast checks, and precache byte-budget gates.
 
 ---
 
@@ -48,7 +48,7 @@ npm ci
 npm run dev          # Start local Vite dev server
 npm run lint         # Run strict type-checked ESLint rules
 npm run typecheck    # Run TypeScript compiler checks
-npm run test:unit    # Run Vitest unit suite with ≥99% V8 coverage gate
-npm run test:e2e     # Build & run Playwright visual regression + smoke suite
-npm test             # Run full quality gate (format, lint, typecheck, unit, e2e)
+npm run test:unit    # Run Vitest unit & integrity suites with 100% per-file V8 coverage gate
+npm run test:e2e     # Build & run Playwright visual regression, WCAG, and PWA budget suites
+npm test             # Run full quality gate (lint, format, typecheck, unit, build, e2e)
 ```
