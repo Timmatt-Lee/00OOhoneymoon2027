@@ -1,15 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
   <defs>
     <clipPath id="g4-bg-mtn-clip">
-      <path d="M -20,205 L -20,146 L 60,134 L 172,42 L 228,42 L 330,138 L 455,80 L 580,136 L 720,76 L 865,134 L 1010,94 L 1220,144 L 1220,205 Z"/>
+      <path d="M -1400,205 L -1400,142 L -1120,82 L -840,136 L -540,76 L -260,134 L 60,134 L 172,42 L 228,42 L 330,138 L 455,80 L 580,136 L 720,76 L 865,134 L 1010,94 L 1220,140 L 1540,82 L 1880,136 L 2220,84 L 2600,142 L 2600,205 Z"/>
     </clipPath>
   </defs>
-  <circle cx="445" cy="90" r="46" fill="#fb923c" opacity="0.42"/>
-  <circle cx="445" cy="90" r="30" fill="#fde047" opacity="0.9"/>
-  <path d="M -20,205 L -20,146 L 60,134 L 172,42 L 228,42 L 330,138 L 455,80 L 580,136 L 720,76 L 865,134 L 1010,94 L 1220,144 L 1220,205 Z" fill="#334155" opacity="0.72"/>
+  <!-- Nocturnal Starlight & Crescent Moon for Otaru / Sapporo / Susukino Night Skies (Days 9-11) -->
+  <g fill="#fef9c3" opacity="0.76">
+    <circle cx="136" cy="24" r="1.2"/>
+    <circle cx="274" cy="30" r="1.4"/>
+    <circle cx="322" cy="18" r="1.1"/>
+    <circle cx="418" cy="26" r="1.3"/>
+    <circle cx="496" cy="20" r="1.5"/>
+    <circle cx="548" cy="34" r="1.2"/>
+    <circle cx="592" cy="22" r="1.3"/>
+  </g>
+  <path d="M 374 22 A 10 10 0 1 1 363 34 A 8 8 0 1 0 374 22 Z" fill="#fef9c3" opacity="0.84"/>
+  <!-- Warm Golden Sunset Glow Positioned Strictly for Day 12 New Chitose Horizon -->
+  <circle cx="654" cy="54" r="26" fill="#fb923c" opacity="0.38"/>
+  <circle cx="654" cy="54" r="17" fill="#fde047" opacity="0.94"/>
+  <!-- Opaque Alpine Ridge (Zero Alpha Sun Bleed Through Mountain Body) -->
+  <path d="M -1400,205 L -1400,142 L -1120,82 L -840,136 L -540,76 L -260,134 L 60,134 L 172,42 L 228,42 L 330,138 L 455,80 L 580,136 L 720,76 L 865,134 L 1010,94 L 1220,140 L 1540,82 L 1880,136 L 2220,84 L 2600,142 L 2600,205 Z" fill="#334155"/>
   <g clip-path="url(#g4-bg-mtn-clip)" fill="#ffffff" opacity="0.94">
+    <polygon points="-1280,110 -1280,74 -960,74 -960,110 -1090,102 -1120,111 -1150,102"/>
+    <polygon points="-700,104 -700,68 -380,68 -380,104 -510,96 -540,105 -570,96"/>
     <polygon points="60,88 60,34 330,34 330,88 234,78 200,89 166,78"/>
     <polygon points="330,108 330,72 580,72 580,108 480,100 455,109 430,100"/>
     <polygon points="580,106 580,68 865,68 865,106 748,97 720,106 692,97"/>
+    <polygon points="1380,110 1380,74 1700,74 1700,110 1570,102 1540,111 1510,102"/>
+    <polygon points="2060,112 2060,76 2380,76 2380,112 2250,104 2220,113 2190,104"/>
   </g>
 </svg>

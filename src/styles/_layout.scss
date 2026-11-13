@@ -21,8 +21,9 @@
 
 html,
 body {
+  height: 100vh;
   height: 100dvh;
-  width: 100vw;
+  width: 100%;
   overflow: hidden;
   overscroll-behavior: none;
   margin: 0;
@@ -30,7 +31,7 @@ body {
   font-family: $font-stack;
   font-size-adjust: from-font;
   background: var(--sky-top-color, $bg-deep);
-  touch-action: pan-y;
+  touch-action: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -38,14 +39,16 @@ body {
 
 #app-shell {
   position: relative;
-  width: 100vw;
+  width: 100%;
+  height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  contain: layout paint;
   background: $bg-deep;
-  touch-action: pan-y;
+  touch-action: none;
 
   &.theme-dark {
-    --tl-line-bg: rgba(255, 255, 255, 0.38);
+    --tl-line-bg: rgba(255, 255, 255, 0.44);
     --tl-text-color: #ffffff;
     --tl-dot-bg: #f43f5e;
     --seg-past-bg: rgba(255, 255, 255, 0.85);
@@ -57,13 +60,13 @@ body {
   }
 
   &.theme-light {
-    --tl-line-bg: rgba(15, 23, 42, 0.28);
+    --tl-line-bg: rgba(15, 23, 42, 0.52);
     --tl-text-color: #0f172a;
     --tl-dot-bg: #0f172a;
-    --seg-past-bg: rgba(15, 23, 42, 0.5);
-    --seg-past-border: rgba(255, 255, 255, 0.9);
-    --seg-future-bg: rgba(30, 41, 59, 0.28);
-    --seg-future-border: rgba(255, 255, 255, 0.8);
+    --seg-past-bg: rgba(15, 23, 42, 0.76);
+    --seg-past-border: rgba(15, 23, 42, 0.88);
+    --seg-future-bg: rgba(15, 23, 42, 0.54);
+    --seg-future-border: rgba(15, 23, 42, 0.68);
     --seg-shadow: none;
     --focus-ring-color: #0284c7;
   }
@@ -75,7 +78,7 @@ body {
   pointer-events: none;
 
   @media (min-width: 560px) {
-    max-width: 480px;
+    max-width: max(480px, 30rem);
     margin-inline: auto;
   }
 }
@@ -85,6 +88,7 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  contain: layout paint;
   background: $bg-deep;
 }
 
@@ -94,11 +98,10 @@ body {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  contain: layout paint;
   opacity: 0;
   visibility: hidden;
-  will-change: opacity;
   backface-visibility: hidden;
-  transform: translateZ(0);
 }
 
 #top-header {
@@ -117,7 +120,7 @@ body {
   gap: 6px;
   min-block-size: 40px;
   cursor: ew-resize;
-  touch-action: pan-y;
+  touch-action: none;
 }
 
 .story-slot {
@@ -165,6 +168,10 @@ body {
   height: 8px;
   border-radius: 9999px;
 
+  &:not(.is-active-pill) > span {
+    display: none;
+  }
+
   &.is-active-pill {
     width: auto;
     height: auto;
@@ -188,14 +195,15 @@ body {
   }
 
   .pill-day-tag {
-    color: #fb7185;
+    color: #fda4af;
   }
 }
 
 #timeline-rail {
   position: absolute;
-  top: calc(#{$rail-top} + var(--sat) * 0.5);
-  bottom: $rail-bottom;
+  top: calc(var(--sat) + clamp(76px, 13.5vh, 116px));
+  top: calc(var(--sat) + clamp(76px, 13.5dvh, 116px));
+  bottom: calc(var(--footer-h) + 24px);
   left: 16px;
   width: 74px;
   z-index: 35;
@@ -229,7 +237,6 @@ body {
   align-items: center;
   transform: translate3d(0, 0px, 0);
   opacity: 0;
-  will-change: transform, opacity;
   backface-visibility: hidden;
 }
 
@@ -254,7 +261,6 @@ body {
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--tl-text-color);
-  will-change: opacity;
 }
 
 .tl-dot {
@@ -267,7 +273,6 @@ body {
   background-color: var(--tl-dot-bg);
   border: 2px solid #ffffff;
   transform: scale(1);
-  will-change: transform, background-color;
 }
 
 #schedule-stage {
@@ -278,17 +283,18 @@ body {
   z-index: 30;
   pointer-events: none;
   overflow: hidden;
+  contain: layout paint;
 }
 
 .day-schedule-panel {
   position: absolute;
-  top: calc(#{$rail-top} + var(--sat) * 0.5);
-  bottom: $rail-bottom;
+  top: calc(var(--sat) + clamp(76px, 13.5vh, 116px));
+  top: calc(var(--sat) + clamp(76px, 13.5dvh, 116px));
+  bottom: calc(var(--footer-h) + 24px);
   left: 90px;
   right: 10px;
   pointer-events: none;
   visibility: hidden;
-  will-change: transform, opacity;
   backface-visibility: hidden;
 }
 
@@ -324,9 +330,11 @@ body {
 
   &.theme-dark {
     color: #ffffff;
+    text-shadow: 0 1px 3px rgba(7, 11, 25, 0.45);
   }
   &.theme-light {
     color: #0f172a;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
   }
 
   &.is-map-link {
@@ -342,7 +350,7 @@ body {
       content: ' ↗';
       content: ' ↗' / '';
       font-size: 0.72em;
-      opacity: 0.72;
+      opacity: 0.86;
       margin-inline-start: 3px;
       -webkit-text-stroke: 0;
     }
@@ -366,10 +374,12 @@ body {
   white-space: nowrap;
 
   &.theme-dark {
-    color: #cbd5e1;
+    color: #e2e8f0;
+    text-shadow: 0 1px 3px rgba(7, 11, 25, 0.45);
   }
   &.theme-light {
-    color: #334155;
+    color: #1e293b;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
   }
 }
 
@@ -379,8 +389,10 @@ body {
   right: 0;
   bottom: 0;
   height: $footer-height;
+  height: var(--footer-h);
   z-index: 20;
   overflow: hidden;
+  contain: layout paint;
   pointer-events: auto;
   cursor: pointer;
 }
@@ -412,13 +424,12 @@ body {
   height: 100%;
   overflow: hidden;
   visibility: hidden;
-  transform: translate3d(var(--clip-x, 0px), 0, 0);
-  will-change: transform;
   backface-visibility: hidden;
   pointer-events: none;
 
   &.is-visible {
     visibility: visible;
+    will-change: transform;
   }
 }
 
@@ -427,25 +438,20 @@ body {
   bottom: 0;
   left: 0;
   height: $footer-height;
-  will-change: transform;
+  height: var(--footer-h);
   backface-visibility: hidden;
   pointer-events: none;
+}
 
-  &.parallax-bg {
-    transform: translate3d(calc(var(--pan-shift, 0px) * 0.38), 0, 0);
-  }
-  &.parallax-mid {
-    transform: translate3d(calc(var(--pan-shift, 0px) * 0.68), 0, 0);
-  }
-  &.parallax-fg {
-    transform: translate3d(calc(var(--pan-shift, 0px) * 1), 0, 0);
-  }
+.scene-group-clip.is-visible .parallax-layer {
+  will-change: transform;
 }
 
 .scene-svg {
   width: 100%;
   height: 100%;
   display: block;
+  overflow: visible;
 }
 
 #snow-ground-slot {
@@ -453,7 +459,7 @@ body {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 44px;
+  height: max(44px, calc(28px + var(--sab)));
   pointer-events: none;
   z-index: 30;
 }
@@ -468,7 +474,6 @@ body {
   position: absolute;
   pointer-events: none;
   z-index: 30;
-  will-change: transform, opacity;
   backface-visibility: hidden;
 
   &.plane-arrive {
@@ -476,6 +481,10 @@ body {
     left: 28px;
     width: 108px;
     height: 37px;
+
+    @media (min-width: 560px) {
+      left: calc(50% - 212px);
+    }
   }
 
   &.plane-depart {
@@ -483,7 +492,15 @@ body {
     right: 34px;
     width: 108px;
     height: 37px;
+
+    @media (min-width: 560px) {
+      right: calc(50% - 206px);
+    }
   }
+}
+
+.scene-group-clip.is-visible .plane-actor {
+  will-change: transform, opacity;
 }
 
 .jetliner-svg {
@@ -499,4 +516,118 @@ body {
   height: 100%;
   pointer-events: none;
   z-index: 25;
+}
+
+// Dynamic GPU layer promotion strictly during active swipe / hardware glide
+#app-shell.is-swiping,
+#app-shell.is-gliding {
+  .sky-layer {
+    will-change: opacity;
+  }
+
+  .day-schedule-panel,
+  .tl-node {
+    will-change: transform, opacity;
+  }
+
+  .tl-dot {
+    will-change: transform;
+  }
+
+  .tl-time-label {
+    will-change: opacity;
+  }
+}
+
+// 60 Hz CoreAnimation off-main-thread glide transitions (runs at 60 Hz even in iOS Low Power Mode)
+#app-shell.is-gliding {
+  .sky-layer,
+  .day-schedule-panel,
+  .tl-node,
+  .tl-dot,
+  .tl-time-label,
+  .scene-group-clip,
+  .parallax-layer,
+  .plane-actor {
+    transition:
+      transform $glide-duration $glide-easing,
+      opacity $glide-duration $glide-easing;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sky-layer,
+    .day-schedule-panel,
+    .tl-node,
+    .tl-dot,
+    .tl-time-label,
+    .scene-group-clip,
+    .parallax-layer,
+    .plane-actor {
+      transition: none !important;
+    }
+  }
+}
+
+// Compact portrait viewport layout (320x568 iPhone SE .. 359px) — zero clipping or overlap
+@media (max-width: 359px) {
+  #top-header {
+    padding: calc(10px + var(--sat)) 10px 0;
+  }
+
+  #story-bar-track {
+    gap: 3px;
+    min-block-size: 34px;
+  }
+
+  .story-slot {
+    min-width: 5px;
+  }
+
+  .story-seg.is-active-pill {
+    min-block-size: 28px;
+    padding: 4px 10px;
+    font-size: 0.875rem;
+    gap: 4px;
+  }
+
+  #timeline-rail {
+    top: calc(var(--sat) + 66px);
+    bottom: calc(var(--footer-h) + 22px);
+    left: 8px;
+    width: 48px;
+  }
+
+  .tl-time-wrap {
+    width: 35px;
+  }
+
+  .tl-time-label {
+    font-size: 0.78125rem;
+  }
+
+  #timeline-line {
+    left: 41px;
+  }
+
+  .tl-dot {
+    left: 42.25px;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+  }
+
+  .day-schedule-panel {
+    top: calc(var(--sat) + 66px);
+    bottom: calc(var(--footer-h) + 22px);
+    left: 58px;
+    right: 4px;
+  }
+
+  .schedule-item-title {
+    font-size: 0.84375rem;
+  }
+
+  .schedule-item-subtitle {
+    font-size: 0.625rem;
+  }
 }

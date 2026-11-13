@@ -1,13 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
   <defs>
     <clipPath id="g3-bg-mtn-clip">
-      <path d="M -20,205 L -20,126 L 82,60 L 146,60 L 224,118 L 334,54 L 465,126 L 495,134 L 495,205 Z"/>
+      <path d="M -1400,205 L -1400,134 L -1120,76 L -840,128 L -560,68 L -280,124 L -20,126 L 82,60 L 146,60 L 224,118 L 334,54 L 465,126 L 740,72 L 1040,128 L 1360,74 L 1880,134 L 1880,205 Z"/>
     </clipPath>
   </defs>
-  <path d="M 412 26 A 14 14 0 1 1 397 43 A 11.2 11.2 0 1 0 412 26 Z" fill="#fef08a" opacity="0.9"/>
-  <path d="M -20,205 L -20,126 L 82,60 L 146,60 L 224,118 L 334,54 L 465,126 L 495,134 L 495,205 Z" fill="#4c1d3d" opacity="0.82"/>
+  <g fill="#fef9c3" opacity="0.72">
+    <circle cx="52" cy="28" r="1.2"/>
+    <circle cx="196" cy="22" r="1.4"/>
+    <circle cx="284" cy="34" r="1.1"/>
+  </g>
+  <path d="M 412 26 A 14 14 0 1 1 397 43 A 11.2 11.2 0 1 0 412 26 Z" fill="#fef08a" opacity="0.92"/>
+  <path d="M -1400,205 L -1400,134 L -1120,76 L -840,128 L -560,68 L -280,124 L -20,126 L 82,60 L 146,60 L 224,118 L 334,54 L 465,126 L 740,72 L 1040,128 L 1360,74 L 1880,134 L 1880,205 Z" fill="#4c1d3d"/>
   <g clip-path="url(#g3-bg-mtn-clip)" fill="#ffffff" opacity="0.9">
+    <polygon points="-1280,104 -1280,68 -960,68 -960,104 -1090,96 -1120,105 -1150,96"/>
+    <polygon points="-720,98 -720,60 -400,60 -400,98 -530,90 -560,99 -590,90"/>
     <polygon points="-20,88 -20,48 224,48 224,88 144,81 114,89 84,81"/>
     <polygon points="224,88 224,44 465,44 465,88 358,80 334,89 310,80"/>
+    <polygon points="590,100 590,64 900,64 900,100 770,92 740,101 710,92"/>
+    <polygon points="1200,102 1200,66 1520,66 1520,102 1390,94 1360,103 1330,94"/>
   </g>
 </svg>

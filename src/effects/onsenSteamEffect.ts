@@ -9,30 +9,35 @@ interface SteamWisp {
   phase: number;
 }
 
-function createSteamPuffSprite(): HTMLCanvasElement {
+function createSteamPuffSprite(dpr: number): HTMLCanvasElement {
+  const sizePx = Math.max(64, Math.round(112 * dpr));
+  const halfPx = sizePx / 2;
+  const innerRadiusPx = Math.max(2, sizePx * 0.03);
   const c = document.createElement('canvas');
-  c.width = 64;
-  c.height = 64;
+  c.width = sizePx;
+  c.height = sizePx;
   const gCtx = c.getContext('2d');
   if (gCtx) {
-    const grad = gCtx.createRadialGradient(32, 32, 2, 32, 32, 32);
+    const grad = gCtx.createRadialGradient(halfPx, halfPx, innerRadiusPx, halfPx, halfPx, halfPx);
     grad.addColorStop(0, 'rgba(248, 250, 252, 1)');
     grad.addColorStop(0.55, 'rgba(241, 245, 249, 0.55)');
     grad.addColorStop(1, 'rgba(241, 245, 249, 0)');
     gCtx.fillStyle = grad;
-    gCtx.fillRect(0, 0, 64, 64);
+    gCtx.fillRect(0, 0, sizePx, sizePx);
   }
   return c;
 }
 
 export class OnsenSteamEffect {
   private readonly wisps: SteamWisp[];
-  private readonly sprite: HTMLCanvasElement;
+  private sprite: HTMLCanvasElement;
+  private spriteDpr: number;
   private readonly activeDayIndices: readonly number[];
   private readonly rand = createPrng(20270307);
 
-  constructor(wispCount = 18, activeDayIndices: readonly number[] = [5, 6]) {
-    this.sprite = createSteamPuffSprite();
+  constructor(wispCount = 18, activeDayIndices: readonly number[] = [5, 6], initialDpr = 1) {
+    this.spriteDpr = initialDpr;
+    this.sprite = createSteamPuffSprite(initialDpr);
     this.activeDayIndices = activeDayIndices;
     const primaryCount = Math.round(wispCount * 0.78);
     this.wisps = Array.from({ length: wispCount }, (_, idx) => ({
@@ -45,12 +50,19 @@ export class OnsenSteamEffect {
     }));
   }
 
+  public setDpr(nextDpr: number): void {
+    if (nextDpr === this.spriteDpr) return;
+    this.spriteDpr = nextDpr;
+    this.sprite = createSteamPuffSprite(nextDpr);
+  }
+
   public render(
     ctx: CanvasRenderingContext2D,
     w: number,
     h: number,
     dayFloat: number,
-    isAdvancing = true
+    isAdvancing = true,
+    dtScale = 1
   ): void {
     if (this.activeDayIndices.length === 0) return;
 
@@ -59,15 +71,15 @@ export class OnsenSteamEffect {
       const d = Math.abs(dayFloat - idx);
       if (d < minDist) minDist = d;
     }
-    if (minDist >= 1.15) return;
+    if (minDist >= 1.0) return;
 
-    const strength = 1 - minDist / 1.15;
+    const strength = 1 - minDist;
     const baseY = h - 36;
 
     for (const s of this.wisps) {
       if (isAdvancing) {
-        s.phase += 0.02;
-        s.yOffset += s.vy;
+        s.phase += 0.02 * dtScale;
+        s.yOffset += s.vy * dtScale;
         if (s.yOffset > 135) {
           s.yOffset = 0;
         }

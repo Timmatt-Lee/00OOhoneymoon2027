@@ -88,7 +88,7 @@
       "groupIdx": 2,
       "localIdx": 0,
       "mapQuery": "Lake Shikotsu",
-      "skyGrad": "linear-gradient(180deg, #0C192C 0%, #1E3A5F 52%, #3B6998 100%)"
+      "skyGrad": "linear-gradient(180deg, #0C192C 0%, #1E3A5F 52%, #24476E 100%)"
     },
     {
       "day": 7,
@@ -183,7 +183,7 @@
   ],
   "sceneGroups": [
     { "groupIdx": 0, "startDay": 0, "endDay": 2, "panStepPx": 54, "widthPx": 620 },
-    { "groupIdx": 1, "startDay": 3, "endDay": 4, "panStepPx": 88, "widthPx": 580 },
+    { "groupIdx": 1, "startDay": 3, "endDay": 4, "panStepPx": 168, "widthPx": 580 },
     { "groupIdx": 2, "startDay": 5, "endDay": 5, "panStepPx": 0, "widthPx": 480 },
     { "groupIdx": 3, "startDay": 6, "endDay": 6, "panStepPx": 0, "widthPx": 480 },
     { "groupIdx": 4, "startDay": 7, "endDay": 11, "panStepPx": 200, "widthPx": 1200 }

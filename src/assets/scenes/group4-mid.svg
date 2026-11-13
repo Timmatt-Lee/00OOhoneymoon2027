@@ -1,19 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
   <defs>
     <clipPath id="g4-mid-hills-clip">
-      <path d="M 230,205 L 230,152 Q 360,104 490,144 Q 640,162 820,144 Q 980,128 1200,150 L 1200,205 Z"/>
+      <path d="M 192,205 L 192,165 C 220,162 246,148 276,136 Q 368,102 490,144 Q 640,162 820,144 Q 980,128 1200,150 Q 1560,128 1920,148 L 2600,146 L 2600,205 Z"/>
     </clipPath>
   </defs>
   <!-- Day 8 (mid shift 0): Lake Toya Calm Caldera Water & Nakajima Snow Island -->
-  <rect x="0" y="144" width="245" height="61" fill="#0284c7" opacity="0.88"/>
+  <rect x="-1400" y="144" width="1665" height="61" fill="#0284c7" opacity="0.9"/>
   <path d="M 68,144 Q 118,108 168,144 Z" fill="#1e293b"/>
   <path d="M 88,129 Q 118,108 148,129 Q 132,124 118,130 Q 104,124 88,129 Z" fill="#ffffff" opacity="0.92"/>
-  <g fill="#e0f2fe" opacity="0.85">
+  <g class="water-shimmer" fill="#e0f2fe" opacity="0.85">
     <rect x="24" y="154" width="56" height="2.5" rx="1.2"/>
     <rect x="98" y="158" width="64" height="2.5" rx="1.2"/>
   </g>
-  <!-- Clean Rolling Snow Foothills across Otaru, Sapporo & Chitose -->
-  <path d="M 230,205 L 230,152 Q 360,104 490,144 Q 640,162 820,144 Q 980,128 1200,150 L 1200,205 Z" fill="#334155" opacity="0.82"/>
-  <rect x="260" y="104" width="210" height="28" fill="#ffffff" opacity="0.86" clip-path="url(#g4-mid-hills-clip)"/>
-  <rect x="230" y="156" width="970" height="49" fill="#cbd5e1"/>
+  <!-- Smoothly Tapered Shoreline & Rolling Snow Foothills Across Otaru, Sapporo & Chitose -->
+  <path d="M 192,205 L 192,165 C 220,162 246,148 276,136 Q 368,102 490,144 Q 640,162 820,144 Q 980,128 1200,150 Q 1560,128 1920,148 L 2600,146 L 2600,205 Z" fill="#334155"/>
+  <rect x="256" y="102" width="214" height="28" fill="#ffffff" opacity="0.88" clip-path="url(#g4-mid-hills-clip)"/>
+  <path d="M 204,205 C 224,166 248,156 276,156 L 2600,156 L 2600,205 Z" fill="#cbd5e1"/>
 </svg>

@@ -3,33 +3,55 @@ import { NightGlowEffect } from './nightGlowEffect';
 
 function createMockCtx(): CanvasRenderingContext2D {
   return {
-    fillStyle: '',
     globalAlpha: 1,
-    beginPath: vi.fn(),
-    arc: vi.fn(),
-    fill: vi.fn()
+    drawImage: vi.fn()
   } as unknown as CanvasRenderingContext2D;
 }
 
 describe('NightGlowEffect', () => {
-  it('draws warm bokeh orbs near night-glow days and skips distant or empty day sets', () => {
+  it('renders HiDPI soft radial bokeh sprites on nocturnal days with strict < 1.0 bleed guard', () => {
+    const gradMock = { addColorStop: vi.fn() };
+    const spriteCtxMock = {
+      createRadialGradient: vi.fn().mockReturnValue(gradMock),
+      fillStyle: '',
+      fillRect: vi.fn()
+    };
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      spriteCtxMock as unknown as CanvasRenderingContext2D
+    );
+
+    const effect = new NightGlowEffect(12, [8, 9, 10], 1);
+    expect(spriteCtxMock.fillRect).toHaveBeenLastCalledWith(0, 0, 32, 32);
+
+    // Unchanged DPR is a no-op; 2x DPR rebuilds offscreen bokeh sprite at 64x64
+    effect.setDpr(1);
+    expect(spriteCtxMock.createRadialGradient).toHaveBeenCalledTimes(1);
+    effect.setDpr(2);
+    expect(spriteCtxMock.createRadialGradient).toHaveBeenCalledTimes(2);
+    expect(spriteCtxMock.fillRect).toHaveBeenLastCalledWith(0, 0, 64, 64);
+
+    vi.restoreAllMocks();
+
     const ctx = createMockCtx();
-    const effect = new NightGlowEffect();
 
-    // Distant day (Day 1 -> index 0) -> skipped
-    effect.render(ctx, 400, 844, 0);
-    expect(ctx.arc).not.toHaveBeenCalled();
+    // Settled Day 8 (dayFloat 7, minDist === 1.0) & Day 12 (dayFloat 11, minDist === 1.0) -> strict zero bleed!
+    effect.render(ctx, 400, 844, 7);
+    effect.render(ctx, 400, 844, 11);
+    expect(ctx.drawImage).not.toHaveBeenCalled();
 
-    // Night-glow day (Day 10 -> index 9) -> renders advancing & non-advancing frames
-    effect.render(ctx, 400, 844, 9, true);
+    // Nocturnal days (Days 9..11 -> indices 8..10) -> renders advancing & static frames
+    effect.render(ctx, 400, 844, 9, true, 1.25);
+    effect.render(ctx, 400, 844, 10);
     effect.render(ctx, 400, 844, 9, false);
-    expect(ctx.fillStyle).toBe('#FDE047');
-    expect(ctx.arc).toHaveBeenCalled();
+    expect(ctx.drawImage).toHaveBeenCalled();
 
-    // Empty activeDayIndices short-circuits cleanly
+    // Default constructor (null 2d context in jsdom) & empty activeDayIndices guard
+    const defaultGlow = new NightGlowEffect();
     const emptyGlow = new NightGlowEffect(6, []);
     const ctx2 = createMockCtx();
     emptyGlow.render(ctx2, 400, 844, 9, true);
-    expect(ctx2.arc).not.toHaveBeenCalled();
+    expect(ctx2.drawImage).not.toHaveBeenCalled();
+    defaultGlow.render(ctx2, 400, 844, 8);
+    expect(ctx2.drawImage).toHaveBeenCalled();
   });
 });

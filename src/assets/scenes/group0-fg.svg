@@ -1,34 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
   <defs>
     <clipPath id="g0-pine-clip">
       <polygon points="558,116 538,186 578,186"/>
     </clipPath>
   </defs>
-  <path d="M -20,205 L -20,168 Q 150,162 310,168 T 640,166 L 640,205 Z" fill="#f1f5f9"/>
-  <!-- Sapporo Station Classic Gable Wing (x: 34..128, y: 108..198) -->
+  <path d="M -1400,205 L -1400,167 Q -1050,162 -700,167 T -20,168 Q 150,162 310,168 T 640,166 Q 980,162 1320,167 T 2020,166 L 2020,205 Z" fill="#f1f5f9"/>
+  <!-- Sapporo Station Classic Gable Wing -->
   <path d="M 34,198 L 34,116 L 81,98 L 128,116 L 128,198 Z" fill="#0f172a"/>
   <polyline points="31,117 81,96 131,117" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="81" cy="111" r="5.5" fill="#fef08a" stroke="#38bdf8" stroke-width="1.5"/>
   <g fill="#fde047" opacity="0.88">
-    <rect x="46" y="124" width="14" height="9" rx="2"/><rect x="74" y="124" width="14" height="9" rx="2"/><rect x="102" y="124" width="14" height="9" rx="2"/>
-    <rect x="46" y="140" width="14" height="9" rx="2"/><rect x="74" y="140" width="14" height="9" rx="2"/><rect x="102" y="140" width="14" height="9" rx="2"/>
+    <rect x="46" y="124" width="14" height="9" rx="2"/>
+    <rect x="74" y="124" width="14" height="9" rx="2"/>
+    <rect x="102" y="124" width="14" height="9" rx="2"/>
+    <rect x="46" y="140" width="14" height="9" rx="2"/>
+    <rect x="74" y="140" width="14" height="9" rx="2"/>
+    <rect x="102" y="140" width="14" height="9" rx="2"/>
   </g>
-  <!-- JR Tower Hotel Nikko Sapporo (x: 136..222, y: 84..198 — proportional height so background mountains shine above!) -->
+  <!-- Station High-Rise Tower Silhouette -->
   <path d="M 136,198 L 136,92 L 148,84 L 210,84 L 222,92 L 222,198 Z" fill="#090d16"/>
   <path d="M 146,84 L 212,84 L 222,91 L 136,91 Z" fill="#ffffff"/>
   <rect x="146" y="96" width="66" height="4" rx="1" fill="#38bdf8"/>
   <g fill="#fde047" opacity="0.9">
-    <rect x="146" y="106" width="12" height="4.5" rx="0.8"/><rect x="163" y="106" width="12" height="4.5" rx="0.8"/><rect x="181" y="106" width="12" height="4.5" rx="0.8"/><rect x="198" y="106" width="12" height="4.5" rx="0.8"/>
-    <rect x="146" y="118" width="12" height="4.5" rx="0.8"/><rect x="163" y="118" width="12" height="4.5" rx="0.8"/><rect x="181" y="118" width="12" height="4.5" rx="0.8"/><rect x="198" y="118" width="12" height="4.5" rx="0.8"/>
-    <rect x="146" y="130" width="12" height="4.5" rx="0.8"/><rect x="163" y="130" width="12" height="4.5" rx="0.8"/><rect x="181" y="130" width="12" height="4.5" rx="0.8"/><rect x="198" y="130" width="12" height="4.5" rx="0.8"/>
-    <rect x="146" y="142" width="12" height="4.5" rx="0.8"/><rect x="163" y="142" width="12" height="4.5" rx="0.8"/><rect x="181" y="142" width="12" height="4.5" rx="0.8"/><rect x="198" y="142" width="12" height="4.5" rx="0.8"/>
+    <rect x="146" y="106" width="12" height="4.5" rx="0.8"/>
+    <rect x="163" y="106" width="12" height="4.5" rx="0.8"/>
+    <rect x="181" y="106" width="12" height="4.5" rx="0.8"/>
+    <rect x="198" y="106" width="12" height="4.5" rx="0.8"/>
+    <rect x="146" y="118" width="12" height="4.5" rx="0.8"/>
+    <rect x="163" y="118" width="12" height="4.5" rx="0.8"/>
+    <rect x="181" y="118" width="12" height="4.5" rx="0.8"/>
+    <rect x="198" y="118" width="12" height="4.5" rx="0.8"/>
+    <rect x="146" y="130" width="12" height="4.5" rx="0.8"/>
+    <rect x="163" y="130" width="12" height="4.5" rx="0.8"/>
+    <rect x="181" y="130" width="12" height="4.5" rx="0.8"/>
+    <rect x="198" y="130" width="12" height="4.5" rx="0.8"/>
+    <rect x="146" y="142" width="12" height="4.5" rx="0.8"/>
+    <rect x="163" y="142" width="12" height="4.5" rx="0.8"/>
+    <rect x="181" y="142" width="12" height="4.5" rx="0.8"/>
+    <rect x="198" y="142" width="12" height="4.5" rx="0.8"/>
   </g>
-  <!-- Sapporo Beer Museum Red-Brick Arch (x: 236..360) -->
+  <!-- Sapporo Historic Beer Hall Arch -->
   <path d="M 236,198 L 236,96 Q 298,72 360,96 L 360,198 Z" fill="#0f172a"/>
   <path d="M 236,96 Q 298,72 360,96" fill="none" stroke="#ffffff" stroke-width="4"/>
   <circle cx="298" cy="106" r="10" fill="#1e3a8a" stroke="#fde047" stroke-width="2"/>
   <polygon points="298,99 301,105 307,106 302,110 303,115 298,112 293,115 294,110 289,106 295,105" fill="#ef4444"/>
-  <!-- Hokkaido Shrine Red Torii Gate & Snowman & Pine (x: 392..578) -->
+  <!-- Shrine Red Torii Gate, Snowman & Snow Pine -->
   <rect x="404" y="122" width="6.5" height="68" fill="#dc2626"/>
   <rect x="444" y="122" width="6.5" height="68" fill="#dc2626"/>
   <path d="M 392,122 Q 427,115 462,122" fill="none" stroke="#dc2626" stroke-width="6.5" stroke-linecap="round"/>

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 205" class="scene-svg" preserveAspectRatio="xMidYMax slice">
-  <path d="M -20,205 L -20,162 Q 110,152 220,162 Q 340,116 460,138 T 595,126 L 595,205 Z" fill="#e2e8f0" opacity="0.88"/>
-  <path d="M 24,164 Q 82,108 140,164 Q 198,108 256,164" fill="none" stroke="#334155" stroke-width="6"/>
-  <line x1="16" y1="164" x2="264" y2="164" stroke="#ffffff" stroke-width="3.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
+  <path d="M -1400,205 L -1400,148 Q -1060,126 -720,148 T -20,162 Q 110,152 220,162 Q 340,116 460,138 T 595,126 Q 940,146 1280,134 T 1980,144 L 1980,205 Z" fill="#cbd5e1"/>
+  <path d="M 24,164 Q 78,110 132,164 Q 186,110 240,164" fill="none" stroke="#334155" stroke-width="6"/>
+  <line x1="16" y1="164" x2="248" y2="164" stroke="#ffffff" stroke-width="3.5"/>
 </svg>
