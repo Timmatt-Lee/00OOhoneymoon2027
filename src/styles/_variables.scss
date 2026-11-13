@@ -9,9 +9,7 @@
 :root {
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
-  --sky-top-color: #070b19;
   --footer-h: clamp(148px, 24vh, 205px);
-  --footer-h: clamp(148px, 24dvh, 205px);
 }
 
 $bg-deep: #070b19;

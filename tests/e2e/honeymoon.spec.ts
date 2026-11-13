@@ -356,9 +356,10 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     }
   });
 
-  test('6. verifies responsive viewports (320x568 SE, 390x844, 1280x800, 1920x1080), Day 5 couple framing, and blind-box privacy', async ({
+  test('6. verifies responsive viewports (320x568 SE, 390x844, 393x852 iPhone 14 Pro safe-area WebClip, 1280x800, 1920x1080), Day 5 couple framing, and blind-box privacy', async ({
     page
   }) => {
+    const errors = await installErrorAndCspMonitors(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
 
     // 1. Day 5 on 390x844: Bride & Groom (#biei-wedding-couple) must sit 100% inside the 390px viewport
@@ -442,5 +443,137 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
         expect(frameBox.x).toBeGreaterThan((vp.width - 480) / 2 - 4);
       }
     }
+
+    // 4. iPhone 14 Pro Standalone WebClip safe-area simulation (393x852, --sat: 59px, --sab: 34px) across all 12 days (incl. Day 1, Day 4, Day 5, Day 12)
+    await page.evaluate(() => {
+      document.documentElement.style.setProperty('--sat', '59px');
+      document.documentElement.style.setProperty('--sab', '34px');
+    });
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+
+    for (let dayIdx = 0; dayIdx < 12; dayIdx++) {
+      await page.locator(`.story-slot[data-day="${dayIdx}"]`).click();
+
+      const safeAreaAudit = await page.evaluate((idx) => {
+        const shellEl = document.getElementById('app-shell');
+        const footerEl = document.getElementById('cityscape-footer');
+        const snowSlotEl = document.getElementById('snow-ground-slot');
+        const snowSvgRect = document
+          .querySelector<SVGElement>('.snow-ground-svg')
+          ?.getBoundingClientRect();
+        const visibleParallaxRect = document
+          .querySelector<HTMLElement>('.scene-group-clip.is-visible .parallax-fg')
+          ?.getBoundingClientRect();
+
+        if (!shellEl || !footerEl || !snowSlotEl || !snowSvgRect || !visibleParallaxRect) {
+          return null;
+        }
+
+        const shellRect = shellEl.getBoundingClientRect();
+        const footerRect = footerEl.getBoundingClientRect();
+        const snowSlotRect = snowSlotEl.getBoundingClientRect();
+
+        const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor;
+        const bodyBg = window.getComputedStyle(document.body).backgroundColor;
+        const shellBg = window.getComputedStyle(shellEl).backgroundColor;
+        const snowAfterBg = window.getComputedStyle(snowSlotEl, '::after').backgroundColor;
+        const skyTopVar = document.documentElement.style.getPropertyValue('--sky-top-color');
+        const isDocOverflow =
+          document.documentElement.scrollWidth > document.documentElement.clientWidth;
+
+        let isItemOverflow = false;
+        let isFooterOverlap = false;
+        let isRowCollision = false;
+
+        const panel = document.querySelector<HTMLElement>(`.day-schedule-panel[data-day="${idx}"]`);
+        const rows = panel
+          ? Array.from(panel.querySelectorAll<HTMLElement>('.schedule-item-row'))
+          : [];
+
+        let prevBottom = -1;
+        for (const row of rows) {
+          const titleEl = row.querySelector<HTMLElement>('.schedule-item-title');
+          const subEl = row.querySelector<HTMLElement>('.schedule-item-subtitle');
+          if (!titleEl) continue;
+
+          const tRect = titleEl.getBoundingClientRect();
+          if (titleEl.scrollWidth > titleEl.clientWidth + 1) {
+            isItemOverflow = true;
+          }
+          if (tRect.top <= prevBottom) {
+            isRowCollision = true;
+          }
+
+          let rowBottom = tRect.bottom;
+          if (subEl) {
+            if (subEl.scrollWidth > subEl.clientWidth + 1) {
+              isItemOverflow = true;
+            }
+            rowBottom = subEl.getBoundingClientRect().bottom;
+          }
+          if (rowBottom > footerRect.top) {
+            isFooterOverlap = true;
+          }
+          prevBottom = rowBottom;
+        }
+
+        return {
+          shellBottom: Math.round(shellRect.bottom),
+          footerBottom: Math.round(footerRect.bottom),
+          snowSlotBottom: Math.round(snowSlotRect.bottom),
+          snowSlotHeight: Math.round(snowSlotRect.height),
+          snowSvgHeight: Math.round(snowSvgRect.height),
+          snowSvgBottom: Math.round(snowSvgRect.bottom),
+          parallaxFgBottom: Math.round(visibleParallaxRect.bottom),
+          htmlBg,
+          bodyBg,
+          shellBg,
+          snowAfterBg,
+          skyTopVar,
+          rowCount: rows.length,
+          isDocOverflow,
+          isItemOverflow,
+          isFooterOverlap,
+          isRowCollision
+        };
+      }, dayIdx);
+
+      expect(safeAreaAudit, `Missing stage elements on Day ${dayIdx + 1}`).not.toBeNull();
+      if (!safeAreaAudit) continue;
+
+      expect(safeAreaAudit.shellBottom, `Day ${dayIdx + 1} #app-shell bottom`).toBe(852);
+      expect(safeAreaAudit.footerBottom, `Day ${dayIdx + 1} #cityscape-footer bottom`).toBe(852);
+      expect(safeAreaAudit.snowSlotBottom, `Day ${dayIdx + 1} #snow-ground-slot bottom`).toBe(852);
+      expect(safeAreaAudit.snowSlotHeight, `Day ${dayIdx + 1} #snow-ground-slot height`).toBe(78);
+      expect(safeAreaAudit.snowSvgHeight, `Day ${dayIdx + 1} .snow-ground-svg height`).toBe(44);
+      expect(safeAreaAudit.snowSvgBottom, `Day ${dayIdx + 1} .snow-ground-svg bottom`).toBe(818);
+      expect(safeAreaAudit.parallaxFgBottom, `Day ${dayIdx + 1} .parallax-fg bottom`).toBe(818);
+      expect(safeAreaAudit.htmlBg, `Day ${dayIdx + 1} html background-color`).toBe(
+        'rgb(255, 255, 255)'
+      );
+      expect(safeAreaAudit.bodyBg, `Day ${dayIdx + 1} body background-color`).toBe(
+        'rgb(255, 255, 255)'
+      );
+      expect(safeAreaAudit.shellBg, `Day ${dayIdx + 1} #app-shell background-color`).toBe(
+        'rgb(255, 255, 255)'
+      );
+      expect(
+        safeAreaAudit.snowAfterBg,
+        `Day ${dayIdx + 1} #snow-ground-slot::after background-color`
+      ).toBe('rgb(255, 255, 255)');
+      expect(safeAreaAudit.skyTopVar, `Day ${dayIdx + 1} --sky-top-color`).toBe('');
+      expect(safeAreaAudit.rowCount).toBeGreaterThanOrEqual(3);
+      expect(safeAreaAudit.isDocOverflow, `Day ${dayIdx + 1} 393x852 doc overflow`).toBe(false);
+      expect(safeAreaAudit.isItemOverflow, `Day ${dayIdx + 1} 393x852 item overflow`).toBe(false);
+      expect(safeAreaAudit.isRowCollision, `Day ${dayIdx + 1} 393x852 row collision`).toBe(false);
+      expect(safeAreaAudit.isFooterOverlap, `Day ${dayIdx + 1} 393x852 footer overlap`).toBe(false);
+    }
+
+    const cspViolations = await page.evaluate(
+      () => (window as unknown as CspWindow).__cspViolations ?? []
+    );
+    expect(cspViolations).toEqual([]);
+    expect(errors).toEqual([]);
   });
 });

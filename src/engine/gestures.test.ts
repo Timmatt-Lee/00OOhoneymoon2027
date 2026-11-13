@@ -9,6 +9,13 @@ describe('bindGesturesAndPhysics', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     window.location.hash = '';
+    document.documentElement.style.removeProperty('--sky-top-color');
+    Object.defineProperty(window, 'CSS', {
+      value: {
+        supports: vi.fn(() => false)
+      },
+      configurable: true
+    });
     document.body.innerHTML = `
       <meta id="theme-color-meta" content="#000000" />
       <div id="app-shell" class="theme-dark">
@@ -175,6 +182,7 @@ describe('bindGesturesAndPhysics', () => {
 
     const themeMeta = document.getElementById('theme-color-meta');
     expect(themeMeta?.getAttribute('content')).toBe('#FBCFE8');
+    expect(document.documentElement.style.getPropertyValue('--sky-top-color')).toBe('');
 
     // Focus inside #story-bar-track syncs roving focus on ArrowRight, ArrowLeft, Home, End
     renderer.storySlotEls[4].focus();
@@ -195,6 +203,7 @@ describe('bindGesturesAndPhysics', () => {
     expect(shell.classList.contains('is-gliding')).toBe(false);
     expect(gestures.getCurrentDayFloat()).toBe(6);
     expect(themeMeta?.getAttribute('content')).toBe('#090A10');
+    expect(document.documentElement.style.getPropertyValue('--sky-top-color')).toBe('');
     expect(renderer.schedulePanelEls[6].classList.contains('is-gpu-staged')).toBe(true);
 
     // Home jumps to Day 1 (index 0); End jumps to Day 12 (index 11)
@@ -204,6 +213,8 @@ describe('bindGesturesAndPhysics', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }));
     expect(gestures.getCurrentDayFloat()).toBe(11);
     expect(document.activeElement).toBe(renderer.storySlotEls[11]);
+    expect(themeMeta?.getAttribute('content')).toBe('#FDBA74');
+    expect(document.documentElement.style.getPropertyValue('--sky-top-color')).toBe('');
 
     // Modifier shortcuts, defaultPrevented events, unrelated keys, and editable inputs are ignored
     renderer.storySlotEls[11].blur();
@@ -517,5 +528,36 @@ describe('bindGesturesAndPhysics', () => {
     nowMs += 500;
     g2.glideToDay(2);
     expect(shell.classList.contains('is-gliding')).toBe(false);
+
+    // Falls back cleanly when theme-color-meta exists and window.CSS or CSS.supports is absent
+    const originalCss = window.CSS;
+    const restoredMeta = document.createElement('meta');
+    restoredMeta.id = 'theme-color-meta';
+    restoredMeta.content = '#000000';
+    document.head.appendChild(restoredMeta);
+    Reflect.deleteProperty(window, 'CSS');
+    bindGesturesAndPhysics(daysData, renderer, timeline, parallax);
+    expect(document.getElementById('theme-color-meta')).toBe(restoredMeta);
+    expect(restoredMeta.content).toBe('#0B1024');
+
+    Object.defineProperty(window, 'CSS', { value: {}, configurable: true });
+    bindGesturesAndPhysics(daysData, renderer, timeline, parallax);
+    expect(document.getElementById('theme-color-meta')).toBe(restoredMeta);
+
+    // Removes #theme-color-meta on iOS/iPadOS WebKit (-webkit-touch-callout: none) so Safari bottom bar never tints to sky colors
+    Object.defineProperty(window, 'CSS', {
+      value: {
+        supports: vi.fn(
+          (prop: string, val: string) => prop === '-webkit-touch-callout' && val === 'none'
+        )
+      },
+      configurable: true
+    });
+    const gIos = bindGesturesAndPhysics(daysData, renderer, timeline, parallax);
+    expect(document.getElementById('theme-color-meta')).toBeNull();
+    gIos.glideToDay(4);
+    expect(document.getElementById('theme-color-meta')).toBeNull();
+
+    Object.defineProperty(window, 'CSS', { value: originalCss, configurable: true });
   });
 });

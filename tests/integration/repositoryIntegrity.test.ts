@@ -10,7 +10,8 @@ const rootDir = path.resolve(__dirname, '../..');
 
 const ManifestSchema = z.object({
   name: z.string(),
-  short_name: z.string()
+  short_name: z.string(),
+  background_color: z.string()
 });
 
 const SPOILER_HOTEL_PATTERN = /Suimeikaku|Takinoya|Nikko|水明閣|瀧乃家/i;
@@ -78,6 +79,7 @@ describe('00OO Hokkaido Honeymoon 2027 — Repository Integrity, Privacy & Archi
     const manifest = ManifestSchema.parse(rawManifest);
     expect(manifest.name).toBe('00OO 北海道蜜月 2027');
     expect(manifest.short_name).toBe('00OO 北海道蜜月 2027');
+    expect(manifest.background_color).toBe('#ffffff');
 
     const indexHtml = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
     expect(indexHtml).toContain('<title>00OO 北海道蜜月 2027</title>');

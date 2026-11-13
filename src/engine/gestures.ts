@@ -30,7 +30,16 @@ export function bindGesturesAndPhysics(
   const shell = getRequiredElementById('app-shell');
   const track = getRequiredElementById('story-bar-track');
   const stageFrame = document.getElementById('stage-frame');
-  const themeMeta = getOptionalMetaById('theme-color-meta');
+  let themeMeta = getOptionalMetaById('theme-color-meta');
+  if (
+    themeMeta &&
+    typeof window.CSS !== 'undefined' &&
+    typeof window.CSS.supports === 'function' &&
+    window.CSS.supports('-webkit-touch-callout', 'none')
+  ) {
+    themeMeta.remove();
+    themeMeta = null;
+  }
 
   const initialIdx = resolveInitialDayIndex(daysData, window.location.hash, now);
   let targetDayIdx = initialIdx;
@@ -80,7 +89,6 @@ export function bindGesturesAndPhysics(
     if (nearestIdx === lastNearestDay) return;
     lastNearestDay = nearestIdx;
     const hex = daysData[nearestIdx].topSkyHex;
-    document.documentElement.style.setProperty('--sky-top-color', hex);
     if (themeMeta && themeMeta.content !== hex) {
       themeMeta.content = hex;
     }
