@@ -223,12 +223,24 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     expect(canvasMetrics.width).toBe(780);
     expect(canvasMetrics.isPopulated).toBe(true);
 
-    // 2. Verify inactive story segment spans stay display:none (zero layout thrash)
-    const isInactiveSpanHidden = await page.evaluate(() => {
+    // 2. Verify inactive story segment spans stay display:none (zero layout thrash) and 3-day GPU staging cap
+    const preGlideGpuState = await page.evaluate(() => {
       const inactiveSpan = document.querySelector('.story-seg:not(.is-active-pill) > span');
-      return inactiveSpan !== null && window.getComputedStyle(inactiveSpan).display === 'none';
+      const activePanel = document.querySelector<HTMLElement>('.day-schedule-panel[data-day="9"]');
+      return {
+        isInactiveSpanHidden:
+          inactiveSpan !== null && window.getComputedStyle(inactiveSpan).display === 'none',
+        stagedPanelCount: document.querySelectorAll('.day-schedule-panel.is-gpu-staged').length,
+        stagedSkyCount: document.querySelectorAll('.sky-layer.is-gpu-staged').length,
+        activePanelWillChange: activePanel ? window.getComputedStyle(activePanel).willChange : ''
+      };
     });
-    expect(isInactiveSpanHidden).toBe(true);
+    expect(preGlideGpuState.isInactiveSpanHidden).toBe(true);
+    expect(preGlideGpuState.stagedPanelCount).toBeLessThanOrEqual(3);
+    expect(preGlideGpuState.stagedSkyCount).toBeLessThanOrEqual(3);
+    expect(preGlideGpuState.stagedPanelCount).toBe(3);
+    expect(preGlideGpuState.stagedSkyCount).toBe(3);
+    expect(preGlideGpuState.activePanelWillChange).toContain('transform');
 
     // 3. Trigger adjacent day glide (Day 10 -> Day 11 in Group 4) and inspect active .is-gliding compositor state
     await page.keyboard.press('ArrowRight');
@@ -243,6 +255,8 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
       );
       return {
         isGlidingClass: shell?.classList.contains('is-gliding') ?? false,
+        stagedPanelCount: document.querySelectorAll('.day-schedule-panel.is-gpu-staged').length,
+        stagedSkyCount: document.querySelectorAll('.sky-layer.is-gpu-staged').length,
         panelTransitionDuration: panel ? window.getComputedStyle(panel).transitionDuration : '',
         shimmerPlayState: shimmer ? window.getComputedStyle(shimmer).animationPlayState : '',
         ferrisPlayState: ferris ? window.getComputedStyle(ferris).animationPlayState : ''
@@ -250,6 +264,8 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     });
 
     expect(glideDiagnostics.isGlidingClass).toBe(true);
+    expect(glideDiagnostics.stagedPanelCount).toBeLessThanOrEqual(3);
+    expect(glideDiagnostics.stagedSkyCount).toBeLessThanOrEqual(3);
     expect(glideDiagnostics.panelTransitionDuration).toContain('0.32s');
     expect(glideDiagnostics.shimmerPlayState).toBe('paused');
     expect(glideDiagnostics.ferrisPlayState).toBe('paused');

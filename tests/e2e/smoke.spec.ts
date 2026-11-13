@@ -3,27 +3,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 test.describe('Post-Build Smoke, Payload Budget, CSP, Offline PWA & Accessibility Suite', () => {
-  test('1. enforces precache payload budget (< 220 KB), subset WOFF2 budget (< 120 KB), and production CSP meta tag', () => {
+  test('1. enforces precache payload budget (< 220 KB), content-hashed subset WOFF2 budget (< 120 KB), and production CSP meta tag', () => {
     const distDir = path.resolve(process.cwd(), 'dist');
     const swPath = path.join(distDir, 'sw.js');
     const indexHtmlPath = path.join(distDir, 'index.html');
-    const subsetFontPath = path.join(distDir, 'fonts/Huninn-Regular.woff2');
 
     expect(fs.existsSync(swPath)).toBe(true);
     expect(fs.existsSync(indexHtmlPath)).toBe(true);
-    expect(fs.existsSync(subsetFontPath)).toBe(true);
+    expect(fs.existsSync(path.join(distDir, 'fonts'))).toBe(false);
 
     const distHtml = fs.readFileSync(indexHtmlPath, 'utf8').replaceAll('&#39;', "'");
     expect(distHtml).toContain('http-equiv="Content-Security-Policy"');
     expect(distHtml).toContain("default-src 'none'");
     expect(distHtml).toContain("style-src 'self'");
 
-    const fontByteCount = fs.statSync(subsetFontPath).size;
-    expect(fontByteCount).toBeGreaterThan(20 * 1024);
-    expect(fontByteCount).toBeLessThan(120 * 1024);
-
     const swContent = fs.readFileSync(swPath, 'utf8');
     expect(swContent).toContain('honeymoon-2027-');
+    expect(swContent).toContain('reload');
 
     const precacheArrayMatch = /\["\.\/[^"]+?"(?:,"\.\/[^"]+?")*\]/.exec(swContent);
     expect(precacheArrayMatch).not.toBeNull();
@@ -33,9 +29,24 @@ test.describe('Post-Build Smoke, Payload Budget, CSP, Offline PWA & Accessibilit
 
     expect(precacheUrls).toContain('./index.html');
     expect(precacheUrls).toContain('./manifest.json');
-    expect(precacheUrls).toContain('./fonts/Huninn-Regular.woff2');
+    const hashedFontUrl = precacheUrls.find((u) =>
+      /^\.\/assets\/Huninn-Regular-[0-9a-f]{8}\.woff2$/.test(u)
+    );
+    expect(hashedFontUrl).toBeDefined();
+    expect(distHtml).toContain(hashedFontUrl ?? '');
     expect(precacheUrls.some((u) => /^\.\/assets\/index-[A-Za-z0-9_-]+\.js$/.test(u))).toBe(true);
-    expect(precacheUrls.some((u) => /^\.\/assets\/index-[A-Za-z0-9_-]+\.css$/.test(u))).toBe(true);
+    const cssRelUrl = precacheUrls.find((u) => /^\.\/assets\/index-[A-Za-z0-9_-]+\.css$/.test(u));
+    expect(cssRelUrl).toBeDefined();
+
+    const subsetFontFileName = path.basename(hashedFontUrl ?? '');
+    const subsetFontPath = path.join(distDir, 'assets', subsetFontFileName);
+    expect(fs.existsSync(subsetFontPath)).toBe(true);
+    const fontByteCount = fs.statSync(subsetFontPath).size;
+    expect(fontByteCount).toBeGreaterThan(20 * 1024);
+    expect(fontByteCount).toBeLessThan(120 * 1024);
+
+    const distCss = fs.readFileSync(path.join(distDir, (cssRelUrl ?? '').slice(2)), 'utf8');
+    expect(distCss).toContain(`./${subsetFontFileName}`);
 
     let totalPrecacheByteCount = 0;
     for (const relUrl of precacheUrls) {

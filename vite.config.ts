@@ -172,14 +172,33 @@ function buildFontCspAndSwPlugin(): Plugin {
     async writeBundle(options) {
       const outDir = options.dir ?? path.resolve(projectRoot, 'dist');
 
-      // 1. Automatically subset master CJK WOFF2 font to exact repository glyph set
+      // 1. Automatically subset master CJK WOFF2 font to exact repository glyph set with content hash
       const subsetFont = nodeRequire('subset-font') as SubsetFontFn;
       const masterBuffer = fs.readFileSync(masterFontPath);
       const glyphText = buildDynamicGlyphString(projectRoot);
       const subsetBuffer = await subsetFont(masterBuffer, glyphText, { targetFormat: 'woff2' });
-      const fontsOutDir = path.join(outDir, 'fonts');
-      fs.mkdirSync(fontsOutDir, { recursive: true });
-      fs.writeFileSync(path.join(fontsOutDir, 'Huninn-Regular.woff2'), subsetBuffer);
+      const fontHash = crypto.createHash('sha256').update(subsetBuffer).digest('hex').slice(0, 8);
+      const hashedFontFileName = `Huninn-Regular-${fontHash}.woff2`;
+      const assetsOutDir = path.join(outDir, 'assets');
+      fs.mkdirSync(assetsOutDir, { recursive: true });
+      fs.writeFileSync(path.join(assetsOutDir, hashedFontFileName), subsetBuffer);
+
+      const indexHtmlPath = path.join(outDir, 'index.html');
+      if (fs.existsSync(indexHtmlPath)) {
+        const updatedHtml = fs
+          .readFileSync(indexHtmlPath, 'utf8')
+          .replace(/(?:\.\/|\/)fonts\/Huninn-Regular\.woff2/g, `./assets/${hashedFontFileName}`);
+        fs.writeFileSync(indexHtmlPath, updatedHtml, 'utf8');
+      }
+
+      for (const entryName of fs.readdirSync(assetsOutDir)) {
+        if (!entryName.endsWith('.css')) continue;
+        const cssFilePath = path.join(assetsOutDir, entryName);
+        const updatedCss = fs
+          .readFileSync(cssFilePath, 'utf8')
+          .replace(/(?:\.\.?\/|\/)fonts\/Huninn-Regular\.woff2/g, `./${hashedFontFileName}`);
+        fs.writeFileSync(cssFilePath, updatedCss, 'utf8');
+      }
 
       // 2. Build Service Worker with true SHA-256 content digest across precached assets + SW source
       const assetUrls = collectPrecacheAssets(outDir);

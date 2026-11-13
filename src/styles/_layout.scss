@@ -239,6 +239,7 @@ body {
   transform: translate3d(0, 0px, 0);
   opacity: 0;
   backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 .tl-time-wrap {
@@ -262,6 +263,7 @@ body {
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--tl-text-color);
+  will-change: opacity;
 }
 
 .tl-dot {
@@ -274,6 +276,7 @@ body {
   background-color: var(--tl-dot-bg);
   border: 2px solid #ffffff;
   transform: scale(1);
+  will-change: transform;
 }
 
 #schedule-stage {
@@ -519,25 +522,13 @@ body {
   z-index: 25;
 }
 
-// Dynamic GPU layer promotion strictly during active swipe / hardware glide
-#app-shell.is-swiping,
-#app-shell.is-gliding {
-  .sky-layer {
-    will-change: opacity;
-  }
+// Pre-staged 3-day GPU compositor window (active day + immediate neighbors; zero frame-1 promotion hitch)
+.sky-layer.is-gpu-staged {
+  will-change: opacity;
+}
 
-  .day-schedule-panel,
-  .tl-node {
-    will-change: transform, opacity;
-  }
-
-  .tl-dot {
-    will-change: transform;
-  }
-
-  .tl-time-label {
-    will-change: opacity;
-  }
+.day-schedule-panel.is-gpu-staged {
+  will-change: transform, opacity;
 }
 
 // 60 Hz CoreAnimation off-main-thread glide transitions (runs at 60 Hz even in iOS Low Power Mode)

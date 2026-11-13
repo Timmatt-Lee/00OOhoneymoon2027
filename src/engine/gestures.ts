@@ -100,12 +100,18 @@ export function bindGesturesAndPhysics(
   function renderPair(idxA: number, idxB: number, t: number, rawPos: number): void {
     for (let i = 0; i <= maxIdx; i++) {
       const el = renderer.skyLayerEls[i];
+      const isPrevNeighbor = t === 0 && i === idxA - 1;
+      const isSkyStaged = i === idxA || i === idxB || isPrevNeighbor;
+      el.classList.toggle('is-gpu-staged', isSkyStaged);
       if (i === idxA) {
         if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
         el.style.opacity = '1';
       } else if (i === idxB) {
         if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
         el.style.opacity = t.toFixed(3);
+      } else if (isPrevNeighbor) {
+        if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
+        el.style.opacity = '0';
       } else if (el.style.visibility !== 'hidden') {
         el.style.visibility = 'hidden';
         el.style.opacity = '0';
@@ -114,14 +120,17 @@ export function bindGesturesAndPhysics(
 
     for (let i = 0; i <= maxIdx; i++) {
       const panel = renderer.schedulePanelEls[i];
-      const isPanelActive = i === idxA || i === idxB;
-      if (isPanelActive) {
+      const isPrevNeighbor = t === 0 && i === idxA - 1;
+      const isPanelStaged = i === idxA || i === idxB || isPrevNeighbor;
+      panel.classList.toggle('is-gpu-staged', isPanelStaged);
+      if (isPanelStaged) {
         if (panel.style.visibility !== 'visible') panel.style.visibility = 'visible';
         const offset = i - rawPos;
-        panel.style.opacity = Math.max(0, 1 - Math.abs(offset) * 0.85).toFixed(3);
+        panel.style.opacity = Math.max(0, 1 - Math.abs(offset)).toFixed(3);
         panel.style.transform = `translate3d(${(offset * stageWidth).toFixed(1)}px, 0, 0)`;
       } else if (panel.style.visibility !== 'hidden') {
         panel.style.visibility = 'hidden';
+        panel.style.opacity = '0';
       }
     }
 
@@ -130,7 +139,9 @@ export function bindGesturesAndPhysics(
     parallax.renderParallax(clamped, idxA, idxB, t, viewportWidth);
     const nearest = Math.round(clamped);
     renderer.updateTopStoryBar(nearest, daysData[nearest].isDark);
-    syncSystemBars(nearest);
+    if (glideTimerId === null) {
+      syncSystemBars(nearest);
+    }
   }
 
   function renderAtPos(pos: number): void {
@@ -215,8 +226,8 @@ export function bindGesturesAndPhysics(
     currentPos = clampedIdx;
 
     const endT = clampedIdx === highIdx && highIdx > lowIdx ? 1 : 0;
-    renderPair(lowIdx, highIdx, endT, clampedIdx);
     glideTimerId = window.setTimeout(finishGlide, GLIDE_DURATION_MS);
+    renderPair(lowIdx, highIdx, endT, clampedIdx);
   }
 
   window.addEventListener('resize', () => {

@@ -103,6 +103,9 @@ describe('bindGesturesAndPhysics', () => {
     const { shell, stageFrame, track, renderer, gestures } = setupEngine(false, '#day-99');
     expect(gestures.getCurrentDayFloat()).toBe(0);
     expect(window.location.hash).toBe('#day-1');
+    expect(document.querySelectorAll('.sky-layer.is-gpu-staged')).toHaveLength(2);
+    expect(document.querySelectorAll('.day-schedule-panel.is-gpu-staged')).toHaveLength(2);
+    expect(renderer.schedulePanelEls[1].style.opacity).toBe('0.000');
 
     // Spy on geometry getters AFTER mount to prove zero reflow reads during pointer interactions
     const frameRectSpy = vi.spyOn(stageFrame, 'getBoundingClientRect');
@@ -159,12 +162,28 @@ describe('bindGesturesAndPhysics', () => {
     expect(gestures.getCurrentDayFloat()).toBe(4);
     slot4.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
 
+    // Interior Day 5 (index 4) pre-stages 3-day GPU window (3, 4, 5) with 0.000 neighbor opacity
+    expect(document.querySelectorAll('.sky-layer.is-gpu-staged')).toHaveLength(3);
+    expect(document.querySelectorAll('.day-schedule-panel.is-gpu-staged')).toHaveLength(3);
+    expect(renderer.skyLayerEls[3].style.visibility).toBe('visible');
+    expect(renderer.skyLayerEls[3].style.opacity).toBe('0');
+    expect(renderer.schedulePanelEls[3].style.opacity).toBe('0.000');
+    expect(renderer.schedulePanelEls[4].style.opacity).toBe('1.000');
+    expect(renderer.schedulePanelEls[5].style.opacity).toBe('0.000');
+    expect(renderer.schedulePanelEls[0].style.visibility).toBe('hidden');
+    expect(renderer.schedulePanelEls[0].style.opacity).toBe('0');
+
+    const themeMeta = document.getElementById('theme-color-meta');
+    expect(themeMeta?.getAttribute('content')).toBe('#FBCFE8');
+
     // Focus inside #story-bar-track syncs roving focus on ArrowRight, ArrowLeft, Home, End
     renderer.storySlotEls[4].focus();
     const rightEv = new KeyboardEvent('keydown', { key: 'ArrowRight', cancelable: true });
     window.dispatchEvent(rightEv);
     expect(rightEv.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(renderer.storySlotEls[5]);
+    // System bar tint sync is deferred during active .is-gliding frame 0
+    expect(themeMeta?.getAttribute('content')).toBe('#FBCFE8');
 
     // Rapid consecutive ArrowRight advances across pairs cleanly while glideTimerId is active
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
@@ -175,6 +194,8 @@ describe('bindGesturesAndPhysics', () => {
     vi.advanceTimersByTime(350);
     expect(shell.classList.contains('is-gliding')).toBe(false);
     expect(gestures.getCurrentDayFloat()).toBe(6);
+    expect(themeMeta?.getAttribute('content')).toBe('#090A10');
+    expect(renderer.schedulePanelEls[6].classList.contains('is-gpu-staged')).toBe(true);
 
     // Home jumps to Day 1 (index 0); End jumps to Day 12 (index 11)
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home' }));

@@ -15,13 +15,14 @@ function createMockSwHarness() {
   const listeners = new Map<string, (ev: unknown) => void>();
 
   const cacheObj: SwCacheLike = {
-    addAll: vi.fn(async (urls: readonly string[]) => {
-      for (const u of urls) {
-        const normalized = u.startsWith('./')
-          ? `https://timmatt-lee.github.io/00OOhoneymoon2027/${u.slice(2)}`
-          : u;
-        store.set(normalized, new Response(`precached:${u}`, { status: 200 }));
-        store.set(u, new Response(`precached:${u}`, { status: 200 }));
+    addAll: vi.fn(async (requests: readonly (Request | string)[]) => {
+      for (const reqOrUrl of requests) {
+        const rawUrl = typeof reqOrUrl === 'string' ? reqOrUrl : reqOrUrl.url;
+        const normalized = rawUrl.startsWith('./')
+          ? `https://timmatt-lee.github.io/00OOhoneymoon2027/${rawUrl.slice(2)}`
+          : rawUrl;
+        store.set(normalized, new Response(`precached:${rawUrl}`, { status: 200 }));
+        store.set(rawUrl, new Response(`precached:${rawUrl}`, { status: 200 }));
       }
       await Promise.resolve();
     }),
@@ -80,9 +81,22 @@ function createMockSwHarness() {
 }
 
 describe('Service Worker lifecycle, quota resilience & caching strategies', () => {
-  it('precaches manifest on install and purges stale caches on activate', async () => {
+  it('precaches manifest on install with cache=reload and purges stale caches on activate', async () => {
+    const BaseRequest = globalThis.Request;
+    class CacheAwareRequest extends BaseRequest {
+      private readonly resolvedCache: RequestCache;
+      constructor(input: RequestInfo | URL, init?: RequestInit) {
+        super(input, init);
+        this.resolvedCache = init?.cache ?? 'default';
+      }
+      override get cache(): RequestCache {
+        return this.resolvedCache;
+      }
+    }
+    vi.stubGlobal('Request', CacheAwareRequest);
+
     const h = createMockSwHarness();
-    bindServiceWorkerLifecycle(h.scope, 'honeymoon-2027-v3', ['./index.html']);
+    bindServiceWorkerLifecycle(h.scope, 'honeymoon-2027-v3', ['./index.html', './manifest.json']);
 
     let installPromise: Promise<unknown> = Promise.resolve();
     const installEv: ExtendableEventLike = {
@@ -92,7 +106,20 @@ describe('Service Worker lifecycle, quota resilience & caching strategies', () =
     };
     h.listeners.get('install')?.(installEv);
     await installPromise;
-    expect(h.cacheObj.addAll).toHaveBeenCalledWith(['./index.html']);
+    expect(h.cacheObj.addAll).toHaveBeenCalledTimes(1);
+    const precacheBatch = vi.mocked(h.cacheObj.addAll).mock.calls[0]?.[0] ?? [];
+    expect(precacheBatch).toHaveLength(2);
+    for (const entry of precacheBatch) {
+      expect(entry).toBeInstanceOf(Request);
+      if (entry instanceof Request) {
+        expect(entry.cache).toBe('reload');
+      }
+    }
+    expect(precacheBatch.map((entry) => (typeof entry === 'string' ? entry : entry.url))).toEqual([
+      expect.stringContaining('/index.html'),
+      expect.stringContaining('/manifest.json')
+    ]);
+    await h.cacheObj.addAll(['./extra.json']);
     expect(h.scope.skipWaiting).toHaveBeenCalled();
 
     let activatePromise: Promise<unknown> = Promise.resolve();

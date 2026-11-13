@@ -8,7 +8,7 @@ export interface FetchEventLike extends ExtendableEventLike {
 }
 
 export interface SwCacheLike {
-  addAll(urls: readonly string[]): Promise<void>;
+  addAll(requests: readonly (Request | string)[]): Promise<void>;
   match(request: Request | string, options?: MultiCacheQueryOptions): Promise<Response | undefined>;
   put(request: Request | string, response: Response): Promise<void>;
 }
@@ -62,10 +62,11 @@ export function bindServiceWorkerLifecycle(
   precacheUrls: readonly string[]
 ): void {
   scope.addEventListener('install', (event: ExtendableEventLike) => {
+    const reloadRequests = precacheUrls.map((url) => new Request(url, { cache: 'reload' }));
     event.waitUntil(
       scope.caches
         .open(cacheName)
-        .then((cache) => cache.addAll(precacheUrls))
+        .then((cache) => cache.addAll(reloadRequests))
         .then(() => scope.skipWaiting())
     );
   });
