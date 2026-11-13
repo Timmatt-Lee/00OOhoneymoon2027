@@ -7,6 +7,10 @@ import { bindGesturesAndPhysics } from './engine/gestures';
 import { startParticleStage } from './effects/particleStage';
 import { registerOfflineServiceWorker } from './pwa/registerSw';
 
+export function onServiceWorkerRegisterError(error: Error): void {
+  console.warn('[PWA] Service worker registration skipped:', error.message);
+}
+
 export function bootstrap(): void {
   const { daysData, sceneGroups } = loadHoneymoonData();
   const renderer = mountStageDOM(daysData);
@@ -14,7 +18,7 @@ export function bootstrap(): void {
   const parallax = mountParallaxScenes(daysData, sceneGroups);
   const gestures = bindGesturesAndPhysics(daysData, renderer, timeline, parallax);
   startParticleStage(daysData, () => gestures.getCurrentDayFloat());
-  registerOfflineServiceWorker();
+  registerOfflineServiceWorker(window, navigator, window.location, onServiceWorkerRegisterError);
 }
 
 export function initWhenReady(
@@ -29,7 +33,6 @@ export function initWhenReady(
   }
 }
 
-/* v8 ignore next 3 */
 if (typeof document !== 'undefined' && document.getElementById('app-shell')) {
   initWhenReady();
 }
