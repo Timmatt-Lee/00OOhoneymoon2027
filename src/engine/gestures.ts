@@ -2,14 +2,21 @@ import type { DayData } from '../types/schedule';
 import type { RendererRefs } from './renderer';
 import type { TimelineController } from './timeline';
 import type { ParallaxController } from './parallax';
-import { closestElement, getRequiredElementById, trySetPointerCapture } from '../utils/dom';
-import { buildGoogleMapsUrl } from '../utils/themeColor';
+import {
+  closestElement,
+  getOptionalMetaById,
+  getRequiredElementById,
+  trySetPointerCapture
+} from '../utils/dom';
 import { formatDayHash, parseDayHash, resolveInitialDayIndex } from '../utils/tripDate';
 
 export interface GestureEngine {
   getCurrentDayFloat(): number;
   glideToDay(nextTargetIdx: number): void;
 }
+
+const GLIDE_DURATION_MS = 320;
+const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable="true"]';
 
 export function bindGesturesAndPhysics(
   daysData: DayData[],
@@ -21,22 +28,37 @@ export function bindGesturesAndPhysics(
   const dayCount = daysData.length;
   const maxIdx = dayCount - 1;
   const shell = getRequiredElementById('app-shell');
-  const skyStack = getRequiredElementById('sky-stack');
   const track = getRequiredElementById('story-bar-track');
-  const footerEl = getRequiredElementById('cityscape-footer');
   const stageFrame = document.getElementById('stage-frame');
-  const themeMeta = document.getElementById('theme-color-meta') as HTMLMetaElement | null;
+  const themeMeta = getOptionalMetaById('theme-color-meta');
 
   const initialIdx = resolveInitialDayIndex(daysData, window.location.hash, now);
   let targetDayIdx = initialIdx;
   let currentPos = initialIdx;
-  let isDragging = false;
-  let rafId: number | null = null;
-  let lastFrameTime = 0;
-  let viewportWidth = shell.clientWidth || 400;
-  let stageWidth = stageFrame?.clientWidth || viewportWidth;
+  let dragRafId: number | null = null;
+  let glideTimerId: number | null = null;
+  let glideFromPos = initialIdx;
+  let glideStartTime = 0;
+  let activeGlideLowIdx = -1;
+  let activeGlideHighIdx = -1;
+
+  let viewportWidth = 400;
+  let stageWidth = 400;
+  let stageLeft = 0;
+  let trackLeft = 0;
+  let trackWidth = 368;
   let lastNearestDay = -1;
-  let lastSkyIdxA = -1;
+
+  function measureLayoutMetrics(): void {
+    viewportWidth = shell.clientWidth || 400;
+    const frameEl = stageFrame ?? shell;
+    stageWidth = frameEl.clientWidth || viewportWidth;
+    stageLeft = frameEl.getBoundingClientRect().left;
+    const trackRect = track.getBoundingClientRect();
+    trackLeft = trackRect.left;
+    trackWidth = Math.max(1, trackRect.width);
+  }
+  measureLayoutMetrics();
 
   const reducedMotionQuery =
     typeof window.matchMedia === 'function'
@@ -64,23 +86,26 @@ export function bindGesturesAndPhysics(
     }
   }
 
-  function renderAtPos(pos: number): void {
-    const clamped = Math.max(0, Math.min(maxIdx, pos));
-    const idxA = Math.floor(clamped);
-    const idxB = Math.min(maxIdx, idxA + 1);
-    const t = clamped - idxA;
-
-    if (idxA !== lastSkyIdxA) {
-      lastSkyIdxA = idxA;
-      skyStack.style.background = daysData[idxA].skyGrad;
+  function clearScheduledAnimations(): void {
+    if (dragRafId !== null) {
+      cancelAnimationFrame(dragRafId);
+      dragRafId = null;
     }
+    if (glideTimerId !== null) {
+      window.clearTimeout(glideTimerId);
+      glideTimerId = null;
+    }
+  }
 
+  function renderPair(idxA: number, idxB: number, t: number, rawPos: number): void {
     for (let i = 0; i <= maxIdx; i++) {
       const el = renderer.skyLayerEls[i];
-      const isSkyActive = i === idxA || i === idxB;
-      if (isSkyActive) {
+      if (i === idxA) {
         if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
-        el.style.opacity = (i === idxA ? 1 - t : t).toFixed(3);
+        el.style.opacity = '1';
+      } else if (i === idxB) {
+        if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
+        el.style.opacity = t.toFixed(3);
       } else if (el.style.visibility !== 'hidden') {
         el.style.visibility = 'hidden';
         el.style.opacity = '0';
@@ -92,7 +117,7 @@ export function bindGesturesAndPhysics(
       const isPanelActive = i === idxA || i === idxB;
       if (isPanelActive) {
         if (panel.style.visibility !== 'visible') panel.style.visibility = 'visible';
-        const offset = i - pos;
+        const offset = i - rawPos;
         panel.style.opacity = Math.max(0, 1 - Math.abs(offset) * 0.85).toFixed(3);
         panel.style.transform = `translate3d(${(offset * stageWidth).toFixed(1)}px, 0, 0)`;
       } else if (panel.style.visibility !== 'hidden') {
@@ -100,6 +125,7 @@ export function bindGesturesAndPhysics(
       }
     }
 
+    const clamped = idxA + t;
     timeline.renderInterpolation(idxA, idxB, t);
     parallax.renderParallax(clamped, idxA, idxB, t, viewportWidth);
     const nearest = Math.round(clamped);
@@ -107,63 +133,105 @@ export function bindGesturesAndPhysics(
     syncSystemBars(nearest);
   }
 
-  function stepSpring(frameNow: number): void {
-    rafId = null;
-    if (isDragging) {
-      lastFrameTime = frameNow;
-      shell.classList.add('is-swiping');
-      renderAtPos(currentPos);
-      return;
-    }
-    const dt = lastFrameTime > 0 ? Math.min(32, Math.max(4, frameNow - lastFrameTime)) : 16.67;
-    lastFrameTime = frameNow;
-    const diff = targetDayIdx - currentPos;
-    if (Math.abs(diff) > 0.0015) {
-      const alpha = 1 - Math.pow(1 - 0.26, dt / 16.67);
-      currentPos += diff * alpha;
-      renderAtPos(currentPos);
-      rafId = requestAnimationFrame(stepSpring);
-    } else {
-      lastFrameTime = 0;
-      shell.classList.remove('is-swiping');
-      currentPos = targetDayIdx;
-      renderAtPos(currentPos);
-    }
+  function renderAtPos(pos: number): void {
+    const clamped = Math.max(0, Math.min(maxIdx, pos));
+    const idxA = Math.floor(clamped);
+    const idxB = Math.min(maxIdx, idxA + 1);
+    const t = clamped - idxA;
+    renderPair(idxA, idxB, t, pos);
   }
+
+  function stepDragFrame(): void {
+    dragRafId = null;
+    renderAtPos(currentPos);
+  }
+
+  function finishGlide(): void {
+    glideTimerId = null;
+    activeGlideLowIdx = -1;
+    activeGlideHighIdx = -1;
+    shell.classList.remove('is-gliding');
+    renderAtPos(targetDayIdx);
+  }
+
+  const jumpImmediatelyToDay = (dayIdx: number): void => {
+    const clampedIdx = Math.max(0, Math.min(maxIdx, dayIdx));
+    clearScheduledAnimations();
+    activeGlideLowIdx = -1;
+    activeGlideHighIdx = -1;
+    shell.classList.remove('is-swiping', 'is-gliding');
+    currentPos = clampedIdx;
+    targetDayIdx = clampedIdx;
+    syncUrlHash(clampedIdx);
+    renderAtPos(clampedIdx);
+  };
 
   function glideToDay(idx: number): void {
     const clampedIdx = Math.max(0, Math.min(maxIdx, idx));
+    const prevPos = currentPos;
     targetDayIdx = clampedIdx;
     syncUrlHash(clampedIdx);
 
-    if (checkIsReducedMotion()) {
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-      lastFrameTime = 0;
-      shell.classList.remove('is-swiping');
-      currentPos = clampedIdx;
-      renderAtPos(currentPos);
+    if (
+      checkIsReducedMotion() ||
+      Math.abs(clampedIdx - prevPos) > 1 ||
+      (clampedIdx === prevPos && glideTimerId === null)
+    ) {
+      jumpImmediatelyToDay(clampedIdx);
       return;
     }
 
-    if (rafId === null) {
-      lastFrameTime = performance.now();
-      rafId = requestAnimationFrame(stepSpring);
+    if (dragRafId !== null) {
+      cancelAnimationFrame(dragRafId);
+      dragRafId = null;
     }
+
+    const clampedFrom = Math.max(0, Math.min(maxIdx, prevPos));
+    const lowIdx = Math.min(Math.floor(clampedFrom), clampedIdx);
+    const highIdx = Math.min(maxIdx, lowIdx + 1);
+
+    if (glideTimerId !== null) {
+      window.clearTimeout(glideTimerId);
+      glideTimerId = null;
+      if (lowIdx !== activeGlideLowIdx || highIdx !== activeGlideHighIdx) {
+        shell.classList.remove('is-gliding');
+        renderAtPos(prevPos);
+      }
+    }
+
+    if (prevPos === highIdx && clampedIdx === lowIdx) {
+      shell.classList.remove('is-gliding');
+      renderPair(lowIdx, highIdx, 1, highIdx);
+    }
+
+    shell.getBoundingClientRect();
+    shell.classList.remove('is-swiping');
+    shell.classList.add('is-gliding');
+
+    activeGlideLowIdx = lowIdx;
+    activeGlideHighIdx = highIdx;
+    glideFromPos = prevPos;
+    glideStartTime = performance.now();
+    currentPos = clampedIdx;
+
+    const endT = clampedIdx === highIdx && highIdx > lowIdx ? 1 : 0;
+    renderPair(lowIdx, highIdx, endT, clampedIdx);
+    glideTimerId = window.setTimeout(finishGlide, GLIDE_DURATION_MS);
   }
 
   window.addEventListener('resize', () => {
-    viewportWidth = shell.clientWidth || 400;
-    stageWidth = stageFrame?.clientWidth || viewportWidth;
+    measureLayoutMetrics();
     renderAtPos(currentPos);
   });
 
   window.addEventListener('hashchange', () => {
     const hashIdx = parseDayHash(window.location.hash, dayCount);
-    if (hashIdx !== null && hashIdx !== targetDayIdx) {
-      glideToDay(hashIdx);
+    if (hashIdx !== null) {
+      if (hashIdx !== targetDayIdx) {
+        glideToDay(hashIdx);
+      }
+    } else if (window.location.hash !== '') {
+      syncUrlHash(targetDayIdx);
     }
   });
 
@@ -171,25 +239,15 @@ export function bindGesturesAndPhysics(
   let scrubId: number | null = null;
   const resolveSlotDay = (clientX: number, targetEl?: EventTarget | null): number => {
     const slotEl = closestElement(targetEl, '[data-day]');
-    if (slotEl?.dataset.day !== undefined && (clientX === 0 || scrubId === null)) {
+    if (slotEl !== null) {
       return Number(slotEl.dataset.day);
     }
-    const r = track.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(0.9999, (clientX - r.left) / Math.max(1, r.width)));
+    const ratio = Math.max(0, Math.min(0.9999, (clientX - trackLeft) / trackWidth));
     return (ratio * dayCount) | 0;
   };
 
-  const jumpImmediatelyToDay = (dayIdx: number): void => {
-    isDragging = false;
-    shell.classList.remove('is-swiping');
-    currentPos = dayIdx;
-    targetDayIdx = dayIdx;
-    syncUrlHash(dayIdx);
-    renderAtPos(dayIdx);
-  };
-
   track.addEventListener('pointerdown', (e: PointerEvent) => {
-    if (e.button) return;
+    if (e.button !== 0 || scrubId !== null) return;
     e.stopPropagation();
     const day = resolveSlotDay(e.clientX, e.target);
     scrubId = e.pointerId;
@@ -199,30 +257,32 @@ export function bindGesturesAndPhysics(
 
   track.addEventListener('pointermove', (e: PointerEvent) => {
     if (scrubId !== e.pointerId) return;
-    jumpImmediatelyToDay(resolveSlotDay(e.clientX));
+    const day = resolveSlotDay(e.clientX);
+    if (day === targetDayIdx && glideTimerId === null) return;
+    jumpImmediatelyToDay(day);
   });
-  track.addEventListener('pointerup', () => {
+
+  const endTrackScrub = (e: PointerEvent): void => {
+    if (scrubId !== e.pointerId) return;
     scrubId = null;
-  });
-  track.addEventListener('pointercancel', () => {
-    scrubId = null;
-  });
+  };
+  track.addEventListener('pointerup', endTrackScrub);
+  track.addEventListener('pointercancel', endTrackScrub);
 
   // Keyboard activation (Enter / Space) on story-slot <button> elements triggers click with detail === 0
   track.addEventListener('click', (e: MouseEvent) => {
     if (e.detail !== 0) return;
     const slotEl = closestElement(e.target, '[data-day]');
-    if (slotEl?.dataset.day !== undefined) {
+    if (slotEl !== null) {
       jumpImmediatelyToDay(Number(slotEl.dataset.day));
     }
   });
 
-  // 2. Stage Swipe, Left/Right Tap, Item Map Links & Footer Google Maps Link
+  // 2. Stage Swipe, Left/Right Tap, Multi-Pointer Guard & Native Map Anchor Navigation
   let activeId: number | null = null;
   let startX = 0;
   let startY = 0;
   let dragStart = 0;
-  let isInFooter = false;
   let isHorizontal = false;
   let isSuppressNextClick = false;
   let lastTap = -1000;
@@ -239,22 +299,24 @@ export function bindGesturesAndPhysics(
     true
   );
 
-  renderer.cityscapeMapLinkEl.addEventListener('click', (e: MouseEvent) => {
-    e.preventDefault();
-    const settled = Math.round(currentPos);
-    window.open(buildGoogleMapsUrl(daysData[settled].mapQuery), '_blank', 'noopener,noreferrer');
-  });
-
   shell.addEventListener('pointerdown', (e: PointerEvent) => {
-    if (e.button || closestElement(e.target, '#story-bar-track')) return;
-    activeId = e.pointerId;
-    if (!closestElement(e.target, 'a[href]')) {
-      trySetPointerCapture(shell, e.pointerId);
+    if (e.button !== 0 || activeId !== null || closestElement(e.target, '#story-bar-track')) {
+      return;
     }
-    viewportWidth = shell.clientWidth || 400;
-    stageWidth = stageFrame?.clientWidth || viewportWidth;
-    isInFooter = e.clientY >= footerEl.getBoundingClientRect().top + 16;
-    isDragging = true;
+    if (glideTimerId !== null) {
+      const elapsed = Math.min(
+        1,
+        Math.max(0, (performance.now() - glideStartTime) / GLIDE_DURATION_MS)
+      );
+      const eased = 1 - Math.pow(1 - elapsed, 3);
+      currentPos = glideFromPos + (targetDayIdx - glideFromPos) * eased;
+      clearScheduledAnimations();
+      activeGlideLowIdx = -1;
+      activeGlideHighIdx = -1;
+      shell.classList.remove('is-gliding');
+      renderAtPos(currentPos);
+    }
+    activeId = e.pointerId;
     isHorizontal = false;
     isSuppressNextClick = false;
     startX = e.clientX;
@@ -275,15 +337,14 @@ export function bindGesturesAndPhysics(
     shell.classList.add('is-swiping');
     const raw = dragStart - dx / stageWidth;
     currentPos = raw < 0 ? raw * 0.2 : raw > maxIdx ? maxIdx + (raw - maxIdx) * 0.2 : raw;
-    if (rafId === null) {
-      rafId = requestAnimationFrame(stepSpring);
+    if (dragRafId === null) {
+      dragRafId = requestAnimationFrame(stepDragFrame);
     }
   });
 
   const endSwipe = (e: PointerEvent): void => {
     if (activeId !== e.pointerId) return;
     activeId = null;
-    isDragging = false;
     const dx = e.clientX - startX;
     const dist = Math.hypot(dx, e.clientY - startY);
     const settled = Math.round(dragStart);
@@ -292,34 +353,57 @@ export function bindGesturesAndPhysics(
     if (isHorizontal) {
       glideToDay(dx < -36 ? settled + 1 : dx > 36 ? settled - 1 : Math.round(currentPos));
     } else if (targetAnchor) {
-      // Allow native <a> click handler to navigate without advancing day
+      // Allow native <a href> click / Universal Links navigation on schedule items and #cityscape-map-link
       return;
     } else if (dist < 10 && performance.now() - lastTap > 200) {
       lastTap = performance.now();
-      if (isInFooter) {
-        window.open(
-          buildGoogleMapsUrl(daysData[settled].mapQuery),
-          '_blank',
-          'noopener,noreferrer'
-        );
-      } else {
-        const frameEl = stageFrame ?? shell;
-        const relX = (e.clientX - frameEl.getBoundingClientRect().left) / stageWidth;
-        glideToDay(relX >= 0.65 ? settled + 1 : relX <= 0.35 ? settled - 1 : settled);
-      }
+      const relX = (e.clientX - stageLeft) / stageWidth;
+      glideToDay(relX >= 0.65 ? settled + 1 : relX <= 0.35 ? settled - 1 : settled);
     } else {
       glideToDay(Math.round(currentPos));
     }
   };
 
+  const cancelSwipe = (e: PointerEvent): void => {
+    if (activeId !== e.pointerId) return;
+    activeId = null;
+    isHorizontal = false;
+    isSuppressNextClick = false;
+    glideToDay(Math.round(dragStart));
+  };
+
   shell.addEventListener('pointerup', endSwipe);
-  shell.addEventListener('pointercancel', endSwipe);
+  shell.addEventListener('pointercancel', cancelSwipe);
 
   window.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight') glideToDay(targetDayIdx + 1);
-    else if (e.key === 'ArrowLeft') glideToDay(targetDayIdx - 1);
+    if (
+      e.altKey ||
+      e.ctrlKey ||
+      e.metaKey ||
+      e.defaultPrevented ||
+      closestElement(e.target, EDITABLE_SELECTOR)
+    ) {
+      return;
+    }
+
+    let nextIdx: number | null = null;
+    if (e.key === 'ArrowRight') nextIdx = targetDayIdx + 1;
+    else if (e.key === 'ArrowLeft') nextIdx = targetDayIdx - 1;
+    else if (e.key === 'Home') nextIdx = 0;
+    else if (e.key === 'End') nextIdx = maxIdx;
+
+    if (nextIdx === null) return;
+
+    glideToDay(nextIdx);
+    if (closestElement(document.activeElement, '#story-bar-track')) {
+      e.preventDefault();
+      renderer.storySlotEls[targetDayIdx].focus();
+    }
   });
 
+  if (window.location.hash !== '') {
+    syncUrlHash(initialIdx);
+  }
   renderAtPos(initialIdx);
   return { getCurrentDayFloat: () => currentPos, glideToDay };
 }

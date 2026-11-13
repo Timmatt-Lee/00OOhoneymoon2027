@@ -72,11 +72,6 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
     lastDayB = dayIdxB;
     lastT = t;
 
-    const currentHeight = container.clientHeight;
-    if (currentHeight > 0) {
-      railHeight = currentHeight;
-    }
-
     const itemsA = daysData[dayIdxA].items;
     const itemsB = daysData[dayIdxB].items;
     const itemACount = itemsA.length;
@@ -99,12 +94,10 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
       const curRatio = ratioA + (ratioB - ratioA) * t;
       const yPx = curRatio * railHeight;
 
-      const isInA = i < itemACount;
-      const isInB = i < itemBCount;
-      const opacityStr = (isInA && !isInB ? 1 - t : !isInA && isInB ? t : 1).toFixed(3);
-      const scaleStr = (
-        isInA && !isInB ? 1 - 0.25 * t : !isInA && isInB ? 0.75 + 0.25 * t : 1
-      ).toFixed(2);
+      const isOnlyInA = i < itemACount && i >= itemBCount;
+      const isOnlyInB = i >= itemACount;
+      const opacityStr = (isOnlyInA ? 1 - t : isOnlyInB ? t : 1).toFixed(3);
+      const scaleStr = (isOnlyInA ? 1 - 0.25 * t : isOnlyInB ? 0.75 + 0.25 * t : 1).toFixed(2);
 
       if (Math.abs(yPx - n.lastY) > 0.05) {
         n.nodeEl.style.transform = `translate3d(0, ${yPx.toFixed(1)}px, 0)`;
@@ -131,8 +124,9 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
         n.lastStrB = strB;
       }
 
-      const opA = strA === strB ? '1' : (1 - t).toFixed(3);
-      const opB = strA === strB ? '0' : t.toFixed(3);
+      const isSingleLabel = isOnlyInA || isOnlyInB || strA === strB;
+      const opA = isOnlyInB ? '0' : isSingleLabel ? '1' : (1 - t).toFixed(3);
+      const opB = isOnlyInB ? '1' : isSingleLabel ? '0' : t.toFixed(3);
       if (n.lastOpA !== opA) {
         n.timeAEl.style.opacity = opA;
         n.lastOpA = opA;

@@ -16,6 +16,7 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
   const track = getRequiredElementById('story-bar-track');
   const stage = getRequiredElementById('schedule-stage');
   const cityscapeMapLinkEl = getRequiredAnchorById('cityscape-map-link');
+  const liveStatusEl = document.getElementById('day-live-status');
 
   skyStack.replaceChildren();
   const skyLayerEls = daysData.map((day, idx) => {
@@ -29,6 +30,7 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
   });
 
   track.replaceChildren();
+  const storySegEls: HTMLSpanElement[] = [];
   const storySlotEls = daysData.map((day, idx) => {
     const slotBtn = document.createElement('button');
     slotBtn.type = 'button';
@@ -38,8 +40,18 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
 
     const seg = document.createElement('span');
     seg.className = 'story-seg';
+
+    const dayTag = document.createElement('span');
+    dayTag.className = 'pill-day-tag';
+    dayTag.textContent = `Day ${day.day}`;
+
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = day.label;
+
+    seg.append(dayTag, labelSpan);
     slotBtn.appendChild(seg);
     track.appendChild(slotBtn);
+    storySegEls.push(seg);
     return slotBtn;
   });
 
@@ -105,6 +117,7 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
   let isLastTopBarDark: boolean | null = null;
 
   function updateTopStoryBar(activeDayIdx: number, isDarkSky: boolean): void {
+    const isInitialSync = lastTopBarDay === -1;
     if (activeDayIdx === lastTopBarDay && isDarkSky === isLastTopBarDark) {
       return;
     }
@@ -121,35 +134,30 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
       `Explore Day ${activeDay.day} ${activeDay.mapQuery} on Google Maps`
     );
 
+    if (!isInitialSync && liveStatusEl) {
+      liveStatusEl.textContent = `Day ${activeDay.day} ${activeDay.label}`;
+    }
+
     storySlotEls.forEach((slot, idx) => {
-      const seg = slot.firstElementChild as HTMLElement;
+      const seg = storySegEls[idx];
       const isActive = idx === activeDayIdx;
       if (isActive) {
-        const d = daysData[idx];
         slot.className = 'story-slot is-active';
         slot.setAttribute('aria-current', 'step');
         seg.className = 'story-seg is-active-pill';
-
-        const dayTag = document.createElement('span');
-        dayTag.className = 'pill-day-tag';
-        dayTag.textContent = `Day ${d.day}`;
-
-        const labelSpan = document.createElement('span');
-        labelSpan.textContent = d.label;
-
-        seg.replaceChildren(dayTag, labelSpan);
       } else {
         slot.className = `story-slot ${idx < activeDayIdx ? 'is-past' : 'is-future'}`;
         slot.removeAttribute('aria-current');
         seg.className = 'story-seg';
-        if (seg.childNodes.length > 0) {
-          seg.replaceChildren();
-        }
       }
     });
 
     schedulePanelEls.forEach((panel, idx) => {
-      panel.inert = idx !== activeDayIdx;
+      const isInactive = idx !== activeDayIdx;
+      if (isInactive && panel.contains(document.activeElement)) {
+        storySlotEls[activeDayIdx].focus();
+      }
+      panel.inert = isInactive;
     });
   }
 

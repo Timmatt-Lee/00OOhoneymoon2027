@@ -14,6 +14,11 @@ export function getRequiredAnchorById(id: string): HTMLAnchorElement {
   return el;
 }
 
+export function getOptionalMetaById(id: string): HTMLMetaElement | null {
+  const el = document.getElementById(id);
+  return el instanceof HTMLMetaElement ? el : null;
+}
+
 export function closestElement(
   target: EventTarget | null | undefined,
   selector: string
@@ -27,15 +32,30 @@ export function closestElement(
   return null;
 }
 
+function stripCommentNodes(parent: Node): void {
+  for (let child = parent.firstChild; child !== null;) {
+    const next = child.nextSibling;
+    if (child.nodeType === Node.COMMENT_NODE) {
+      parent.removeChild(child);
+    } else if (child.firstChild !== null) {
+      stripCommentNodes(child);
+    }
+    child = next;
+  }
+}
+
 export function parseTrustedSvgElement(rawSvg: string): SVGSVGElement {
   const parser = new DOMParser();
   const doc = parser.parseFromString(rawSvg.trim(), 'image/svg+xml');
   const parserError = doc.querySelector('parsererror');
-  const root = doc.documentElement;
-  if (parserError || root.tagName.toLowerCase() !== 'svg') {
+  const imported = parserError ? null : document.importNode(doc.documentElement, true);
+  if (!(imported instanceof SVGSVGElement)) {
     throw new Error('Failed to parse static SVG asset into <svg> root element.');
   }
-  const imported = document.importNode(root, true) as unknown as SVGSVGElement;
+  if (imported.querySelector('script, foreignObject')) {
+    throw new Error('Disallowed <script> or <foreignObject> element in static SVG asset.');
+  }
+  stripCommentNodes(imported);
   imported.setAttribute('aria-hidden', 'true');
   imported.setAttribute('focusable', 'false');
   return imported;

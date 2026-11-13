@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   closestElement,
+  getOptionalMetaById,
   getRequiredAnchorById,
   getRequiredElementById,
   parseTrustedSvgElement,
@@ -8,44 +9,62 @@ import {
 } from './dom';
 
 describe('dom utilities', () => {
-  it('returns the element when present and throws Error when missing or wrong tag', () => {
-    document.body.innerHTML =
-      '<div id="stage-root"><span class="inner">text</span></div><a id="map-link" href="#"></a>';
+  it('returns typed elements when present and handles missing or mismatched tags', () => {
+    document.body.innerHTML = [
+      '<meta id="theme-meta" content="#070B19" />',
+      '<div id="stage-root"><span class="inner">text</span></div>',
+      '<a id="map-link" href="#"></a>'
+    ].join('');
+
     const found = getRequiredElementById('stage-root');
     expect(found.id).toBe('stage-root');
     expect(getRequiredAnchorById('map-link').id).toBe('map-link');
+    expect(getOptionalMetaById('theme-meta')?.content).toBe('#070B19');
+    expect(getOptionalMetaById('stage-root')).toBeNull();
+    expect(getOptionalMetaById('missing-meta')).toBeNull();
+
     expect(() => getRequiredAnchorById('stage-root')).toThrow(/Expected #stage-root to be an <a>/);
     expect(() => getRequiredElementById('non-existent')).toThrow(
       'Missing required DOM element: #non-existent'
     );
 
-    const innerSpan = found.querySelector('.inner') as HTMLElement;
-    const textNode = innerSpan.firstChild as Text;
+    const innerSpan = found.querySelector<HTMLElement>('.inner');
+    const textNode = innerSpan?.firstChild ?? null;
     expect(closestElement(innerSpan, '#stage-root')).toBe(found);
     expect(closestElement(textNode, '#stage-root')).toBe(found);
     expect(closestElement(document.createTextNode('detached'), '#stage-root')).toBeNull();
     expect(closestElement(null, '#stage-root')).toBeNull();
   });
 
-  it('parses valid SVG markup with aria-hidden and focusable attributes', () => {
+  it('parses valid SVG markup, strips all XML comments, and sets a11y attributes', () => {
     const svg = parseTrustedSvgElement(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></svg>'
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><!-- root comment --><g><!-- nested comment --><circle cx="5" cy="5" r="4"/></g></svg>'
     );
     expect(svg.tagName.toLowerCase()).toBe('svg');
     expect(svg.getAttribute('aria-hidden')).toBe('true');
     expect(svg.getAttribute('focusable')).toBe('false');
     expect(svg.querySelector('circle')).not.toBeNull();
+
+    const walker = document.createTreeWalker(svg, NodeFilter.SHOW_COMMENT);
+    expect(walker.nextNode()).toBeNull();
   });
 
-  it('throws Error on non-SVG or malformed XML input', () => {
+  it('throws Error on non-SVG, malformed XML, or disallowed <script>/<foreignObject> elements', () => {
     expect(() => parseTrustedSvgElement('<div>not an svg</div>')).toThrow(/Failed to parse/);
     expect(() => parseTrustedSvgElement('<svg><unclosed></svg>')).toThrow(/Failed to parse/);
+    expect(() =>
+      parseTrustedSvgElement('<svg xmlns="http://www.w3.org/2000/svg"><script>1</script></svg>')
+    ).toThrow(/Disallowed/);
+    expect(() =>
+      parseTrustedSvgElement(
+        '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject></foreignObject></svg>'
+      )
+    ).toThrow(/Disallowed/);
   });
 
   it('captures active pointers, ignores DOMException, and rethrows unexpected errors', () => {
     const div = document.createElement('div');
 
-    // Environment where setPointerCapture is undefined
     Object.defineProperty(div, 'setPointerCapture', {
       value: undefined,
       configurable: true
@@ -54,7 +73,6 @@ describe('dom utilities', () => {
       trySetPointerCapture(div, 1);
     }).not.toThrow();
 
-    // Normal pointer capture succeeds
     const captureSpy = vi.fn();
     Object.defineProperty(div, 'setPointerCapture', {
       value: captureSpy,
@@ -63,7 +81,6 @@ describe('dom utilities', () => {
     trySetPointerCapture(div, 42);
     expect(captureSpy).toHaveBeenCalledWith(42);
 
-    // Synthetic PointerEvent throws DOMException -> safely ignored
     Object.defineProperty(div, 'setPointerCapture', {
       value: () => {
         throw new DOMException('Invalid pointer id', 'NotFoundError');
@@ -74,7 +91,6 @@ describe('dom utilities', () => {
       trySetPointerCapture(div, 99);
     }).not.toThrow();
 
-    // Unexpected Error instance -> rethrown directly
     Object.defineProperty(div, 'setPointerCapture', {
       value: () => {
         throw new TypeError('Unexpected failure');
@@ -85,7 +101,6 @@ describe('dom utilities', () => {
       trySetPointerCapture(div, 99);
     }).toThrow('Unexpected failure');
 
-    // Non-Error thrown primitive -> wrapped in standard Error
     Object.defineProperty(div, 'setPointerCapture', {
       value: () => {
         // eslint-disable-next-line @typescript-eslint/only-throw-error
