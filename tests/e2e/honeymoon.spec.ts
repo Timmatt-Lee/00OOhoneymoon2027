@@ -191,6 +191,33 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
 
     await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 2');
     expect(context.pages()).toHaveLength(1);
+
+    // Verify 2-frame (~25ms) fast flick with ZERO pointermove events on #cityscape-map-link advances Day 1 -> Day 2 and suppresses map click
+    await page.locator('.story-slot[data-day="0"]').click();
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 1');
+    await mapLink.dispatchEvent('pointerdown', {
+      bubbles: true,
+      button: 0,
+      clientX: 300,
+      clientY: swipeY,
+      pointerId: 77
+    });
+    await page.waitForTimeout(25);
+    await mapLink.dispatchEvent('pointerup', {
+      bubbles: true,
+      button: 0,
+      clientX: 265,
+      clientY: swipeY,
+      pointerId: 77
+    });
+    const isFlickClickPrevented = await mapLink.evaluate((el) => {
+      const clickEv = new MouseEvent('click', { bubbles: true, cancelable: true });
+      el.dispatchEvent(clickEv);
+      return clickEv.defaultPrevented;
+    });
+    expect(isFlickClickPrevented).toBe(true);
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 2');
+    expect(context.pages()).toHaveLength(1);
   });
 
   test('4. verifies WebKit GPU invariants (2x non-iOS & 1x iOS DPR cap, clipped SVG layers, zero SVG @keyframes, pruned will-change) and rapid multi-flick chaining', async ({
@@ -270,9 +297,9 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     expect(gpuState.shimmerAnimName).toBe('none');
     expect(gpuState.ferrisAnimName).toBe('none');
 
-    // 3. Verify short (< 30px) high-velocity flick advances Day 1 -> Day 2, and rapid consecutive flicks chain Day 1 -> Day 2 -> Day 3 -> Day 4
-    await page.locator('.story-slot[data-day="0"]').click();
-    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 1');
+    // 3. Verify short (< 30px) high-velocity flick advances Day 3 (dark) -> Day 4 (light) without premature frame-0 contrast flip or inert rebuild
+    await page.locator('.story-slot[data-day="2"]').click();
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 3');
     const shell = page.locator('#app-shell');
     await shell.dispatchEvent('pointerdown', {
       button: 0,
@@ -286,16 +313,22 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
 
     const movingDiagnostics = await page.evaluate(() => {
       const shellEl = document.getElementById('app-shell');
-      const panel = document.querySelector<HTMLElement>('.day-schedule-panel[data-day="1"]');
+      const panel2 = document.querySelector<HTMLElement>('.day-schedule-panel[data-day="2"]');
+      const panel3 = document.querySelector<HTMLElement>('.day-schedule-panel[data-day="3"]');
       return {
         isMovingClass: shellEl?.classList.contains('is-moving') ?? false,
-        panelTransitionDuration: panel ? window.getComputedStyle(panel).transitionDuration : ''
+        isStillDarkBeforeMidpoint: shellEl?.classList.contains('theme-dark') ?? false,
+        isPanel2StillInteractive: panel2 ? !panel2.inert : false,
+        panelTransitionDuration: panel3 ? window.getComputedStyle(panel3).transitionDuration : ''
       };
     });
     expect(movingDiagnostics.isMovingClass).toBe(true);
+    expect(movingDiagnostics.isStillDarkBeforeMidpoint).toBe(true);
+    expect(movingDiagnostics.isPanel2StillInteractive).toBe(true);
     expect(movingDiagnostics.panelTransitionDuration).toBe('0s');
-    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 2');
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 4');
     await expect(shell).not.toHaveClass(/is-moving/);
+    await expect(shell).toHaveClass(/theme-light/);
 
     // Reset to Day 1 and fire 3 rapid short flicks (< 30px each) in quick succession -> chains smoothly Day 1 -> Day 2 -> Day 3 -> Day 4!
     await page.locator('.story-slot[data-day="0"]').click();
@@ -581,6 +614,28 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     await iosShell.dispatchEvent('pointermove', { clientX: 400, clientY: 293, pointerId: 1 });
     await iosShell.dispatchEvent('pointerup', { clientX: 400, clientY: 293, pointerId: 1 });
     await expect(iosPage.locator('.story-seg.is-active-pill')).toContainText('Day 2');
+
+    // Simulate iOS Standalone Landscape subtracting 21pt Home Indicator (852x372 vs 393pt short edge -> --ios-chin-fix: 21px)
+    await iosPage.setViewportSize({ width: 852, height: 372 });
+    await iosPage.evaluate(() => window.dispatchEvent(new Event('resize')));
+    const landscapeChinAudit = await iosPage.evaluate(() => {
+      const shellEl = document.getElementById('app-shell');
+      if (!shellEl) return null;
+      const shellRect = shellEl.getBoundingClientRect();
+      return {
+        chinFixVar: document.documentElement.style.getPropertyValue('--ios-chin-fix'),
+        lockWVar: document.documentElement.style.getPropertyValue('--lock-w'),
+        clientWidth: shellEl.clientWidth,
+        rectTop: Math.round(shellRect.top),
+        rectBottom: Math.round(shellRect.bottom)
+      };
+    });
+    expect(landscapeChinAudit).not.toBeNull();
+    expect(landscapeChinAudit?.chinFixVar).toBe('21px');
+    expect(landscapeChinAudit?.lockWVar).toBe('393px');
+    expect(landscapeChinAudit?.clientWidth).toBe(393);
+    expect(landscapeChinAudit?.rectTop).toBe(0);
+    expect(landscapeChinAudit?.rectBottom).toBe(393);
 
     // Rotate back to iPhone 14 Pro Standalone WebClip portrait (innerHeight = 818 vs screen.height = 852 -> --ios-chin-fix = 34px)
     await iosPage.setViewportSize({ width: 393, height: 818 });

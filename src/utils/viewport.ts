@@ -67,6 +67,12 @@ export function syncViewportState(
   const isStandalone = isDisplayModeStandalone || isIosStandalone;
   const isPortrait = innerW <= innerH;
 
+  const touchPointCount = nav.maxTouchPoints ?? 0;
+  const isCoarsePointer =
+    typeof win.matchMedia === 'function' && win.matchMedia('(pointer: coarse)').matches;
+  const isTouchDevice = touchPointCount > 0 || isCoarsePointer;
+  const isTouchLandscape = innerW > innerH && Math.min(innerW, innerH) <= 540 && isTouchDevice;
+
   let chinFixPx = 0;
   if (isStandalone && isPortrait) {
     const screenPortraitH = Math.max(screenW, screenH);
@@ -74,14 +80,14 @@ export function syncViewportState(
     if (gapPx > 0 && gapPx <= 60) {
       chinFixPx = gapPx;
     }
+  } else if (isStandalone && isTouchLandscape) {
+    const screenShort = Math.min(screenW, screenH);
+    const landscapeGapPx = screenShort - innerH;
+    if (landscapeGapPx > 0 && landscapeGapPx <= 60) {
+      chinFixPx = landscapeGapPx;
+    }
   }
   docEl.style.setProperty('--ios-chin-fix', `${chinFixPx}px`);
-
-  const touchPointCount = nav.maxTouchPoints ?? 0;
-  const isCoarsePointer =
-    typeof win.matchMedia === 'function' && win.matchMedia('(pointer: coarse)').matches;
-  const isTouchDevice = touchPointCount > 0 || isCoarsePointer;
-  const isTouchLandscape = innerW > innerH && Math.min(innerW, innerH) <= 540 && isTouchDevice;
 
   let lockMode: LockMode = 'none';
   if (isTouchLandscape) {
@@ -89,10 +95,13 @@ export function syncViewportState(
     lockMode = angle === 270 || angle === -90 ? 'cw90' : 'ccw90';
   }
 
+  const lockW = innerH + (isTouchLandscape ? chinFixPx : 0);
+  const lockH = innerW;
+
   shell.classList.toggle('is-landscape-locked', isTouchLandscape);
   docEl.style.setProperty('--app-h', isTouchLandscape ? `${innerW}px` : '100vh');
-  docEl.style.setProperty('--lock-w', `${innerH}px`);
-  docEl.style.setProperty('--lock-h', `${innerW}px`);
+  docEl.style.setProperty('--lock-w', `${lockW}px`);
+  docEl.style.setProperty('--lock-h', `${lockH}px`);
   docEl.style.setProperty('--lock-rot', lockMode === 'cw90' ? '90deg' : '-90deg');
 
   return {

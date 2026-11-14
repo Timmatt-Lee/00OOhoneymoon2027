@@ -18,7 +18,7 @@ describe('registerOfflineServiceWorker', () => {
     expect(addListener).not.toHaveBeenCalled();
   });
 
-  it('registers ./sw.js with updateViaCache: none and reports registration errors via custom or default handler', async () => {
+  it('registers ./sw.js with updateViaCache: none, checks for updates on foreground visibilitychange, and reports registration errors', async () => {
     let loadHandler: (() => void) | undefined;
     const fakeWin = {
       addEventListener: vi.fn((_ev: string, cb: () => void) => {
@@ -26,14 +26,50 @@ describe('registerOfflineServiceWorker', () => {
       })
     };
 
-    const regSpy = vi.fn().mockResolvedValue({});
+    const visibilityHandlers: Array<() => void> = [];
+    const fakeDoc = {
+      hidden: true,
+      addEventListener: vi.fn((_ev: string, cb: () => void) => {
+        visibilityHandlers.push(cb);
+      })
+    };
+
+    const updateSpy = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('offline resume'));
+    const regSpy = vi.fn().mockResolvedValueOnce({ update: updateSpy }).mockResolvedValueOnce({});
+
     registerOfflineServiceWorker(
       fakeWin,
       { serviceWorker: { register: regSpy } },
-      { hostname: 'timmatt-lee.github.io', search: '' }
+      { hostname: 'timmatt-lee.github.io', search: '' },
+      undefined,
+      fakeDoc
     );
     loadHandler?.();
     expect(regSpy).toHaveBeenCalledWith('./sw.js', { updateViaCache: 'none' });
+    await Promise.resolve();
+    expect(visibilityHandlers).toHaveLength(1);
+
+    // Hidden background transition does not trigger SW update check
+    fakeDoc.hidden = true;
+    visibilityHandlers[0]();
+    expect(updateSpy).not.toHaveBeenCalled();
+
+    // Foreground resume (!doc.hidden) triggers reg.update() and swallows offline update rejections
+    fakeDoc.hidden = false;
+    visibilityHandlers[0]();
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    visibilityHandlers[0]();
+    expect(updateSpy).toHaveBeenCalledTimes(2);
+    await Promise.resolve();
+
+    // Registration without an update() method handles foreground resume safely
+    loadHandler?.();
+    await Promise.resolve();
+    expect(visibilityHandlers).toHaveLength(2);
+    visibilityHandlers[1]();
 
     // Custom error handler receives normalized Error for both Error and non-Error rejections
     const errors: Error[] = [];
@@ -50,7 +86,9 @@ describe('registerOfflineServiceWorker', () => {
     );
     loadHandler?.();
     await Promise.resolve();
+    await Promise.resolve();
     loadHandler?.();
+    await Promise.resolve();
     await Promise.resolve();
 
     expect(errors.map((e) => e.message)).toEqual(['network blocked', 'raw rejection']);
@@ -64,6 +102,7 @@ describe('registerOfflineServiceWorker', () => {
       { hostname: 'timmatt-lee.github.io', search: '' }
     );
     loadHandler?.();
+    await Promise.resolve();
     await Promise.resolve();
     expect(warnSpy).toHaveBeenCalledWith(
       '[PWA] Service Worker registration failed:',

@@ -112,6 +112,35 @@ describe('viewport utilities', () => {
     expect(document.documentElement.style.getPropertyValue('--lock-h')).toBe('852px');
     expect(document.documentElement.style.getPropertyValue('--lock-rot')).toBe('-90deg');
 
+    // 1b. iPhone 14 Pro Standalone landscape with 21pt Home Indicator subtracted (innerH = 372, screen short = 393 -> chinFixPx = 21)
+    const standaloneChinState = syncViewportState(
+      shell,
+      {
+        innerWidth: 852,
+        innerHeight: 372,
+        screen: { width: 393, height: 852, orientation: { angle: 90 } }
+      },
+      { standalone: true, maxTouchPoints: 5 }
+    );
+    expect(standaloneChinState.isTouchLandscape).toBe(true);
+    expect(standaloneChinState.chinFixPx).toBe(21);
+    expect(document.documentElement.style.getPropertyValue('--ios-chin-fix')).toBe('21px');
+    expect(document.documentElement.style.getPropertyValue('--lock-w')).toBe('393px');
+    expect(document.documentElement.style.getPropertyValue('--lock-h')).toBe('852px');
+
+    // 1c. Standalone landscape with gap > 60 (e.g. keyboard/split view) clamps chinFixPx to 0
+    const standaloneHugeLandscapeGap = syncViewportState(
+      shell,
+      {
+        innerWidth: 852,
+        innerHeight: 300,
+        screen: { width: 852, height: 393, orientation: { angle: 90 } }
+      },
+      { standalone: true, maxTouchPoints: 5 }
+    );
+    expect(standaloneHugeLandscapeGap.chinFixPx).toBe(0);
+    expect(document.documentElement.style.getPropertyValue('--lock-w')).toBe('300px');
+
     // 2. Phone landscape tilted right via screen.orientation.angle === 270 -> cw90 (+90deg)
     const cw270State = syncViewportState(
       shell,
@@ -147,13 +176,14 @@ describe('viewport utilities', () => {
     );
     expect(defaultAngleState.lockMode).toBe('ccw90');
 
-    // 5. Desktop 1280x800 (even on touch laptop) and narrow desktop mouse window 500x400 NEVER lock
+    // 5. Desktop 1280x800 (even on standalone touch laptop) and narrow desktop mouse window 500x400 NEVER lock
     const touchLaptopState = syncViewportState(
       shell,
-      { innerWidth: 1280, innerHeight: 800 },
-      { maxTouchPoints: 10 }
+      { innerWidth: 1280, innerHeight: 800, screen: { width: 1280, height: 820 } },
+      { standalone: true, maxTouchPoints: 10 }
     );
     expect(touchLaptopState.isTouchLandscape).toBe(false);
+    expect(touchLaptopState.chinFixPx).toBe(0);
     expect(touchLaptopState.lockMode).toBe('none');
     expect(shell.classList.contains('is-landscape-locked')).toBe(false);
     expect(document.documentElement.style.getPropertyValue('--app-h')).toBe('100vh');

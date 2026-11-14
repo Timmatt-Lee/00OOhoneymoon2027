@@ -88,7 +88,7 @@ export function bindGesturesAndPhysics(
       e.clientX,
       e.clientY,
       viewportState.innerW,
-      viewportState.innerH,
+      viewportState.innerH + (viewportState.isTouchLandscape ? viewportState.chinFixPx : 0),
       viewportState.lockMode
     );
   }
@@ -169,9 +169,10 @@ export function bindGesturesAndPhysics(
     const clamped = idxA + t;
     timeline.renderInterpolation(idxA, idxB, t);
     parallax.renderParallax(clamped, idxA, idxB, t, viewportWidth);
-    if (activeId === null && glideRafId === null) {
-      const nearest = Math.round(clamped);
-      renderer.updateTopStoryBar(nearest, daysData[nearest].isDark);
+    const nearest = Math.round(clamped);
+    const isSettled = activeId === null && glideRafId === null;
+    renderer.updateTopStoryBar(nearest, daysData[nearest].isDark, isSettled);
+    if (isSettled) {
       syncSystemBars(nearest);
     }
   }
@@ -228,7 +229,6 @@ export function bindGesturesAndPhysics(
     const clampedIdx = Math.max(0, Math.min(maxIdx, idx));
     targetDayIdx = clampedIdx;
     syncUrlHash(clampedIdx);
-    renderer.updateTopStoryBar(clampedIdx, daysData[clampedIdx].isDark);
 
     if (checkIsReducedMotion() || Math.abs(clampedIdx - currentPos) < GLIDE_SETTLE_EPSILON) {
       jumpImmediatelyToDay(clampedIdx);
@@ -404,6 +404,11 @@ export function bindGesturesAndPhysics(
     const dist = Math.hypot(dx, dy);
     const nowTime = performance.now();
     const targetAnchor = closestElement(e.target, 'a[href]');
+
+    if (!isHorizontal && Math.abs(dx) > 10 && Math.abs(dx) >= Math.abs(dy) * 0.75) {
+      isHorizontal = true;
+      isSuppressNextClick = true;
+    }
 
     if (isHorizontal) {
       const dtVel = nowTime - velAnchorTime;

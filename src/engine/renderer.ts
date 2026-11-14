@@ -7,7 +7,7 @@ export interface RendererRefs {
   storySlotEls: HTMLButtonElement[];
   schedulePanelEls: HTMLElement[];
   cityscapeMapLinkEl: HTMLAnchorElement;
-  updateTopStoryBar(activeDayIdx: number, isDarkSky: boolean): void;
+  updateTopStoryBar(activeDayIdx: number, isDarkSky: boolean, isSettled?: boolean): void;
 }
 
 export function mountStageDOM(daysData: DayData[]): RendererRefs {
@@ -115,52 +115,56 @@ export function mountStageDOM(daysData: DayData[]): RendererRefs {
     return panel;
   });
 
-  let lastTopBarDay = -1;
-  let isLastTopBarDark: boolean | null = null;
+  let lastVisualDay = -1;
+  let isLastVisualDark: boolean | null = null;
+  let lastSettledDay = -1;
 
-  function updateTopStoryBar(activeDayIdx: number, isDarkSky: boolean): void {
-    const isInitialSync = lastTopBarDay === -1;
-    if (activeDayIdx === lastTopBarDay && isDarkSky === isLastTopBarDark) {
-      return;
+  function updateTopStoryBar(activeDayIdx: number, isDarkSky: boolean, isSettled = true): void {
+    if (activeDayIdx !== lastVisualDay || isDarkSky !== isLastVisualDark) {
+      lastVisualDay = activeDayIdx;
+      isLastVisualDark = isDarkSky;
+
+      shellEl.classList.toggle('theme-dark', isDarkSky);
+      shellEl.classList.toggle('theme-light', !isDarkSky);
+
+      storySlotEls.forEach((slot, idx) => {
+        const seg = storySegEls[idx];
+        const isActive = idx === activeDayIdx;
+        if (isActive) {
+          slot.className = 'story-slot is-active';
+          slot.setAttribute('aria-current', 'step');
+          seg.className = 'story-seg is-active-pill';
+        } else {
+          slot.className = `story-slot ${idx < activeDayIdx ? 'is-past' : 'is-future'}`;
+          slot.removeAttribute('aria-current');
+          seg.className = 'story-seg';
+        }
+      });
     }
-    lastTopBarDay = activeDayIdx;
-    isLastTopBarDark = isDarkSky;
 
-    shellEl.classList.toggle('theme-dark', isDarkSky);
-    shellEl.classList.toggle('theme-light', !isDarkSky);
+    if (isSettled && activeDayIdx !== lastSettledDay) {
+      const isInitialSync = lastSettledDay === -1;
+      lastSettledDay = activeDayIdx;
 
-    const activeDay = daysData[activeDayIdx];
-    cityscapeMapLinkEl.href = buildGoogleMapsUrl(activeDay.mapQuery);
-    cityscapeMapLinkEl.setAttribute(
-      'aria-label',
-      `Explore Day ${activeDay.day} ${activeDay.mapQuery} on Google Maps`
-    );
+      const activeDay = daysData[activeDayIdx];
+      cityscapeMapLinkEl.href = buildGoogleMapsUrl(activeDay.mapQuery);
+      cityscapeMapLinkEl.setAttribute(
+        'aria-label',
+        `Explore Day ${activeDay.day} ${activeDay.mapQuery} on Google Maps`
+      );
 
-    if (!isInitialSync && liveStatusEl) {
-      liveStatusEl.textContent = `Day ${activeDay.day} ${activeDay.label}`;
+      if (!isInitialSync && liveStatusEl) {
+        liveStatusEl.textContent = `Day ${activeDay.day} ${activeDay.label}`;
+      }
+
+      schedulePanelEls.forEach((panel, idx) => {
+        const isInactive = idx !== activeDayIdx;
+        if (isInactive && panel.contains(document.activeElement)) {
+          storySlotEls[activeDayIdx].focus();
+        }
+        panel.inert = isInactive;
+      });
     }
-
-    storySlotEls.forEach((slot, idx) => {
-      const seg = storySegEls[idx];
-      const isActive = idx === activeDayIdx;
-      if (isActive) {
-        slot.className = 'story-slot is-active';
-        slot.setAttribute('aria-current', 'step');
-        seg.className = 'story-seg is-active-pill';
-      } else {
-        slot.className = `story-slot ${idx < activeDayIdx ? 'is-past' : 'is-future'}`;
-        slot.removeAttribute('aria-current');
-        seg.className = 'story-seg';
-      }
-    });
-
-    schedulePanelEls.forEach((panel, idx) => {
-      const isInactive = idx !== activeDayIdx;
-      if (isInactive && panel.contains(document.activeElement)) {
-        storySlotEls[activeDayIdx].focus();
-      }
-      panel.inert = isInactive;
-    });
   }
 
   return {

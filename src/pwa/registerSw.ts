@@ -7,9 +7,13 @@ export interface SwRegisterOptions {
   readonly updateViaCache?: 'all' | 'imports' | 'none';
 }
 
+export interface SwRegistrationLike {
+  update?: () => Promise<unknown>;
+}
+
 export interface SwNavigatorLike {
   readonly serviceWorker?: {
-    register(scriptURL: string, options?: SwRegisterOptions): Promise<unknown>;
+    register(scriptURL: string, options?: SwRegisterOptions): Promise<SwRegistrationLike>;
   };
 }
 
@@ -21,7 +25,8 @@ export function registerOfflineServiceWorker(
   win: Pick<Window, 'addEventListener'> = window,
   nav: SwNavigatorLike = navigator,
   loc: SwLocationLike = window.location,
-  onRegisterError: (error: Error) => void = defaultReportSwError
+  onRegisterError: (error: Error) => void = defaultReportSwError,
+  doc: Pick<Document, 'hidden' | 'addEventListener'> = document
 ): void {
   const isSwSupported = Boolean(nav.serviceWorker);
   if (!isSwSupported || !nav.serviceWorker) return;
@@ -32,9 +37,18 @@ export function registerOfflineServiceWorker(
 
   const swContainer = nav.serviceWorker;
   win.addEventListener('load', () => {
-    swContainer.register('./sw.js', { updateViaCache: 'none' }).catch((err: unknown) => {
-      const normalized = err instanceof Error ? err : new Error(String(err));
-      onRegisterError(normalized);
-    });
+    swContainer
+      .register('./sw.js', { updateViaCache: 'none' })
+      .then((reg) => {
+        doc.addEventListener('visibilitychange', () => {
+          if (!doc.hidden) {
+            void reg.update?.().catch(() => undefined);
+          }
+        });
+      })
+      .catch((err: unknown) => {
+        const normalized = err instanceof Error ? err : new Error(String(err));
+        onRegisterError(normalized);
+      });
   });
 }

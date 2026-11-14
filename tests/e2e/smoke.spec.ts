@@ -86,6 +86,20 @@ test.describe('Post-Build Smoke, Payload Budget, CSP, Offline PWA & Accessibilit
       }
     });
 
+    // Verify foreground resume (visibilitychange while !document.hidden) triggers background SW update check
+    const swUpdateCallCount = await page.evaluate(() => {
+      let updateCallCount = 0;
+      const origUpdate = ServiceWorkerRegistration.prototype.update;
+      ServiceWorkerRegistration.prototype.update = function (this: ServiceWorkerRegistration) {
+        updateCallCount++;
+        return origUpdate.call(this);
+      };
+      document.dispatchEvent(new Event('visibilitychange'));
+      ServiceWorkerRegistration.prototype.update = origUpdate;
+      return updateCallCount;
+    });
+    expect(swUpdateCallCount).toBe(1);
+
     // Simulate losing cellular signal in rural Hokkaido and reloading cold on Day 6
     await context.setOffline(true);
     await page.reload();

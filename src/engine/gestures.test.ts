@@ -290,21 +290,27 @@ describe('bindGesturesAndPhysics', () => {
     stepFrames(1, 16);
     expect(shell.classList.contains('is-moving')).toBe(true);
 
-    // Drag left past 60% between Day 1 and Day 2: verify zero mid-drag updateTopStoryBar churn
+    // Drag left past 60% between Day 1 and Day 2: visual pill flips at t > 0.5 while panel.inert stays deferred
     updateTopBarSpy.mockClear();
     shell.dispatchEvent(
       new PointerEvent('pointermove', { clientX: -140, clientY: 300, pointerId: 10 })
     );
     stepFrames(1, 16);
-    expect(updateTopBarSpy).not.toHaveBeenCalled();
+    expect(updateTopBarSpy).toHaveBeenCalledWith(1, true, false);
+    expect(renderer.storySlotEls[1].classList.contains('is-active')).toBe(true);
+    expect(renderer.schedulePanelEls[0].inert).toBe(false);
+    expect(renderer.schedulePanelEls[1].inert).toBe(true);
     expect(renderer.skyLayerEls[0].style.opacity).toBe('1');
     expect(Number(renderer.skyLayerEls[1].style.opacity)).toBeCloseTo(0.6, 2);
 
-    // Pause > 90ms mid-drag to reset stale velocity anchor, then release with pending dragRafId
+    // Pause > 90ms mid-drag to reset stale velocity anchor, pull back to pos = 0.2, then release
     nowMs += 120;
     shell.dispatchEvent(
       new PointerEvent('pointermove', { clientX: 20, clientY: 300, pointerId: 10 })
     );
+    stepFrames(1, 16);
+    expect(renderer.storySlotEls[0].classList.contains('is-active')).toBe(true);
+    updateTopBarSpy.mockClear();
     shell.dispatchEvent(
       new PointerEvent('pointerup', { clientX: 20, clientY: 300, pointerId: 10 })
     );
@@ -312,7 +318,9 @@ describe('bindGesturesAndPhysics', () => {
       new PointerEvent('pointerup', { clientX: 20, clientY: 300, pointerId: 99 })
     );
     expect(shell.classList.contains('is-moving')).toBe(true);
-    expect(updateTopBarSpy).toHaveBeenCalledTimes(1);
+    // glideToDay does NOT prematurely flip pill/theme or rebuild inert on frame 0 (before t = 0.5)
+    expect(updateTopBarSpy).not.toHaveBeenCalled();
+    expect(renderer.storySlotEls[0].classList.contains('is-active')).toBe(true);
 
     // Next click after horizontal drag is suppressed; subsequent normal click is allowed
     const suppressedClick = new MouseEvent('click', { bubbles: true, cancelable: true });
@@ -482,8 +490,38 @@ describe('bindGesturesAndPhysics', () => {
       new PointerEvent('pointerdown', { button: 0, clientX: 200, clientY: 300, pointerId: 65 })
     );
     shell.dispatchEvent(
-      new PointerEvent('pointerup', { button: 0, clientX: 200, clientY: 350, pointerId: 65 })
+      new PointerEvent('pointerup', { button: 0, clientX: 212, clientY: 350, pointerId: 65 })
     );
+
+    // 2-frame (~30ms) fast flick with ZERO pointermove events on #cityscape-map-link advances to Day 2 AND suppresses click
+    renderer.storySlotEls[0].dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    expect(gestures.getCurrentDayFloat()).toBe(0);
+    nowMs += 500;
+    footerLink.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 300,
+        clientY: 780,
+        pointerId: 70
+      })
+    );
+    nowMs += 30;
+    footerLink.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        button: 0,
+        clientX: 265,
+        clientY: 780,
+        pointerId: 70
+      })
+    );
+    const fastFlickMapClick = new MouseEvent('click', { bubbles: true, cancelable: true });
+    footerLink.dispatchEvent(fastFlickMapClick);
+    expect(fastFlickMapClick.defaultPrevented).toBe(true);
+    stepFrames(35, 16);
+    expect(gestures.getCurrentDayFloat()).toBe(1);
+    expect(window.location.hash).toBe('#day-2');
 
     // Settled tap on #cityscape-map-link or inline .is-map-link preserves native <a href> Universal Links
     renderer.storySlotEls[0].dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
