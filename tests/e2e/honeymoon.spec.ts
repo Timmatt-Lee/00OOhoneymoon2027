@@ -1012,4 +1012,472 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     expect(errors).toEqual([]);
     await mobileContext.close();
   });
+
+  test('8. maintains continuous 60fps snowfall during active swipes and smoothly fades Night Glow and Onsen Steam in/out without pop-in, midpoint dips, or instant vanish', async ({
+    page
+  }) => {
+    const errors = await installErrorAndCspMonitors(page);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/?fx=live#day-8');
+    await page.evaluate(() => document.fonts.ready);
+
+    // 1. Snowfall Continuity During Active Drag (.is-moving === true) & Night Glow Smooth Fade-In / Contiguous Span / Smooth Fade-Out
+    const glowAndSnowAudit = await page.evaluate(async () => {
+      const shell = document.getElementById('app-shell');
+      const canvas = document.getElementById('fx-canvas');
+      if (!(shell instanceof HTMLElement) || !(canvas instanceof HTMLCanvasElement)) {
+        throw new Error('Missing #app-shell or #fx-canvas');
+      }
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Missing 2D context on #fx-canvas');
+      }
+
+      const waitMs = (ms: number): Promise<void> =>
+        new Promise((resolve) => {
+          const start = performance.now();
+          const step = (now: number): void => {
+            if (now - start >= ms) {
+              resolve();
+            } else {
+              requestAnimationFrame(step);
+            }
+          };
+          requestAnimationFrame(step);
+        });
+
+      const waitNextDrawFrame = (): Promise<void> =>
+        new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              resolve();
+            });
+          });
+        });
+
+      const captureUpperSnowAlpha = (): Uint8ClampedArray => {
+        const halfH = Math.max(1, Math.floor(canvas.height * 0.48));
+        const raw = ctx.getImageData(0, 0, canvas.width, halfH).data;
+        const alphas = new Uint8ClampedArray(raw.length >> 2);
+        for (let i = 3, outIdx = 0; i < raw.length; i += 4, outIdx++) {
+          alphas[outIdx] = raw[i];
+        }
+        return alphas;
+      };
+
+      const measureWarmGlow = (): number => {
+        const bandH = Math.min(canvas.height, Math.round(210 * (canvas.width / 390)));
+        const startY = canvas.height - bandH;
+        const data = ctx.getImageData(0, startY, canvas.width, bandH).data;
+        let warmSum = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const warmExcess = data[i] - data[i + 2];
+          if (warmExcess > 8 && data[i + 3] > 0) {
+            warmSum += (warmExcess * data[i + 3]) / 255;
+          }
+        }
+        return warmSum;
+      };
+
+      const clickStorySlot = (dayIdx: number): void => {
+        const slot = document.querySelector<HTMLElement>(`.story-slot[data-day="${dayIdx}"]`);
+        if (!slot) throw new Error(`Missing story slot ${dayIdx}`);
+        const rect = slot.getBoundingClientRect();
+        const cx = rect.left + rect.width * 0.5;
+        const cy = rect.top + rect.height * 0.5;
+        slot.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            bubbles: true,
+            button: 0,
+            clientX: cx,
+            clientY: cy,
+            pointerId: 950 + dayIdx
+          })
+        );
+        slot.dispatchEvent(
+          new PointerEvent('pointerup', {
+            bubbles: true,
+            button: 0,
+            clientX: cx,
+            clientY: cy,
+            pointerId: 950 + dayIdx
+          })
+        );
+      };
+
+      await waitMs(60);
+      const day8BaselineGlow = measureWarmGlow();
+
+      // A. Active horizontal drag on Day 8: verify #app-shell.is-moving is true AND snow pixels actively move!
+      shell.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          button: 0,
+          clientX: 300,
+          clientY: 420,
+          pointerId: 801
+        })
+      );
+      shell.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          clientX: 272,
+          clientY: 420,
+          pointerId: 801
+        })
+      );
+      await waitNextDrawFrame();
+      const isMovingAtDragStart = shell.classList.contains('is-moving');
+      const snowSnapA = captureUpperSnowAlpha();
+
+      await waitMs(85);
+      shell.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          clientX: 262,
+          clientY: 420,
+          pointerId: 801
+        })
+      );
+      await waitNextDrawFrame();
+      const isMovingAtDragEnd = shell.classList.contains('is-moving');
+      const snowSnapB = captureUpperSnowAlpha();
+
+      let dragSnowAlphaDiff = 0;
+      for (let i = 0; i < snowSnapA.length; i++) {
+        dragSnowAlphaDiff += Math.abs(snowSnapA[i] - snowSnapB[i]);
+      }
+
+      // Release drag to flick into Day 9 (dx = -70px -> Day 8 -> Day 9)
+      shell.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          clientX: 215,
+          clientY: 420,
+          pointerId: 801
+        })
+      );
+      shell.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          button: 0,
+          clientX: 215,
+          clientY: 420,
+          pointerId: 801
+        })
+      );
+
+      // B. Night Glow Smooth Fade-In (Day 8 -> Day 9)
+      await waitNextDrawFrame();
+      const initialFadeInGlow = measureWarmGlow();
+      await waitMs(110);
+      const midFadeInGlow = measureWarmGlow();
+      await waitMs(750);
+      const steadyDay9Glow = measureWarmGlow();
+
+      // C. Contiguous Nocturnal Span (Day 9 <-> Day 10 at midpoint dayFloat ~ 8.5): zero 50% dip!
+      const preSpanDay9Glow = measureWarmGlow();
+      shell.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          button: 0,
+          clientX: 300,
+          clientY: 420,
+          pointerId: 802
+        })
+      );
+      shell.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          clientX: 105,
+          clientY: 420,
+          pointerId: 802
+        })
+      );
+      await waitNextDrawFrame();
+      const midpoint85Glow = measureWarmGlow();
+      shell.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          button: 0,
+          clientX: 105,
+          clientY: 420,
+          pointerId: 802
+        })
+      );
+      await waitMs(250);
+
+      // Return to Day 9 steady state, then flick out Day 9 -> Day 8 and verify smooth dissolve
+      clickStorySlot(8);
+      await waitMs(200);
+      const preFlickOutGlow = measureWarmGlow();
+      shell.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          button: 0,
+          clientX: 100,
+          clientY: 420,
+          pointerId: 803
+        })
+      );
+      await waitMs(20);
+      shell.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          clientX: 190,
+          clientY: 420,
+          pointerId: 803
+        })
+      );
+      shell.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          button: 0,
+          clientX: 190,
+          clientY: 420,
+          pointerId: 803
+        })
+      );
+      await waitMs(90);
+      const flickOut90msGlow = measureWarmGlow();
+      await waitMs(290);
+      const flickOut380msGlow = measureWarmGlow();
+      await waitMs(850);
+      const flickOutFinalGlow = measureWarmGlow();
+
+      // D. Story Bar Instant Jump (Day 9 -> Day 1): smooth temporal fade-out even on 0ms jump!
+      clickStorySlot(8);
+      await waitMs(850);
+      const preJumpDay9Glow = measureWarmGlow();
+
+      clickStorySlot(0);
+      const isSettledImmediatelyOnJump = !shell.classList.contains('is-moving');
+      await waitMs(90);
+      const jumpOut90msGlow = measureWarmGlow();
+      await waitMs(270);
+      const jumpOut360msGlow = measureWarmGlow();
+      await waitMs(850);
+      const jumpOutFinalGlow = measureWarmGlow();
+
+      return {
+        day8BaselineGlow,
+        isMovingAtDragStart,
+        isMovingAtDragEnd,
+        dragSnowAlphaDiff,
+        initialFadeInGlow,
+        midFadeInGlow,
+        steadyDay9Glow,
+        preSpanDay9Glow,
+        midpoint85Glow,
+        preFlickOutGlow,
+        flickOut90msGlow,
+        flickOut380msGlow,
+        flickOutFinalGlow,
+        preJumpDay9Glow,
+        isSettledImmediatelyOnJump,
+        jumpOut90msGlow,
+        jumpOut360msGlow,
+        jumpOutFinalGlow
+      };
+    });
+
+    expect(glowAndSnowAudit.day8BaselineGlow).toBe(0);
+    expect(glowAndSnowAudit.isMovingAtDragStart).toBe(true);
+    expect(glowAndSnowAudit.isMovingAtDragEnd).toBe(true);
+    expect(glowAndSnowAudit.dragSnowAlphaDiff).toBeGreaterThan(2000);
+
+    expect(glowAndSnowAudit.steadyDay9Glow).toBeGreaterThan(500);
+    expect(glowAndSnowAudit.initialFadeInGlow).toBeLessThan(glowAndSnowAudit.steadyDay9Glow * 0.45);
+    expect(glowAndSnowAudit.midFadeInGlow).toBeGreaterThan(glowAndSnowAudit.initialFadeInGlow);
+    expect(glowAndSnowAudit.midFadeInGlow).toBeLessThan(glowAndSnowAudit.steadyDay9Glow);
+
+    expect(glowAndSnowAudit.midpoint85Glow).toBeGreaterThan(
+      glowAndSnowAudit.preSpanDay9Glow * 0.75
+    );
+
+    expect(glowAndSnowAudit.flickOut90msGlow).toBeGreaterThan(
+      glowAndSnowAudit.preFlickOutGlow * 0.15
+    );
+    expect(glowAndSnowAudit.flickOut380msGlow).toBeGreaterThan(0);
+    expect(glowAndSnowAudit.flickOut380msGlow).toBeLessThan(glowAndSnowAudit.flickOut90msGlow);
+    expect(glowAndSnowAudit.flickOut380msGlow).toBeLessThan(
+      glowAndSnowAudit.preFlickOutGlow * 0.75
+    );
+    expect(glowAndSnowAudit.flickOutFinalGlow).toBe(0);
+
+    expect(glowAndSnowAudit.isSettledImmediatelyOnJump).toBe(true);
+    expect(glowAndSnowAudit.jumpOut90msGlow).toBeGreaterThan(
+      glowAndSnowAudit.preJumpDay9Glow * 0.2
+    );
+    expect(glowAndSnowAudit.jumpOut360msGlow).toBeGreaterThan(0);
+    expect(glowAndSnowAudit.jumpOut360msGlow).toBeLessThan(glowAndSnowAudit.jumpOut90msGlow);
+    expect(glowAndSnowAudit.jumpOut360msGlow).toBeLessThan(glowAndSnowAudit.preJumpDay9Glow * 0.72);
+    expect(glowAndSnowAudit.jumpOutFinalGlow).toBe(0);
+
+    // 2. Onsen Steam Smooth Fade-In, Contiguous Span (Day 6 <-> Day 7), & Smooth Fade-Out (Day 5 -> 6 -> 7 -> 8)
+    await page.goto('/?fx=live#day-5');
+    await page.evaluate(() => document.fonts.ready);
+
+    const steamAudit = await page.evaluate(async () => {
+      const shell = document.getElementById('app-shell');
+      const canvas = document.getElementById('fx-canvas');
+      if (!(shell instanceof HTMLElement) || !(canvas instanceof HTMLCanvasElement)) {
+        throw new Error('Missing #app-shell or #fx-canvas');
+      }
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Missing 2D context on #fx-canvas');
+      }
+
+      const waitMs = (ms: number): Promise<void> =>
+        new Promise((resolve) => {
+          const start = performance.now();
+          const step = (now: number): void => {
+            if (now - start >= ms) {
+              resolve();
+            } else {
+              requestAnimationFrame(step);
+            }
+          };
+          requestAnimationFrame(step);
+        });
+
+      const waitNextDrawFrame = (): Promise<void> =>
+        new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              resolve();
+            });
+          });
+        });
+
+      const measureSteamPlumeAlpha = (): number => {
+        const dprScale = canvas.width / 390;
+        const x0 = Math.round(canvas.width * 0.66);
+        const w = Math.round(canvas.width * 0.3);
+        const y0 = Math.max(0, canvas.height - Math.round(185 * dprScale));
+        const h = Math.max(1, canvas.height - Math.round(12 * dprScale) - y0);
+        const data = ctx.getImageData(x0, y0, w, h).data;
+        let alphaSum = 0;
+        for (let i = 3; i < data.length; i += 4) {
+          alphaSum += data[i] / 255;
+        }
+        return alphaSum;
+      };
+
+      const clickStorySlot = (dayIdx: number): void => {
+        const slot = document.querySelector<HTMLElement>(`.story-slot[data-day="${dayIdx}"]`);
+        if (!slot) throw new Error(`Missing story slot ${dayIdx}`);
+        const rect = slot.getBoundingClientRect();
+        const cx = rect.left + rect.width * 0.5;
+        const cy = rect.top + rect.height * 0.5;
+        slot.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            bubbles: true,
+            button: 0,
+            clientX: cx,
+            clientY: cy,
+            pointerId: 950 + dayIdx
+          })
+        );
+        slot.dispatchEvent(
+          new PointerEvent('pointerup', {
+            bubbles: true,
+            button: 0,
+            clientX: cx,
+            clientY: cy,
+            pointerId: 950 + dayIdx
+          })
+        );
+      };
+
+      await waitMs(60);
+      const day5SnowBaseline = measureSteamPlumeAlpha();
+
+      // Jump Day 5 -> Day 6: smooth steam fade-in from 0 -> 1
+      clickStorySlot(5);
+      await waitNextDrawFrame();
+      const initialSteam = measureSteamPlumeAlpha();
+      await waitMs(180);
+      const midSteam = measureSteamPlumeAlpha();
+      await waitMs(700);
+      const steadyDay6Steam = measureSteamPlumeAlpha();
+
+      // Contiguous Onsen Span (Day 6 <-> Day 7 at midpoint dayFloat ~ 5.5): zero 50% dip!
+      const preSpanDay6Steam = measureSteamPlumeAlpha();
+      shell.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          button: 0,
+          clientX: 300,
+          clientY: 420,
+          pointerId: 901
+        })
+      );
+      shell.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          clientX: 105,
+          clientY: 420,
+          pointerId: 901
+        })
+      );
+      await waitNextDrawFrame();
+      const midpoint55Steam = measureSteamPlumeAlpha();
+      shell.dispatchEvent(
+        new PointerEvent('pointerup', {
+          bubbles: true,
+          button: 0,
+          clientX: 105,
+          clientY: 420,
+          pointerId: 901
+        })
+      );
+      await waitMs(300);
+
+      // Jump/flick out Day 7 -> Day 8: wisps keep rising while smoothly dissolving back to snow-only baseline!
+      const preExitDay7Steam = measureSteamPlumeAlpha();
+      clickStorySlot(7);
+      await waitMs(70);
+      const exit70msSteam = measureSteamPlumeAlpha();
+      await waitMs(220);
+      const exit290msSteam = measureSteamPlumeAlpha();
+      await waitMs(900);
+      const exitFinalDay8Steam = measureSteamPlumeAlpha();
+
+      return {
+        day5SnowBaseline,
+        initialSteam,
+        midSteam,
+        steadyDay6Steam,
+        preSpanDay6Steam,
+        midpoint55Steam,
+        preExitDay7Steam,
+        exit70msSteam,
+        exit290msSteam,
+        exitFinalDay8Steam
+      };
+    });
+
+    expect(steamAudit.day5SnowBaseline).toBeLessThan(250);
+    expect(steamAudit.steadyDay6Steam).toBeGreaterThan(steamAudit.day5SnowBaseline + 1500);
+    expect(steamAudit.initialSteam - steamAudit.day5SnowBaseline).toBeLessThan(
+      (steamAudit.steadyDay6Steam - steamAudit.day5SnowBaseline) * 0.45
+    );
+    expect(steamAudit.midSteam).toBeGreaterThan(steamAudit.initialSteam);
+    expect(steamAudit.midSteam).toBeLessThan(steamAudit.steadyDay6Steam);
+
+    expect(steamAudit.midpoint55Steam).toBeGreaterThan(steamAudit.preSpanDay6Steam * 0.75);
+
+    expect(steamAudit.exit70msSteam).toBeGreaterThan(
+      steamAudit.day5SnowBaseline +
+        (steamAudit.preExitDay7Steam - steamAudit.day5SnowBaseline) * 0.2
+    );
+    expect(steamAudit.exit70msSteam).toBeLessThan(steamAudit.preExitDay7Steam * 0.95);
+    expect(steamAudit.exit290msSteam).toBeGreaterThan(steamAudit.day5SnowBaseline);
+    expect(steamAudit.exit290msSteam).toBeLessThan(steamAudit.exit70msSteam);
+    expect(steamAudit.exitFinalDay8Steam).toBeLessThan(250);
+
+    expect(errors).toEqual([]);
+  });
 });

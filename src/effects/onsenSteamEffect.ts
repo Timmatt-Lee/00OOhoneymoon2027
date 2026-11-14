@@ -1,4 +1,5 @@
 import { createPrng } from '../utils/prng';
+import { StrengthEnvelope } from './strengthEnvelope';
 
 interface SteamWisp {
   xRatio: number;
@@ -32,13 +33,13 @@ export class OnsenSteamEffect {
   private readonly wisps: SteamWisp[];
   private sprite: HTMLCanvasElement;
   private spriteDpr: number;
-  private readonly activeDayIndices: readonly number[];
+  private readonly envelope: StrengthEnvelope;
   private readonly rand = createPrng(20270307);
 
   constructor(wispCount = 18, activeDayIndices: readonly number[] = [5, 6], initialDpr = 1) {
     this.spriteDpr = initialDpr;
     this.sprite = createSteamPuffSprite(initialDpr);
-    this.activeDayIndices = activeDayIndices;
+    this.envelope = new StrengthEnvelope(activeDayIndices);
     const primaryCount = Math.round(wispCount * 0.78);
     this.wisps = Array.from({ length: wispCount }, (_, idx) => ({
       xRatio: idx < primaryCount ? 0.68 + this.rand() * 0.25 : 0.22 + this.rand() * 0.42,
@@ -64,16 +65,9 @@ export class OnsenSteamEffect {
     isAdvancing = true,
     dtScale = 1
   ): void {
-    if (this.activeDayIndices.length === 0) return;
+    const currentStrength = this.envelope.step(dayFloat, isAdvancing, dtScale);
+    if (currentStrength <= 0) return;
 
-    let minDist = Infinity;
-    for (const idx of this.activeDayIndices) {
-      const d = Math.abs(dayFloat - idx);
-      if (d < minDist) minDist = d;
-    }
-    if (minDist >= 1.0) return;
-
-    const strength = 1 - minDist;
     const baseY = h - 36;
 
     for (const s of this.wisps) {
@@ -89,7 +83,7 @@ export class OnsenSteamEffect {
       const y = baseY - s.yOffset;
       const r = s.radius * (0.75 + lifeRatio * 0.85);
 
-      ctx.globalAlpha = s.alpha * Math.sin(lifeRatio * Math.PI) * strength;
+      ctx.globalAlpha = Math.max(0, s.alpha * Math.sin(lifeRatio * Math.PI)) * currentStrength;
       ctx.drawImage(this.sprite, x - r, y - r, r * 2, r * 2);
     }
   }

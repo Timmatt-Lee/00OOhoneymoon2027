@@ -1,4 +1,5 @@
 import { createPrng } from '../utils/prng';
+import { StrengthEnvelope } from './strengthEnvelope';
 
 const ALPHA_BUCKETS = [0.42, 0.64, 0.86] as const;
 
@@ -15,12 +16,19 @@ interface Snowflake {
 export class SnowfallEffect {
   private readonly flakes: Snowflake[];
   private readonly rand = createPrng(20270302);
+  private readonly tintEnvelope: StrengthEnvelope;
   private lastWidth: number;
   private lastHeight: number;
 
-  constructor(flakeCount: number, width: number, height: number) {
+  constructor(
+    flakeCount: number,
+    width: number,
+    height: number,
+    tintedDayIndices: readonly number[] = [4]
+  ) {
     this.lastWidth = Math.max(1, width);
     this.lastHeight = Math.max(1, height);
+    this.tintEnvelope = new StrengthEnvelope(tintedDayIndices);
     this.flakes = Array.from({ length: flakeCount }, () => {
       const rawAlpha = this.rand() * 0.55 + 0.35;
       const bucketIdx: 0 | 1 | 2 = rawAlpha < 0.53 ? 0 : rawAlpha < 0.72 ? 1 : 2;
@@ -53,10 +61,12 @@ export class SnowfallEffect {
     ctx: CanvasRenderingContext2D,
     w: number,
     h: number,
-    isTinted: boolean,
+    dayFloat: number,
     isAdvancing = true,
     dtScale = 1
   ): void {
+    const tintStrength = this.tintEnvelope.step(dayFloat, isAdvancing, dtScale);
+
     if (isAdvancing) {
       for (const f of this.flakes) {
         f.phase += 0.015 * dtScale;
@@ -71,7 +81,17 @@ export class SnowfallEffect {
       }
     }
 
-    ctx.fillStyle = isTinted ? 'rgba(255, 245, 250, 0.92)' : '#FFFFFF';
+    if (tintStrength <= 0) {
+      ctx.fillStyle = 'rgb(255, 255, 255)';
+    } else if (tintStrength >= 1) {
+      ctx.fillStyle = 'rgba(255, 245, 250, 0.92)';
+    } else {
+      const g = Math.round(255 - 10 * tintStrength);
+      const b = Math.round(255 - 5 * tintStrength);
+      const a = Number((1 - 0.08 * tintStrength).toFixed(3));
+      ctx.fillStyle = `rgba(255, ${g}, ${b}, ${a})`;
+    }
+
     for (const [bucketIdx, bucketAlpha] of ALPHA_BUCKETS.entries()) {
       ctx.globalAlpha = bucketAlpha;
       ctx.beginPath();

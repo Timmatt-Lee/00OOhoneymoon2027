@@ -1,4 +1,5 @@
 import { createPrng } from '../utils/prng';
+import { StrengthEnvelope } from './strengthEnvelope';
 
 interface GlowOrb {
   xRatio: number;
@@ -31,13 +32,13 @@ export class NightGlowEffect {
   private readonly orbs: GlowOrb[];
   private sprite: HTMLCanvasElement;
   private spriteDpr: number;
-  private readonly activeDayIndices: readonly number[];
+  private readonly envelope: StrengthEnvelope;
 
   constructor(orbCount = 12, activeDayIndices: readonly number[] = [8, 9, 10], initialDpr = 1) {
     const rand = createPrng(20270310);
     this.spriteDpr = initialDpr;
     this.sprite = createBokehOrbSprite(initialDpr);
-    this.activeDayIndices = activeDayIndices;
+    this.envelope = new StrengthEnvelope(activeDayIndices);
     this.orbs = Array.from({ length: orbCount }, () => ({
       xRatio: 0.08 + rand() * 0.84,
       yOffset: 28 + rand() * 110,
@@ -61,16 +62,10 @@ export class NightGlowEffect {
     isAdvancing = true,
     dtScale = 1
   ): void {
-    if (this.activeDayIndices.length === 0) return;
+    const currentStrength = this.envelope.step(dayFloat, isAdvancing, dtScale);
+    if (currentStrength <= 0) return;
 
-    let minDist = Infinity;
-    for (const idx of this.activeDayIndices) {
-      const d = Math.abs(dayFloat - idx);
-      if (d < minDist) minDist = d;
-    }
-    if (minDist >= 1.0) return;
-
-    const strength = (1 - minDist) * 0.72;
+    const scaledStrength = currentStrength * 0.72;
 
     for (const o of this.orbs) {
       if (isAdvancing) {
@@ -78,7 +73,7 @@ export class NightGlowEffect {
       }
       const x = o.xRatio * w;
       const y = h - o.yOffset + Math.cos(o.phase * 0.7) * 4;
-      ctx.globalAlpha = (0.45 + 0.55 * Math.sin(o.phase)) * strength;
+      ctx.globalAlpha = Math.max(0, 0.45 + 0.55 * Math.sin(o.phase)) * scaledStrength;
       ctx.drawImage(this.sprite, x - o.r, y - o.r, o.r * 2, o.r * 2);
     }
   }
