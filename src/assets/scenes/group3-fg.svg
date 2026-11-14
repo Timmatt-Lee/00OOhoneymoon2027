@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="hidden">
   <defs>
     <clipPath id="g3-pine-clip">
       <polygon points="-140,116 -162,184 -118,184"/>

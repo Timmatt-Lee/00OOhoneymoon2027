@@ -24,6 +24,12 @@ describe('startParticleStage', () => {
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
     Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
     Object.defineProperty(navigator, 'webdriver', { value: false, configurable: true });
+    Object.defineProperty(window, 'CSS', {
+      value: {
+        supports: vi.fn(() => false)
+      },
+      configurable: true
+    });
   });
 
   afterEach(() => {
@@ -52,7 +58,7 @@ describe('startParticleStage', () => {
     }).not.toThrow();
   });
 
-  it('caps DPR at 2x, pauses during .is-swiping/.is-gliding, scales dt, and handles reduced-motion transitions', async () => {
+  it('caps DPR at 2x on non-iOS and 1x on iOS WebKit, throttles ambient ticks to ~30fps, skips drawing while .is-moving, and handles reduced-motion transitions', () => {
     const { daysData } = loadHoneymoonData();
     document.body.innerHTML = '<div id="app-shell"><canvas id="fx-canvas"></canvas></div>';
     const appShell = document.getElementById('app-shell');
@@ -64,7 +70,7 @@ describe('startParticleStage', () => {
     const ctxMock = createCanvasCtxMock();
     vi.spyOn(rawCanvas, 'getContext').mockReturnValue(ctxMock);
 
-    // 3x Retina DPR must be capped at 2x
+    // 3x Retina DPR must be capped at 2x on non-iOS browsers
     Object.defineProperty(window, 'devicePixelRatio', { value: 3, configurable: true });
 
     let isReducedMotion = false;
@@ -105,80 +111,115 @@ describe('startParticleStage', () => {
     let dayPos = 4; // Day 5 Biei (snow tinted)
     startParticleStage(daysData, () => dayPos);
 
-    // Backing store capped at 2x DPR (400 * 2 = 800, 844 * 2 = 1688)
+    // Backing store capped at 2x DPR on non-iOS (400 * 2 = 800, 844 * 2 = 1688)
     expect(rawCanvas.width).toBe(800);
     expect(rawCanvas.height).toBe(1688);
     expect(ctxMock.setTransform).toHaveBeenCalledWith(2, 0, 0, 2, 0, 0);
     expect(rafCallbacks.size).toBe(1);
 
-    // Run ticks covering initial dt, normal 60Hz dt, slow 30Hz dt clamp (2x), and fast >240Hz dt clamp (0.25x)
+    const clearRectSpy = vi.mocked(ctxMock.clearRect);
+    clearRectSpy.mockClear();
+
+    // Tick at t = 100 draws initial ambient frame; t = 116 (< 30ms) skips drawing while keeping rafId scheduled; t = 135 (>= 30ms) draws
     flushNextRaf(100);
-    flushNextRaf(116.667);
-    flushNextRaf(200);
-    flushNextRaf(201);
+    expect(clearRectSpy).toHaveBeenCalledTimes(1);
     expect(rafCallbacks.size).toBe(1);
 
-    // Dispatch click while animated (loop stays single-scheduled)
+    flushNextRaf(116);
+    expect(clearRectSpy).toHaveBeenCalledTimes(1);
+    expect(rafCallbacks.size).toBe(1);
+
+    flushNextRaf(135);
+    expect(clearRectSpy).toHaveBeenCalledTimes(2);
+    expect(rafCallbacks.size).toBe(1);
+
+    // Dispatch click while animated (loop stays single-scheduled with zero synchronous redraw)
     window.dispatchEvent(new Event('click'));
+    expect(clearRectSpy).toHaveBeenCalledTimes(2);
     expect(rafCallbacks.size).toBe(1);
 
-    // Adding .is-swiping pauses rAF immediately via MutationObserver
-    appShell.classList.add('is-swiping');
-    await Promise.resolve();
-    expect(rafCallbacks.size).toBe(0);
+    // Adding .is-moving passively skips canvas drawing inside tick without MutationObserver microtasks
+    appShell.classList.add('is-moving');
+    flushNextRaf(170);
+    expect(clearRectSpy).toHaveBeenCalledTimes(2);
+    expect(rafCallbacks.size).toBe(1);
 
-    // Switching to .is-gliding keeps rAF paused
-    appShell.classList.remove('is-swiping');
-    appShell.classList.add('is-gliding');
-    await Promise.resolve();
-    expect(rafCallbacks.size).toBe(0);
+    // Resize while .is-moving skips renderFrame(false) cleanly
+    window.dispatchEvent(new Event('resize'));
+    expect(clearRectSpy).toHaveBeenCalledTimes(2);
 
-    // Clearing .is-gliding resumes rAF smoothly
+    // Removing .is-moving resumes drawing on the very next tick
     dayPos = 5;
-    appShell.classList.remove('is-gliding');
-    await Promise.resolve();
+    appShell.classList.remove('is-moving');
+    flushNextRaf(210);
+    expect(clearRectSpy).toHaveBeenCalledTimes(3);
     expect(rafCallbacks.size).toBe(1);
 
     // If document.hidden flips before visibilitychange fires, tick exits cleanly without rescheduling
     Object.defineProperty(document, 'hidden', { value: true, configurable: true });
-    flushNextRaf(240);
+    flushNextRaf(250);
     expect(rafCallbacks.size).toBe(0);
+
+    // Navigation trigger while hidden does not re-arm rAF
+    window.dispatchEvent(new Event('pointerup'));
+    expect(rafCallbacks.size).toBe(0);
+
     document.dispatchEvent(new Event('visibilitychange'));
     expect(rafCallbacks.size).toBe(0);
 
-    // Visible again -> resumes rAF
+    // Visible again before visibilitychange: pointerup re-arms rAF immediately
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+    window.dispatchEvent(new Event('pointerup'));
+    expect(rafCallbacks.size).toBe(1);
     document.dispatchEvent(new Event('visibilitychange'));
     expect(rafCallbacks.size).toBe(1);
 
-    // Resize updates backing store (including 0 fallback & 0 DPR fallback) and re-renders
+    // iOS WebKit (-webkit-touch-callout: none) caps DPR at 1x even on 3x Retina (500 * 1 = 500, 900 * 1 = 900)
+    Object.defineProperty(window, 'CSS', {
+      value: {
+        supports: vi.fn(
+          (prop: string, val: string) => prop === '-webkit-touch-callout' && val === 'none'
+        )
+      },
+      configurable: true
+    });
     Object.defineProperty(rawCanvas, 'offsetWidth', { value: 500, configurable: true });
     Object.defineProperty(rawCanvas, 'offsetHeight', { value: 900, configurable: true });
-    Object.defineProperty(window, 'devicePixelRatio', { value: 0, configurable: true });
     window.dispatchEvent(new Event('resize'));
     expect(rawCanvas.width).toBe(500);
+    expect(rawCanvas.height).toBe(900);
 
+    // Resize also handles missing window.CSS, 0 DPR fallback, and 0 offsetWidth/offsetHeight fallbacks
+    Reflect.deleteProperty(window, 'CSS');
+    Object.defineProperty(window, 'devicePixelRatio', { value: 0, configurable: true });
     Object.defineProperty(rawCanvas, 'offsetWidth', { value: 0, configurable: true });
     Object.defineProperty(rawCanvas, 'offsetHeight', { value: 0, configurable: true });
     window.dispatchEvent(new Event('resize'));
     expect(rawCanvas.width).toBe(400);
+    expect(rawCanvas.height).toBe(844);
 
     // Dynamic prefers-reduced-motion toggle stops continuous loop immediately
     isReducedMotion = true;
     for (const notify of motionListeners) notify();
     expect(rafCallbacks.size).toBe(0);
 
-    // Coalesces multiple navigation events into a single static rAF sync
+    // Static sync waits if .is-moving is active, coalesces duplicate triggers, then renders settled frame once
     dayPos = 9;
+    appShell.classList.add('is-moving');
     window.dispatchEvent(new Event('pointerup'));
-    window.dispatchEvent(new Event('click'));
+    window.dispatchEvent(new Event('keydown'));
     expect(rafCallbacks.size).toBe(1);
+
     flushNextRaf(300);
+    expect(rafCallbacks.size).toBe(1);
+
+    appShell.classList.remove('is-moving');
+    flushNextRaf(330);
     expect(rafCallbacks.size).toBe(0);
 
     // Unchanged dayFloat in static mode hits early-return cache guard
     window.dispatchEvent(new Event('hashchange'));
-    flushNextRaf(316);
+    flushNextRaf(360);
     expect(rafCallbacks.size).toBe(0);
   });
 

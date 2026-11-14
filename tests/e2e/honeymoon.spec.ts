@@ -193,7 +193,7 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     expect(context.pages()).toHaveLength(1);
   });
 
-  test('4. verifies iOS Low Power Mode 60Hz invariants: 2x DPR cap on 3x Retina, .is-gliding CoreAnimation transitions, paused SVG loops, and hidden inactive spans', async ({
+  test('4. verifies WebKit GPU invariants (2x non-iOS & 1x iOS DPR cap, clipped SVG layers, zero SVG @keyframes, pruned will-change) and rapid multi-flick chaining', async ({
     browser
   }) => {
     const retinaContext = await browser.newContext({
@@ -204,7 +204,7 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/#day-10');
 
-    // 1. Verify #fx-canvas caps backing store at 2x (780px) even on 3x Retina devices
+    // 1. Verify #fx-canvas caps backing store at 2x (780px) on non-iOS 3x Retina devices
     const canvasMetrics = await page.evaluate(() => {
       const canvas = document.getElementById('fx-canvas') as HTMLCanvasElement;
       const ctx = canvas.getContext('2d');
@@ -219,34 +219,22 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
       }
       return { width: canvas.width, isPopulated };
     });
-    expect(canvasMetrics.width).toBeLessThanOrEqual(390 * 2);
     expect(canvasMetrics.width).toBe(780);
     expect(canvasMetrics.isPopulated).toBe(true);
 
-    // 2. Verify inactive story segment spans stay display:none (zero layout thrash) and 3-day GPU staging cap
-    const preGlideGpuState = await page.evaluate(() => {
+    // 2. Verify GPU layer pruning, clipped SVG textures (zero CATiledLayer overflow), and zero SVG @keyframes
+    const gpuState = await page.evaluate(() => {
       const inactiveSpan = document.querySelector('.story-seg:not(.is-active-pill) > span');
       const activePanel = document.querySelector<HTMLElement>('.day-schedule-panel[data-day="9"]');
-      return {
-        isInactiveSpanHidden:
-          inactiveSpan !== null && window.getComputedStyle(inactiveSpan).display === 'none',
-        stagedPanelCount: document.querySelectorAll('.day-schedule-panel.is-gpu-staged').length,
-        stagedSkyCount: document.querySelectorAll('.sky-layer.is-gpu-staged').length,
-        activePanelWillChange: activePanel ? window.getComputedStyle(activePanel).willChange : ''
-      };
-    });
-    expect(preGlideGpuState.isInactiveSpanHidden).toBe(true);
-    expect(preGlideGpuState.stagedPanelCount).toBeLessThanOrEqual(3);
-    expect(preGlideGpuState.stagedSkyCount).toBeLessThanOrEqual(3);
-    expect(preGlideGpuState.stagedPanelCount).toBe(3);
-    expect(preGlideGpuState.stagedSkyCount).toBe(3);
-    expect(preGlideGpuState.activePanelWillChange).toContain('transform');
-
-    // 3. Trigger adjacent day glide (Day 10 -> Day 11 in Group 4) and inspect active .is-gliding compositor state
-    await page.keyboard.press('ArrowRight');
-    const glideDiagnostics = await page.evaluate(() => {
-      const shell = document.getElementById('app-shell');
-      const panel = document.querySelector<HTMLElement>('.day-schedule-panel[data-day="10"]');
+      const tlNode = document.querySelector<HTMLElement>('.tl-node');
+      const tlDot = document.querySelector<HTMLElement>('.tl-dot');
+      const planeActor = document.querySelector<HTMLElement>('.plane-actor');
+      const parallaxLayer = document.querySelector<HTMLElement>(
+        '.scene-group-clip[data-group="4"] .parallax-fg'
+      );
+      const sceneSvg = document.querySelector<SVGSVGElement>(
+        '.scene-group-clip[data-group="4"] .scene-svg'
+      );
       const shimmer = document.querySelector<SVGElement>(
         '.scene-group-clip[data-group="4"] .water-shimmer'
       );
@@ -254,21 +242,106 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
         '.scene-group-clip[data-group="4"] .ferris-wheel-spin'
       );
       return {
-        isGlidingClass: shell?.classList.contains('is-gliding') ?? false,
+        isInactiveSpanHidden:
+          inactiveSpan !== null && window.getComputedStyle(inactiveSpan).display === 'none',
         stagedPanelCount: document.querySelectorAll('.day-schedule-panel.is-gpu-staged').length,
         stagedSkyCount: document.querySelectorAll('.sky-layer.is-gpu-staged').length,
-        panelTransitionDuration: panel ? window.getComputedStyle(panel).transitionDuration : '',
-        shimmerPlayState: shimmer ? window.getComputedStyle(shimmer).animationPlayState : '',
-        ferrisPlayState: ferris ? window.getComputedStyle(ferris).animationPlayState : ''
+        activePanelWillChange: activePanel ? window.getComputedStyle(activePanel).willChange : '',
+        tlNodeWillChange: tlNode ? window.getComputedStyle(tlNode).willChange : '',
+        tlDotWillChange: tlDot ? window.getComputedStyle(tlDot).willChange : '',
+        planeWillChange: planeActor ? window.getComputedStyle(planeActor).willChange : '',
+        parallaxOverflow: parallaxLayer ? window.getComputedStyle(parallaxLayer).overflow : '',
+        svgOverflowAttr: sceneSvg?.getAttribute('overflow') ?? '',
+        svgOverflowStyle: sceneSvg ? window.getComputedStyle(sceneSvg).overflow : '',
+        shimmerAnimName: shimmer ? window.getComputedStyle(shimmer).animationName : '',
+        ferrisAnimName: ferris ? window.getComputedStyle(ferris).animationName : ''
       };
     });
+    expect(gpuState.isInactiveSpanHidden).toBe(true);
+    expect(gpuState.stagedPanelCount).toBe(3);
+    expect(gpuState.stagedSkyCount).toBe(3);
+    expect(gpuState.activePanelWillChange).toContain('transform');
+    expect(gpuState.tlNodeWillChange).toBe('auto');
+    expect(gpuState.tlDotWillChange).toBe('auto');
+    expect(gpuState.planeWillChange).toBe('auto');
+    expect(gpuState.parallaxOverflow).toBe('hidden');
+    expect(gpuState.svgOverflowAttr).toBe('hidden');
+    expect(gpuState.svgOverflowStyle).toBe('hidden');
+    expect(gpuState.shimmerAnimName).toBe('none');
+    expect(gpuState.ferrisAnimName).toBe('none');
 
-    expect(glideDiagnostics.isGlidingClass).toBe(true);
-    expect(glideDiagnostics.stagedPanelCount).toBeLessThanOrEqual(3);
-    expect(glideDiagnostics.stagedSkyCount).toBeLessThanOrEqual(3);
-    expect(glideDiagnostics.panelTransitionDuration).toContain('0.32s');
-    expect(glideDiagnostics.shimmerPlayState).toBe('paused');
-    expect(glideDiagnostics.ferrisPlayState).toBe('paused');
+    // 3. Verify short (< 30px) high-velocity flick advances Day 1 -> Day 2, and rapid consecutive flicks chain Day 1 -> Day 2 -> Day 3 -> Day 4
+    await page.locator('.story-slot[data-day="0"]').click();
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 1');
+    const shell = page.locator('#app-shell');
+    await shell.dispatchEvent('pointerdown', {
+      button: 0,
+      clientX: 250,
+      clientY: 400,
+      pointerId: 1
+    });
+    await page.waitForTimeout(20);
+    await shell.dispatchEvent('pointermove', { clientX: 228, clientY: 400, pointerId: 1 });
+    await shell.dispatchEvent('pointerup', { clientX: 228, clientY: 400, pointerId: 1 });
+
+    const movingDiagnostics = await page.evaluate(() => {
+      const shellEl = document.getElementById('app-shell');
+      const panel = document.querySelector<HTMLElement>('.day-schedule-panel[data-day="1"]');
+      return {
+        isMovingClass: shellEl?.classList.contains('is-moving') ?? false,
+        panelTransitionDuration: panel ? window.getComputedStyle(panel).transitionDuration : ''
+      };
+    });
+    expect(movingDiagnostics.isMovingClass).toBe(true);
+    expect(movingDiagnostics.panelTransitionDuration).toBe('0s');
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 2');
+    await expect(shell).not.toHaveClass(/is-moving/);
+
+    // Reset to Day 1 and fire 3 rapid short flicks (< 30px each) in quick succession -> chains smoothly Day 1 -> Day 2 -> Day 3 -> Day 4!
+    await page.locator('.story-slot[data-day="0"]').click();
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 1');
+
+    for (let flickIdx = 0; flickIdx < 3; flickIdx++) {
+      const pid = 10 + flickIdx;
+      await shell.dispatchEvent('pointerdown', {
+        button: 0,
+        clientX: 260,
+        clientY: 420,
+        pointerId: pid
+      });
+      await page.waitForTimeout(18);
+      await shell.dispatchEvent('pointermove', {
+        clientX: 236,
+        clientY: 420,
+        pointerId: pid
+      });
+      await shell.dispatchEvent('pointerup', {
+        clientX: 236,
+        clientY: 420,
+        pointerId: pid
+      });
+      await page.waitForTimeout(45);
+    }
+
+    await expect(page.locator('.story-seg.is-active-pill')).toContainText('Day 4');
+    await expect(shell).not.toHaveClass(/is-moving/);
+    expect(page.url()).toContain('#day-4');
+
+    // 4. Verify iOS WebKit (-webkit-touch-callout: none) caps #fx-canvas backing store at 1x DPR (393px)
+    const iosPage = await retinaContext.newPage();
+    await iosPage.addInitScript(() => {
+      const origSupports = window.CSS.supports.bind(window.CSS);
+      window.CSS.supports = (prop: string, val?: string): boolean => {
+        if (prop === '-webkit-touch-callout' && val === 'none') return true;
+        return typeof val === 'string' ? origSupports(prop, val) : origSupports(prop);
+      };
+    });
+    await iosPage.setViewportSize({ width: 393, height: 852 });
+    await iosPage.goto('/#day-5');
+    const iosCanvasWidth = await iosPage.evaluate(
+      () => (document.getElementById('fx-canvas') as HTMLCanvasElement).width
+    );
+    expect(iosCanvasWidth).toBe(393);
 
     await retinaContext.close();
   });
@@ -356,8 +429,9 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     }
   });
 
-  test('6. verifies responsive viewports (320x568 SE, 390x844, 393x852 iPhone 14 Pro safe-area WebClip, 1280x800, 1920x1080), Day 5 couple framing, and blind-box privacy', async ({
-    page
+  test('6. verifies responsive viewports (320x568 SE, 390x844, 393x852 iPhone 14 Pro full-screen WebClip, 852x393 portrait-lock, 1280x800, 1920x1080), Day 5 couple framing, and blind-box privacy', async ({
+    page,
+    browser
   }) => {
     const errors = await installErrorAndCspMonitors(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -401,11 +475,19 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
       await page.locator('.story-slot[data-day="5"]').click();
 
       const layoutAudit = await page.evaluate(() => {
+        const shellEl = document.getElementById('app-shell');
+        const isLandscapeLocked = shellEl?.classList.contains('is-landscape-locked') ?? false;
         const isDocOverflow =
           document.documentElement.scrollWidth > document.documentElement.clientWidth;
         const footerRect = document.getElementById('cityscape-footer')?.getBoundingClientRect();
-        if (!footerRect)
-          return { isDocOverflow: true, isItemOverflow: true, isFooterOverlap: true };
+        if (!footerRect) {
+          return {
+            isLandscapeLocked,
+            isDocOverflow: true,
+            isItemOverflow: true,
+            isFooterOverlap: true
+          };
+        }
 
         let isItemOverflow = false;
         let isFooterOverlap = false;
@@ -424,9 +506,12 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
             isFooterOverlap = true;
           }
         }
-        return { isDocOverflow, isItemOverflow, isFooterOverlap };
+        return { isLandscapeLocked, isDocOverflow, isItemOverflow, isFooterOverlap };
       });
 
+      expect(layoutAudit.isLandscapeLocked, `Landscape lock at ${vp.width}x${vp.height}`).toBe(
+        false
+      );
       expect(layoutAudit.isDocOverflow, `Doc overflow at ${vp.width}x${vp.height}`).toBe(false);
       expect(layoutAudit.isItemOverflow, `Item overflow at ${vp.width}x${vp.height}`).toBe(false);
       expect(layoutAudit.isFooterOverlap, `Footer overlap at ${vp.width}x${vp.height}`).toBe(false);
@@ -444,7 +529,91 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
       }
     }
 
-    // 4. iPhone 14 Pro Standalone WebClip safe-area simulation (393x852, --sat: 59px, --sab: 34px) across all 12 days (incl. Day 1, Day 4, Day 5, Day 12)
+    // 4. iPhone 14 Pro coarse-pointer landscape (852x393) portrait-lock + rotated swipe & standalone WebClip --ios-chin-fix (393x818 -> 852pt)
+    const iosContext = await browser.newContext({
+      viewport: { width: 852, height: 393 },
+      deviceScaleFactor: 3,
+      hasTouch: true,
+      isMobile: true
+    });
+    const iosPage = await iosContext.newPage();
+    await iosPage.addInitScript(() => {
+      Object.defineProperty(navigator, 'standalone', { value: true, configurable: true });
+      Object.defineProperty(window.screen, 'width', { value: 393, configurable: true });
+      Object.defineProperty(window.screen, 'height', { value: 852, configurable: true });
+    });
+    await iosPage.emulateMedia({ reducedMotion: 'reduce' });
+    await iosPage.goto('/#day-1');
+    await iosPage.evaluate(() => document.fonts.ready);
+
+    const landscapeAudit = await iosPage.evaluate(() => {
+      const shellEl = document.getElementById('app-shell');
+      const footerEl = document.getElementById('cityscape-footer');
+      if (!shellEl || !footerEl) return null;
+      const shellRect = shellEl.getBoundingClientRect();
+      return {
+        isLandscapeLocked: shellEl.classList.contains('is-landscape-locked'),
+        clientWidth: shellEl.clientWidth,
+        clientHeight: shellEl.clientHeight,
+        footerClientHeight: footerEl.clientHeight,
+        rectWidth: Math.round(shellRect.width),
+        rectHeight: Math.round(shellRect.height),
+        appHVar: document.documentElement.style.getPropertyValue('--app-h')
+      };
+    });
+    expect(landscapeAudit).not.toBeNull();
+    expect(landscapeAudit?.isLandscapeLocked).toBe(true);
+    expect(landscapeAudit?.clientWidth).toBe(393);
+    expect(landscapeAudit?.clientHeight).toBe(852);
+    expect(landscapeAudit?.footerClientHeight).toBeGreaterThanOrEqual(200);
+    expect(landscapeAudit?.rectWidth).toBe(852);
+    expect(landscapeAudit?.rectHeight).toBe(393);
+    expect(landscapeAudit?.appHVar).toBe('852px');
+
+    // Dispatch rotated horizontal swipe in ccw90 landscape (moving clientY 73 -> 293 maps to stage X 320 -> 100)
+    const iosShell = iosPage.locator('#app-shell');
+    await iosShell.dispatchEvent('pointerdown', {
+      button: 0,
+      clientX: 400,
+      clientY: 73,
+      pointerId: 1
+    });
+    await iosShell.dispatchEvent('pointermove', { clientX: 400, clientY: 293, pointerId: 1 });
+    await iosShell.dispatchEvent('pointerup', { clientX: 400, clientY: 293, pointerId: 1 });
+    await expect(iosPage.locator('.story-seg.is-active-pill')).toContainText('Day 2');
+
+    // Rotate back to iPhone 14 Pro Standalone WebClip portrait (innerHeight = 818 vs screen.height = 852 -> --ios-chin-fix = 34px)
+    await iosPage.setViewportSize({ width: 393, height: 818 });
+    await iosPage.evaluate(() => window.dispatchEvent(new Event('resize')));
+    const chinFixAudit = await iosPage.evaluate(() => {
+      const shellEl = document.getElementById('app-shell');
+      const footerEl = document.getElementById('cityscape-footer');
+      const snowSlotEl = document.getElementById('snow-ground-slot');
+      const parallaxFg = document.querySelector<HTMLElement>(
+        '.scene-group-clip.is-visible .parallax-fg'
+      );
+      if (!shellEl || !footerEl || !snowSlotEl || !parallaxFg) return null;
+      return {
+        isLandscapeLocked: shellEl.classList.contains('is-landscape-locked'),
+        chinFixVar: document.documentElement.style.getPropertyValue('--ios-chin-fix'),
+        shellBottom: Math.round(shellEl.getBoundingClientRect().bottom),
+        footerBottom: Math.round(footerEl.getBoundingClientRect().bottom),
+        parallaxBottom: Math.round(parallaxFg.getBoundingClientRect().bottom),
+        snowSlotBottom: Math.round(snowSlotEl.getBoundingClientRect().bottom),
+        snowSlotHeight: Math.round(snowSlotEl.getBoundingClientRect().height)
+      };
+    });
+    expect(chinFixAudit).not.toBeNull();
+    expect(chinFixAudit?.isLandscapeLocked).toBe(false);
+    expect(chinFixAudit?.chinFixVar).toBe('34px');
+    expect(chinFixAudit?.shellBottom).toBe(852);
+    expect(chinFixAudit?.footerBottom).toBe(852);
+    expect(chinFixAudit?.parallaxBottom).toBe(852);
+    expect(chinFixAudit?.snowSlotBottom).toBe(852);
+    expect(chinFixAudit?.snowSlotHeight).toBe(44);
+    await iosContext.close();
+
+    // 5. Full 12-day iPhone 14 Pro full-screen geometry audit (393x852, --sat: 59px, --sab: 34px) with 44px snowdrift and zero white wall
     await page.evaluate(() => {
       document.documentElement.style.setProperty('--sat', '59px');
       document.documentElement.style.setProperty('--sab', '34px');
@@ -477,7 +646,7 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
         const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor;
         const bodyBg = window.getComputedStyle(document.body).backgroundColor;
         const shellBg = window.getComputedStyle(shellEl).backgroundColor;
-        const snowAfterBg = window.getComputedStyle(snowSlotEl, '::after').backgroundColor;
+        const snowAfterContent = window.getComputedStyle(snowSlotEl, '::after').content;
         const skyTopVar = document.documentElement.style.getPropertyValue('--sky-top-color');
         const isDocOverflow =
           document.documentElement.scrollWidth > document.documentElement.clientWidth;
@@ -529,7 +698,7 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
           htmlBg,
           bodyBg,
           shellBg,
-          snowAfterBg,
+          snowAfterContent,
           skyTopVar,
           rowCount: rows.length,
           isDocOverflow,
@@ -545,10 +714,10 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
       expect(safeAreaAudit.shellBottom, `Day ${dayIdx + 1} #app-shell bottom`).toBe(852);
       expect(safeAreaAudit.footerBottom, `Day ${dayIdx + 1} #cityscape-footer bottom`).toBe(852);
       expect(safeAreaAudit.snowSlotBottom, `Day ${dayIdx + 1} #snow-ground-slot bottom`).toBe(852);
-      expect(safeAreaAudit.snowSlotHeight, `Day ${dayIdx + 1} #snow-ground-slot height`).toBe(78);
+      expect(safeAreaAudit.snowSlotHeight, `Day ${dayIdx + 1} #snow-ground-slot height`).toBe(44);
       expect(safeAreaAudit.snowSvgHeight, `Day ${dayIdx + 1} .snow-ground-svg height`).toBe(44);
-      expect(safeAreaAudit.snowSvgBottom, `Day ${dayIdx + 1} .snow-ground-svg bottom`).toBe(818);
-      expect(safeAreaAudit.parallaxFgBottom, `Day ${dayIdx + 1} .parallax-fg bottom`).toBe(818);
+      expect(safeAreaAudit.snowSvgBottom, `Day ${dayIdx + 1} .snow-ground-svg bottom`).toBe(852);
+      expect(safeAreaAudit.parallaxFgBottom, `Day ${dayIdx + 1} .parallax-fg bottom`).toBe(852);
       expect(safeAreaAudit.htmlBg, `Day ${dayIdx + 1} html background-color`).toBe(
         'rgb(255, 255, 255)'
       );
@@ -558,10 +727,9 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
       expect(safeAreaAudit.shellBg, `Day ${dayIdx + 1} #app-shell background-color`).toBe(
         'rgb(255, 255, 255)'
       );
-      expect(
-        safeAreaAudit.snowAfterBg,
-        `Day ${dayIdx + 1} #snow-ground-slot::after background-color`
-      ).toBe('rgb(255, 255, 255)');
+      expect(safeAreaAudit.snowAfterContent, `Day ${dayIdx + 1} #snow-ground-slot::after`).toBe(
+        'none'
+      );
       expect(safeAreaAudit.skyTopVar, `Day ${dayIdx + 1} --sky-top-color`).toBe('');
       expect(safeAreaAudit.rowCount).toBeGreaterThanOrEqual(3);
       expect(safeAreaAudit.isDocOverflow, `Day ${dayIdx + 1} 393x852 doc overflow`).toBe(false);

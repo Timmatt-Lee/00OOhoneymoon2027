@@ -7,12 +7,10 @@ export interface TimelineController {
 
 interface CachedTimelineNode {
   nodeEl: HTMLDivElement;
-  dotEl: HTMLDivElement;
   timeAEl: HTMLSpanElement;
   timeBEl: HTMLSpanElement;
   lastY: number;
   lastOp: string;
-  lastScale: string;
   lastStrA: string;
   lastStrB: string;
   lastOpA: string;
@@ -49,12 +47,10 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
 
     return {
       nodeEl,
-      dotEl,
       timeAEl,
       timeBEl,
       lastY: -9999,
       lastOp: '',
-      lastScale: '',
       lastStrA: '',
       lastStrB: '',
       lastOpA: '',
@@ -97,7 +93,6 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
       const isOnlyInA = i < itemACount && i >= itemBCount;
       const isOnlyInB = i >= itemACount;
       const opacityStr = (isOnlyInA ? 1 - t : isOnlyInB ? t : 1).toFixed(3);
-      const scaleStr = (isOnlyInA ? 1 - 0.25 * t : isOnlyInB ? 0.75 + 0.25 * t : 1).toFixed(2);
 
       if (Math.abs(yPx - n.lastY) > 0.05) {
         n.nodeEl.style.transform = `translate3d(0, ${yPx.toFixed(1)}px, 0)`;
@@ -106,10 +101,6 @@ export function mountTimelineRail(daysData: DayData[]): TimelineController {
       if (n.lastOp !== opacityStr) {
         n.nodeEl.style.opacity = opacityStr;
         n.lastOp = opacityStr;
-      }
-      if (n.lastScale !== scaleStr) {
-        n.dotEl.style.transform = `scale(${scaleStr})`;
-        n.lastScale = scaleStr;
       }
 
       const strA = itemsA[Math.min(i, itemACount - 1)].time;

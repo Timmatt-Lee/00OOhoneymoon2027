@@ -9,7 +9,8 @@
 :root {
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
-  --footer-h: clamp(148px, 24vh, 205px);
+  --app-h: 100vh;
+  --footer-h: clamp(148px, calc(var(--app-h) * 0.24), 205px);
 }
 
 $bg-deep: #070b19;
@@ -20,5 +21,3 @@ $font-stack:
   BlinkMacSystemFont,
   sans-serif;
 $footer-height: 205px;
-$glide-easing: cubic-bezier(0.22, 1, 0.36, 1);
-$glide-duration: 320ms;

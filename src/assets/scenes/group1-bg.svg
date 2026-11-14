@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="hidden">
   <defs>
     <clipPath id="g1-mtn-clip">
       <path d="M -1400,205 L -1400,122 L -1220,66 L -1060,114 L -890,56 L -720,112 L -550,62 L -380,116 L -200,60 L -20,126 L 95,62 L 195,112 L 310,52 L 430,108 L 525,64 L 600,118 L 760,60 L 920,114 L 1090,56 L 1260,114 L 1440,62 L 1620,116 L 1800,66 L 1980,122 L 1980,205 Z"/>

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { bootstrap, initWhenReady, onServiceWorkerRegisterError } from './main';
+import * as timelineModule from './engine/timeline';
+import * as viewportModule from './utils/viewport';
 
 const STAGE_HTML = `
   <meta id="theme-color-meta" content="#070B19" />
@@ -47,7 +49,23 @@ describe('application bootstrap', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => mockCtx);
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 1);
 
+    const bootSequence: string[] = [];
+    const origSyncViewport = viewportModule.syncViewportState;
+    vi.spyOn(viewportModule, 'syncViewportState').mockImplementation((shellEl) => {
+      bootSequence.push('syncViewportState');
+      return origSyncViewport(shellEl);
+    });
+    const origMountTimeline = timelineModule.mountTimelineRail;
+    vi.spyOn(timelineModule, 'mountTimelineRail').mockImplementation((daysData) => {
+      bootSequence.push('mountTimelineRail');
+      return origMountTimeline(daysData);
+    });
+
     initWhenReady({ readyState: 'complete' }, window);
+    expect(bootSequence[0]).toBe('syncViewportState');
+    expect(bootSequence.indexOf('syncViewportState')).toBeLessThan(
+      bootSequence.indexOf('mountTimelineRail')
+    );
     expect(document.querySelectorAll('.story-slot')).toHaveLength(12);
 
     // Invoke particle-stage day callback by triggering a resize frame

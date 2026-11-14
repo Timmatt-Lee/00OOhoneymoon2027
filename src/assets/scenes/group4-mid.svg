@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="visible">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 205" class="scene-svg" preserveAspectRatio="xMidYMax meet" overflow="hidden">
   <defs>
     <clipPath id="g4-mid-hills-clip">
       <path d="M 192,205 L 192,165 C 220,162 246,148 276,136 Q 368,102 490,144 Q 640,162 820,144 Q 980,128 1200,150 Q 1560,128 1920,148 L 2600,146 L 2600,205 Z"/>

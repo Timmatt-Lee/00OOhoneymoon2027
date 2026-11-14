@@ -124,7 +124,7 @@ describe('00OO Hokkaido Honeymoon 2027 — Repository Integrity, Privacy & Archi
     ).toThrow(/chronological/);
   });
 
-  it('4. verifies all 18 inlined SVGs have unique IDs, valid url(#...) refs, xMidYMax meet + overflow="visible", and full-bleed horizons', () => {
+  it('4. verifies all 18 inlined SVGs have unique IDs, valid url(#...) refs, xMidYMax meet + overflow="hidden", and full-bleed horizons', () => {
     const scenesDir = path.join(rootDir, 'src/assets/scenes');
     const svgFiles = fs
       .readdirSync(scenesDir)
@@ -151,7 +151,7 @@ describe('00OO Hokkaido Honeymoon 2027 — Repository Integrity, Privacy & Archi
           'preserveAspectRatio="xMidYMax meet"'
         );
         expect(content, `${file} must not use slice`).not.toContain('slice');
-        expect(content, `${file} must set overflow="visible"`).toContain('overflow="visible"');
+        expect(content, `${file} must set overflow="hidden"`).toContain('overflow="hidden"');
 
         if (layerKind === 'bg' || layerKind === 'mid') {
           expect(content, `${file} must extend left horizon to -1400`).toContain('-1400');
@@ -244,7 +244,16 @@ describe('00OO Hokkaido Honeymoon 2027 — Repository Integrity, Privacy & Archi
     }
   });
 
-  it('8. ensures zero legacy untyped JS, duplicate public fonts, or obsolete test directories exist in the repo', () => {
+  it('8. ensures zero legacy untyped JS, SVG @keyframes stylesheets, duplicate public fonts, or obsolete test directories exist in the repo', () => {
+    expect(fs.existsSync(path.join(rootDir, 'src/styles/_animations.scss'))).toBe(false);
+    const scssFiles = walkDirectory(path.join(rootDir, 'src/styles')).filter((filePath) =>
+      filePath.endsWith('.scss')
+    );
+    for (const scssPath of scssFiles) {
+      const scssContent = fs.readFileSync(scssPath, 'utf8');
+      expect(scssContent).not.toContain('@keyframes');
+    }
+
     expect(fs.existsSync(path.join(rootDir, 'public/sw.js'))).toBe(false);
     expect(fs.existsSync(path.join(rootDir, 'public/fonts/Huninn-Regular.woff2'))).toBe(false);
     expect(fs.existsSync(path.join(rootDir, 'tests/unit'))).toBe(false);

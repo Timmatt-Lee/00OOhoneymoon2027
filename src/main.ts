@@ -6,12 +6,15 @@ import { mountParallaxScenes } from './engine/parallax';
 import { bindGesturesAndPhysics } from './engine/gestures';
 import { startParticleStage } from './effects/particleStage';
 import { registerOfflineServiceWorker } from './pwa/registerSw';
+import { getRequiredElementById } from './utils/dom';
+import { syncViewportState } from './utils/viewport';
 
 export function onServiceWorkerRegisterError(error: Error): void {
   console.warn('[PWA] Service worker registration skipped:', error.message);
 }
 
 export function bootstrap(): void {
+  syncViewportState(getRequiredElementById('app-shell'));
   const { daysData, sceneGroups } = loadHoneymoonData();
   const renderer = mountStageDOM(daysData);
   const timeline = mountTimelineRail(daysData);

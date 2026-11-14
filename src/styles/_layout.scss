@@ -41,16 +41,25 @@ body {
 
 #app-shell {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(0px - var(--ios-chin-fix, 0px));
   width: 100%;
   overflow: hidden;
   contain: layout paint;
   background-color: #ffffff;
   touch-action: none;
 
-  @media (display-mode: standalone) {
-    min-height: 100vh;
-    min-height: 100lvh;
+  &.is-landscape-locked {
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    width: var(--lock-w);
+    height: var(--lock-h);
+    transform: translate(-50%, -50%) rotate(var(--lock-rot));
+    transform-origin: center center;
   }
 
   &.theme-dark {
@@ -207,8 +216,8 @@ body {
 
 #timeline-rail {
   position: absolute;
-  top: calc(var(--sat) + clamp(76px, 13.5vh, 116px));
-  bottom: calc(var(--footer-h) + var(--sab) + 24px);
+  top: calc(var(--sat) + clamp(76px, calc(var(--app-h) * 0.135), 116px));
+  bottom: calc(var(--footer-h) + 24px);
   left: 16px;
   width: 74px;
   z-index: 35;
@@ -243,7 +252,6 @@ body {
   transform: translate3d(0, 0px, 0);
   opacity: 0;
   backface-visibility: hidden;
-  will-change: transform, opacity;
 }
 
 .tl-time-wrap {
@@ -267,7 +275,6 @@ body {
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--tl-text-color);
-  will-change: opacity;
 }
 
 .tl-dot {
@@ -279,8 +286,6 @@ body {
   border-radius: 9999px;
   background-color: var(--tl-dot-bg);
   border: 2px solid #ffffff;
-  transform: scale(1);
-  will-change: transform;
 }
 
 #schedule-stage {
@@ -296,8 +301,8 @@ body {
 
 .day-schedule-panel {
   position: absolute;
-  top: calc(var(--sat) + clamp(76px, 13.5vh, 116px));
-  bottom: calc(var(--footer-h) + var(--sab) + 24px);
+  top: calc(var(--sat) + clamp(76px, calc(var(--app-h) * 0.135), 116px));
+  bottom: calc(var(--footer-h) + 24px);
   left: 90px;
   right: 10px;
   pointer-events: none;
@@ -396,7 +401,7 @@ body {
   right: 0;
   bottom: 0;
   height: $footer-height;
-  height: calc(var(--footer-h) + var(--sab));
+  height: var(--footer-h);
   z-index: 20;
   overflow: hidden;
   contain: layout paint;
@@ -442,10 +447,12 @@ body {
 
 .parallax-layer {
   position: absolute;
-  bottom: var(--sab);
+  bottom: 0;
   left: 0;
   height: $footer-height;
   height: var(--footer-h);
+  overflow: hidden;
+  contain: layout paint;
   backface-visibility: hidden;
   pointer-events: none;
 }
@@ -458,7 +465,7 @@ body {
   width: 100%;
   height: 100%;
   display: block;
-  overflow: visible;
+  overflow: hidden;
 }
 
 #snow-ground-slot {
@@ -466,20 +473,9 @@ body {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: calc(44px + var(--sab));
-  padding-bottom: var(--sab);
+  height: 44px;
   pointer-events: none;
   z-index: 30;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: calc(var(--sab) + 18px);
-    background-color: #ffffff;
-  }
 }
 
 .snow-ground-svg {
@@ -517,10 +513,6 @@ body {
   }
 }
 
-.scene-group-clip.is-visible .plane-actor {
-  will-change: transform, opacity;
-}
-
 .jetliner-svg {
   width: 100%;
   height: 100%;
@@ -543,35 +535,6 @@ body {
 
 .day-schedule-panel.is-gpu-staged {
   will-change: transform, opacity;
-}
-
-// 60 Hz CoreAnimation off-main-thread glide transitions (runs at 60 Hz even in iOS Low Power Mode)
-#app-shell.is-gliding {
-  .sky-layer,
-  .day-schedule-panel,
-  .tl-node,
-  .tl-dot,
-  .tl-time-label,
-  .scene-group-clip,
-  .parallax-layer,
-  .plane-actor {
-    transition:
-      transform $glide-duration $glide-easing,
-      opacity $glide-duration $glide-easing;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .sky-layer,
-    .day-schedule-panel,
-    .tl-node,
-    .tl-dot,
-    .tl-time-label,
-    .scene-group-clip,
-    .parallax-layer,
-    .plane-actor {
-      transition: none !important;
-    }
-  }
 }
 
 // Compact portrait viewport layout (320x568 iPhone SE .. 359px) — zero clipping or overlap
@@ -598,7 +561,7 @@ body {
 
   #timeline-rail {
     top: calc(var(--sat) + 66px);
-    bottom: calc(var(--footer-h) + var(--sab) + 22px);
+    bottom: calc(var(--footer-h) + 22px);
     left: 8px;
     width: 48px;
   }
@@ -624,7 +587,7 @@ body {
 
   .day-schedule-panel {
     top: calc(var(--sat) + 66px);
-    bottom: calc(var(--footer-h) + var(--sab) + 22px);
+    bottom: calc(var(--footer-h) + 22px);
     left: 58px;
     right: 4px;
   }
