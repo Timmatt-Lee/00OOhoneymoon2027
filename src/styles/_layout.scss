@@ -47,9 +47,13 @@ body {
   bottom: calc(0px - var(--ios-chin-fix, 0px));
   width: 100%;
   overflow: hidden;
-  contain: layout paint;
+  contain: layout style paint;
   background-color: #ffffff;
   touch-action: none;
+
+  &.is-moving .is-map-link {
+    pointer-events: none;
+  }
 
   &.is-landscape-locked {
     --sat: max(
@@ -130,8 +134,9 @@ body {
   left: 0;
   right: 0;
   z-index: 50;
-  padding: calc(12px + var(--sat)) 16px 0;
+  padding: calc(12px + var(--sat)) 16px 8px;
   pointer-events: auto;
+  contain: layout style paint;
 }
 
 #story-bar-track {
@@ -221,19 +226,21 @@ body {
 
 #timeline-rail {
   position: absolute;
-  top: calc(var(--sat) + clamp(76px, calc(var(--app-h) * 0.135), 116px));
-  bottom: calc(var(--footer-h) + 24px);
+  top: calc(var(--sat) + clamp(76px, calc(var(--app-h) * 0.135), 116px) - 20px);
+  bottom: calc(var(--footer-h) + 4px);
   left: 16px;
   width: 74px;
+  padding: 20px 0;
   z-index: 35;
   pointer-events: none;
+  contain: layout style paint;
 }
 
 #timeline-line {
   position: absolute;
   left: 60px;
-  top: 0;
-  bottom: 0;
+  top: 20px;
+  bottom: 20px;
   width: 2.5px;
   border-radius: 9999px;
   background-color: var(--tl-line-bg);
@@ -256,6 +263,7 @@ body {
   align-items: center;
   transform: translate3d(0, 0px, 0);
   opacity: 0;
+  will-change: transform, opacity;
   backface-visibility: hidden;
 }
 
@@ -280,6 +288,7 @@ body {
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--tl-text-color);
+  will-change: opacity;
 }
 
 .tl-dot {
@@ -301,17 +310,19 @@ body {
   z-index: 30;
   pointer-events: none;
   overflow: hidden;
-  contain: layout paint;
+  contain: layout style paint;
 }
 
 .day-schedule-panel {
   position: absolute;
-  top: calc(var(--sat) + clamp(76px, calc(var(--app-h) * 0.135), 116px));
-  bottom: calc(var(--footer-h) + 24px);
-  left: 90px;
-  right: 10px;
+  top: calc(var(--sat) + clamp(76px, calc(var(--app-h) * 0.135), 116px) - 28px);
+  bottom: calc(var(--footer-h) - 4px);
+  left: 84px;
+  right: 4px;
+  padding: 28px 6px;
   pointer-events: none;
   visibility: hidden;
+  contain: layout style paint;
   backface-visibility: hidden;
 }
 
@@ -545,7 +556,7 @@ body {
 // Compact portrait viewport layout (320x568 iPhone SE .. 359px) — zero clipping or overlap
 @media (max-width: 359px) {
   #top-header {
-    padding: calc(10px + var(--sat)) 10px 0;
+    padding: calc(10px + var(--sat)) 10px 8px;
   }
 
   #story-bar-track {
@@ -565,10 +576,10 @@ body {
   }
 
   #timeline-rail {
-    top: calc(var(--sat) + 66px);
-    bottom: calc(var(--footer-h) + 22px);
+    top: calc(var(--sat) + 46px);
+    bottom: calc(var(--footer-h) + 2px);
     left: 8px;
-    width: 48px;
+    width: 52px;
   }
 
   .tl-time-wrap {
@@ -591,10 +602,11 @@ body {
   }
 
   .day-schedule-panel {
-    top: calc(var(--sat) + 66px);
-    bottom: calc(var(--footer-h) + 22px);
-    left: 58px;
-    right: 4px;
+    top: calc(var(--sat) + 40px);
+    bottom: calc(var(--footer-h) - 4px);
+    left: 52px;
+    right: 0;
+    padding: 26px 4px 26px 6px;
   }
 
   .schedule-item-title {

@@ -330,17 +330,26 @@ describe('bindGesturesAndPhysics', () => {
     shell.dispatchEvent(normalClick);
     expect(normalClick.defaultPrevented).toBe(false);
 
-    // Catch active glide mid-flight with 0.00px jitter!
-    stepFrames(4, 16);
-    const posBeforeCatch = gestures.getCurrentDayFloat();
-    expect(posBeforeCatch).toBeGreaterThan(0.4);
-    expect(posBeforeCatch).toBeLessThan(1);
+    // Catch active glide mid-flight: pointerdown keeps glide running smoothly; horizontal pointermove catches with 0.00px jitter!
+    stepFrames(2, 16);
+    const posAtDown = gestures.getCurrentDayFloat();
+    expect(posAtDown).toBeGreaterThan(0.4);
+    expect(posAtDown).toBeLessThan(1);
     shell.dispatchEvent(
       new PointerEvent('pointerdown', { button: 0, clientX: 200, clientY: 300, pointerId: 12 })
     );
-    expect(gestures.getCurrentDayFloat()).toBe(posBeforeCatch);
+    // Glide continues advancing smoothly during finger contact before drag threshold!
+    stepFrames(1, 16);
+    const posDuringContact = gestures.getCurrentDayFloat();
+    expect(posDuringContact).toBeGreaterThan(posAtDown);
 
-    // pointercancel aborts gesture cleanly back to nearest dragStart
+    // Horizontal pointermove cancels glideRafId and rebases dragStart so raw === currentPos (0.00px catch jitter!)
+    shell.dispatchEvent(
+      new PointerEvent('pointermove', { clientX: 192, clientY: 300, pointerId: 12 })
+    );
+    expect(gestures.getCurrentDayFloat()).toBeCloseTo(posDuringContact, 6);
+
+    // pointercancel after horizontal drag aborts back to Math.round(dragStart)
     shell.dispatchEvent(
       new PointerEvent('pointercancel', { clientX: 380, clientY: 300, pointerId: 99 })
     );
@@ -350,6 +359,19 @@ describe('bindGesturesAndPhysics', () => {
     stepFrames(30, 16);
     expect(shell.classList.contains('is-moving')).toBe(false);
     expect(gestures.getCurrentDayFloat()).toBe(1);
+
+    // Also verify pointercancel before horizontal drag settles cleanly to Math.round(currentPos)
+    gestures.glideToDay(2);
+    stepFrames(2, 16);
+    shell.dispatchEvent(
+      new PointerEvent('pointerdown', { button: 0, clientX: 200, clientY: 300, pointerId: 120 })
+    );
+    shell.dispatchEvent(
+      new PointerEvent('pointercancel', { clientX: 200, clientY: 300, pointerId: 120 })
+    );
+    stepFrames(30, 16);
+    expect(gestures.getCurrentDayFloat()).toBe(2);
+    renderer.storySlotEls[1].dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
 
     // Slow small drag (< 28px after > 90ms hold) snaps cleanly to Math.round(currentPos)
     shell.dispatchEvent(
@@ -400,6 +422,8 @@ describe('bindGesturesAndPhysics', () => {
     expect(shell.classList.contains('is-moving')).toBe(false);
     expect(gestures.getCurrentDayFloat()).toBe(5);
     expect(window.location.hash).toBe('#day-6');
+    expect(renderer.schedulePanelEls[5].inert).toBe(false);
+    expect(renderer.schedulePanelEls[0].inert).toBe(true);
 
     // Chained rapid flicks RIGHT (Day 6 -> Day 5 -> Day 4) while interrupting backward glide
     for (let flickIdx = 0; flickIdx < 2; flickIdx++) {
@@ -447,45 +471,137 @@ describe('bindGesturesAndPhysics', () => {
     expect(caughtMapClick.defaultPrevented).toBe(true);
     stepFrames(35, 16);
 
-    // Jump to Day 1 and verify Right tap (including rapid chained Right tap), Left tap, Center tap, and vertical non-tap
+    // Touching down mid-glide, holding until glide settles, then dragging horizontally starts with 0.00px jump
     renderer.storySlotEls[0].dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
-    nowMs += 500;
+    gestures.glideToDay(1);
+    stepFrames(2, 16);
+    expect(gestures.getCurrentDayFloat()).toBeGreaterThan(0.2);
+    expect(gestures.getCurrentDayFloat()).toBeLessThan(0.9);
+    shell.dispatchEvent(
+      new PointerEvent('pointerdown', { button: 0, clientX: 300, clientY: 300, pointerId: 199 })
+    );
+    // Let glide settle completely to Day 2 (1.0) during finger contact before horizontal drag threshold
+    stepFrames(25, 16);
+    expect(gestures.getCurrentDayFloat()).toBe(1);
+    shell.dispatchEvent(
+      new PointerEvent('pointermove', { clientX: 294, clientY: 300, pointerId: 199 })
+    );
+    stepFrames(1, 16);
+    // Rebased dragStart keeps currentPos locked at settled Day 2 (1.0), never snapping back to ~0.6
+    expect(gestures.getCurrentDayFloat()).toBeCloseTo(1, 5);
+    shell.dispatchEvent(
+      new PointerEvent('pointermove', { clientX: 220, clientY: 300, pointerId: 199 })
+    );
+    stepFrames(1, 16);
+    expect(gestures.getCurrentDayFloat()).toBeCloseTo(1 + 74 / 400, 4);
+    shell.dispatchEvent(
+      new PointerEvent('pointerup', { clientX: 220, clientY: 300, pointerId: 199 })
+    );
+    shell.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    stepFrames(25, 16);
+    expect(gestures.getCurrentDayFloat()).toBe(2);
+
+    // Jump to Day 1 and verify 10 rapid 85ms Right taps (with 32ms finger contact) advance Day 1 -> Day 11 with <= 1.0 day lag!
+    renderer.storySlotEls[0].dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    for (let tapIdx = 0; tapIdx < 10; tapIdx++) {
+      const pid = 200 + tapIdx;
+      shell.dispatchEvent(
+        new PointerEvent('pointerdown', { button: 0, clientX: 360, clientY: 300, pointerId: pid })
+      );
+      stepFrames(4, 8);
+      shell.dispatchEvent(
+        new PointerEvent('pointerup', { button: 0, clientX: 360, clientY: 300, pointerId: pid })
+      );
+      expect(tapIdx + 1 - gestures.getCurrentDayFloat()).toBeLessThanOrEqual(1);
+      stepFrames(6, 8);
+    }
+    stepFrames(30, 8);
+    expect(gestures.getCurrentDayFloat()).toBe(10);
+    expect(window.location.hash).toBe('#day-11');
+
+    // Rapid 60ms Left taps retreat Day 11 -> Day 3 cleanly while clamping backward lag <= 1.0 day
+    for (let tapIdx = 0; tapIdx < 8; tapIdx++) {
+      const pid = 220 + tapIdx;
+      shell.dispatchEvent(
+        new PointerEvent('pointerdown', { button: 0, clientX: 40, clientY: 300, pointerId: pid })
+      );
+      stepFrames(3, 8);
+      shell.dispatchEvent(
+        new PointerEvent('pointerup', { button: 0, clientX: 40, clientY: 300, pointerId: pid })
+      );
+      expect(gestures.getCurrentDayFloat() - (10 - (tapIdx + 1))).toBeLessThanOrEqual(1);
+      stepFrames(4, 8);
+    }
+    stepFrames(30, 8);
+    expect(gestures.getCurrentDayFloat()).toBe(2);
+
+    // 1-day swipe from settled Day 5 (idx 4) -> Day 6 (idx 5) has ZERO .is-gpu-staged class mutations during motion
+    renderer.storySlotEls[4].dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
+    let movingGpuMutationCount = 0;
+    const gpuObs = new MutationObserver((records) => {
+      for (const r of records) {
+        if (
+          r.target instanceof HTMLElement &&
+          (r.target.classList.contains('sky-layer') ||
+            r.target.classList.contains('day-schedule-panel'))
+        ) {
+          movingGpuMutationCount++;
+        }
+      }
+    });
+    gpuObs.observe(shell, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    shell.dispatchEvent(
+      new PointerEvent('pointerdown', { button: 0, clientX: 300, clientY: 300, pointerId: 240 })
+    );
+    shell.dispatchEvent(
+      new PointerEvent('pointermove', { clientX: 180, clientY: 300, pointerId: 240 })
+    );
+    stepFrames(1, 16);
+    expect(movingGpuMutationCount).toBe(0);
+
+    // Continuous multi-day drag past staged window in both directions expands staged window on demand
+    shell.dispatchEvent(
+      new PointerEvent('pointermove', { clientX: -600, clientY: 300, pointerId: 240 })
+    );
+    stepFrames(1, 16);
+    shell.dispatchEvent(
+      new PointerEvent('pointermove', { clientX: 950, clientY: 300, pointerId: 240 })
+    );
+    stepFrames(1, 16);
+    shell.dispatchEvent(
+      new PointerEvent('pointerup', { clientX: 950, clientY: 300, pointerId: 240 })
+    );
+    shell.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    gpuObs.disconnect();
+    stepFrames(35, 16);
+
+    // Settled Right tap, Left tap, Center tap (both active glide & settled), and vertical non-tap
+    renderer.storySlotEls[0].dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
     shell.dispatchEvent(
       new PointerEvent('pointerdown', { button: 0, clientX: 350, clientY: 300, pointerId: 61 })
     );
     shell.dispatchEvent(
       new PointerEvent('pointerup', { button: 0, clientX: 350, clientY: 300, pointerId: 61 })
     );
-    stepFrames(4, 16);
-    nowMs += 250;
-    shell.dispatchEvent(
-      new PointerEvent('pointerdown', { button: 0, clientX: 350, clientY: 300, pointerId: 62 })
-    );
-    shell.dispatchEvent(
-      new PointerEvent('pointerup', { button: 0, clientX: 350, clientY: 300, pointerId: 62 })
-    );
-    stepFrames(35, 16);
-    expect(gestures.getCurrentDayFloat()).toBe(2);
+    stepFrames(30, 8);
+    expect(gestures.getCurrentDayFloat()).toBe(1);
 
-    nowMs += 500;
     shell.dispatchEvent(
       new PointerEvent('pointerdown', { button: 0, clientX: 50, clientY: 300, pointerId: 63 })
     );
     shell.dispatchEvent(
       new PointerEvent('pointerup', { button: 0, clientX: 50, clientY: 300, pointerId: 63 })
     );
-    stepFrames(35, 16);
-    expect(gestures.getCurrentDayFloat()).toBe(1);
-
-    nowMs += 500;
+    stepFrames(2, 8);
+    // Center neutral tap catches active glide cleanly
     shell.dispatchEvent(
       new PointerEvent('pointerdown', { button: 0, clientX: 200, clientY: 300, pointerId: 64 })
     );
     shell.dispatchEvent(
       new PointerEvent('pointerup', { button: 0, clientX: 200, clientY: 300, pointerId: 64 })
     );
+    stepFrames(30, 8);
 
-    nowMs += 500;
     shell.dispatchEvent(
       new PointerEvent('pointerdown', { button: 0, clientX: 200, clientY: 300, pointerId: 65 })
     );
@@ -671,6 +787,33 @@ describe('bindGesturesAndPhysics', () => {
     vi.advanceTimersByTime(20);
     expect(shell.classList.contains('is-moving')).toBe(false);
     expect(g2.getCurrentDayFloat()).toBe(3);
+
+    // Reduced-motion 2-frame horizontal flick on map link jumps immediately and still suppresses post-pointerup click
+    const mapAnchor = renderer.cityscapeMapLinkEl;
+    mapAnchor.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 300,
+        clientY: 750,
+        pointerId: 91
+      })
+    );
+    nowMs += 20;
+    mapAnchor.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        button: 0,
+        clientX: 260,
+        clientY: 750,
+        pointerId: 91
+      })
+    );
+    expect(g2.getCurrentDayFloat()).toBe(4);
+    const reducedFlickClick = new MouseEvent('click', { bubbles: true, cancelable: true });
+    mapAnchor.dispatchEvent(reducedFlickClick);
+    expect(reducedFlickClick.defaultPrevented).toBe(true);
+    g2.glideToDay(3);
 
     // Falls back cleanly when theme-color-meta exists and window.CSS or CSS.supports is absent
     const originalCss = window.CSS;

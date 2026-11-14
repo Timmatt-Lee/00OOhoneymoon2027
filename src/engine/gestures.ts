@@ -22,8 +22,8 @@ export interface GestureEngine {
   glideToDay(nextTargetIdx: number): void;
 }
 
-const GLIDE_TAU_MS = 52;
-const GLIDE_SETTLE_EPSILON = 0.002;
+const GLIDE_TAU_MS = 32;
+const GLIDE_SETTLE_EPSILON = 0.003;
 const FLICK_VELOCITY_PX_PER_MS = 0.22;
 const FLICK_DISTANCE_PX = 28;
 const VELOCITY_SAMPLE_STEP_MS = 30;
@@ -71,6 +71,14 @@ export function bindGesturesAndPhysics(
   let lastNearestDay = -1;
   let activeId: number | null = null;
   let isHorizontal = false;
+  let isSuppressNextClick = false;
+  let stagedMinIdx = maxIdx;
+  let stagedMaxIdx = -1;
+  const stagedDayMask = new Uint8Array(dayCount);
+  stagedDayMask.fill(2);
+  const lastSkyOp: string[] = Array.from({ length: dayCount }, () => '');
+  const lastPanelOp: string[] = Array.from({ length: dayCount }, () => '');
+  const lastPanelTx: string[] = Array.from({ length: dayCount }, () => '');
 
   function measureLayoutMetrics(): void {
     viewportState = syncViewportState(shell);
@@ -118,59 +126,83 @@ export function bindGesturesAndPhysics(
     }
   }
 
-  function clearScheduledAnimations(): void {
-    if (dragRafId !== null) {
-      cancelAnimationFrame(dragRafId);
-      dragRafId = null;
-    }
+  function stopGlideAnimation(): void {
     if (glideRafId !== null) {
       cancelAnimationFrame(glideRafId);
       glideRafId = null;
     }
   }
 
+  function clearScheduledAnimations(): void {
+    if (dragRafId !== null) {
+      cancelAnimationFrame(dragRafId);
+      dragRafId = null;
+    }
+    stopGlideAnimation();
+  }
+
   function renderPair(idxA: number, idxB: number, t: number, rawPos: number): void {
-    for (let i = 0; i <= maxIdx; i++) {
-      const el = renderer.skyLayerEls[i];
-      const isPrevNeighbor = t === 0 && i === idxA - 1;
-      const isSkyStaged = i === idxA || i === idxB || isPrevNeighbor;
-      el.classList.toggle('is-gpu-staged', isSkyStaged);
-      if (i === idxA) {
-        if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
-        el.style.opacity = '1';
-      } else if (i === idxB) {
-        if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
-        el.style.opacity = t.toFixed(3);
-      } else if (isPrevNeighbor) {
-        if (el.style.visibility !== 'visible') el.style.visibility = 'visible';
-        el.style.opacity = '0';
-      } else if (el.style.visibility !== 'hidden') {
-        el.style.visibility = 'hidden';
-        el.style.opacity = '0';
-      }
-    }
-
-    for (let i = 0; i <= maxIdx; i++) {
-      const panel = renderer.schedulePanelEls[i];
-      const isPrevNeighbor = t === 0 && i === idxA - 1;
-      const isPanelStaged = i === idxA || i === idxB || isPrevNeighbor;
-      panel.classList.toggle('is-gpu-staged', isPanelStaged);
-      if (isPanelStaged) {
-        if (panel.style.visibility !== 'visible') panel.style.visibility = 'visible';
-        const offset = i - rawPos;
-        panel.style.opacity = Math.max(0, 1 - Math.abs(offset)).toFixed(3);
-        panel.style.transform = `translate3d(${(offset * stageWidth).toFixed(1)}px, 0, 0)`;
-      } else if (panel.style.visibility !== 'hidden') {
-        panel.style.visibility = 'hidden';
-        panel.style.opacity = '0';
-      }
-    }
-
     const clamped = idxA + t;
+    const nearest = Math.round(clamped);
+    const isSettled = !isHorizontal && dragRafId === null && glideRafId === null;
+
+    if (isSettled) {
+      stagedMinIdx = Math.max(0, nearest - 1);
+      stagedMaxIdx = Math.min(maxIdx, nearest + 1);
+    } else if (idxB > stagedMaxIdx) {
+      stagedMinIdx = idxA;
+      stagedMaxIdx = Math.min(maxIdx, idxB + 1);
+    } else if (idxA < stagedMinIdx) {
+      stagedMinIdx = Math.max(0, idxA - 1);
+      stagedMaxIdx = idxB;
+    }
+
+    for (let i = 0; i <= maxIdx; i++) {
+      const isInWindow = i >= stagedMinIdx && i <= stagedMaxIdx;
+      const nextMask = isInWindow ? 1 : 0;
+      const skyEl = renderer.skyLayerEls[i];
+      const panelEl = renderer.schedulePanelEls[i];
+
+      if (stagedDayMask[i] !== nextMask) {
+        stagedDayMask[i] = nextMask;
+        skyEl.classList.toggle('is-gpu-staged', isInWindow);
+        panelEl.classList.toggle('is-gpu-staged', isInWindow);
+        const nextVis = isInWindow ? 'visible' : 'hidden';
+        skyEl.style.visibility = nextVis;
+        panelEl.style.visibility = nextVis;
+        if (!isInWindow) {
+          skyEl.style.opacity = '0';
+          lastSkyOp[i] = '0';
+          panelEl.style.opacity = '0';
+          lastPanelOp[i] = '0';
+        }
+      }
+
+      if (!isInWindow) continue;
+
+      const nextSkyOp = i === idxA ? '1' : i === idxB ? t.toFixed(3) : '0';
+      if (lastSkyOp[i] !== nextSkyOp) {
+        skyEl.style.opacity = nextSkyOp;
+        lastSkyOp[i] = nextSkyOp;
+      }
+
+      const isActivePair = i === idxA || i === idxB;
+      const offset = isActivePair || isSettled ? i - rawPos : i < idxA ? -1 : 1;
+      const nextPanelOp = isActivePair ? Math.max(0, 1 - Math.abs(offset)).toFixed(3) : '0.000';
+      if (lastPanelOp[i] !== nextPanelOp) {
+        panelEl.style.opacity = nextPanelOp;
+        lastPanelOp[i] = nextPanelOp;
+      }
+
+      const nextPanelTx = `translate3d(${(offset * stageWidth).toFixed(1)}px, 0, 0)`;
+      if (lastPanelTx[i] !== nextPanelTx) {
+        panelEl.style.transform = nextPanelTx;
+        lastPanelTx[i] = nextPanelTx;
+      }
+    }
+
     timeline.renderInterpolation(idxA, idxB, t);
     parallax.renderParallax(clamped, idxA, idxB, t, viewportWidth);
-    const nearest = Math.round(clamped);
-    const isSettled = activeId === null && glideRafId === null;
     renderer.updateTopStoryBar(nearest, daysData[nearest].isDark, isSettled);
     if (isSettled) {
       syncSystemBars(nearest);
@@ -235,6 +267,12 @@ export function bindGesturesAndPhysics(
       return;
     }
 
+    if (clampedIdx - currentPos > 1) {
+      currentPos = clampedIdx - 1;
+    } else if (currentPos - clampedIdx > 1) {
+      currentPos = clampedIdx + 1;
+    }
+
     if (dragRafId !== null) {
       cancelAnimationFrame(dragRafId);
       dragRafId = null;
@@ -279,6 +317,7 @@ export function bindGesturesAndPhysics(
   track.addEventListener('pointerdown', (e: PointerEvent) => {
     if (e.button !== 0 || scrubId !== null) return;
     e.stopPropagation();
+    isSuppressNextClick = false;
     const pt = toStagePoint(e);
     const day = resolveSlotDay(pt.x, e.target);
     scrubId = e.pointerId;
@@ -316,8 +355,6 @@ export function bindGesturesAndPhysics(
   let dragStart = 0;
   let isInterruptingGlide = false;
   let priorTargetIdx = initialIdx;
-  let isSuppressNextClick = false;
-  let lastTap = -1000;
   let velAnchorX = 0;
   let velAnchorTime = 0;
   let velStepX = 0;
@@ -342,10 +379,6 @@ export function bindGesturesAndPhysics(
     }
     isInterruptingGlide = glideRafId !== null;
     priorTargetIdx = targetDayIdx;
-    if (glideRafId !== null) {
-      cancelAnimationFrame(glideRafId);
-      glideRafId = null;
-    }
     const pt = toStagePoint(e);
     const nowTime = performance.now();
     activeId = e.pointerId;
@@ -370,6 +403,10 @@ export function bindGesturesAndPhysics(
     if (!isHorizontal) {
       isHorizontal = true;
       isSuppressNextClick = true;
+      if (glideRafId !== null || isInterruptingGlide) {
+        stopGlideAnimation();
+        dragStart = currentPos + dx / stageWidth;
+      }
       trySetPointerCapture(shell, e.pointerId);
     }
 
@@ -409,8 +446,10 @@ export function bindGesturesAndPhysics(
       isHorizontal = true;
       isSuppressNextClick = true;
     }
+    const isHorizontalGesture = isHorizontal;
+    isHorizontal = false;
 
-    if (isHorizontal) {
+    if (isHorizontalGesture) {
       const dtVel = nowTime - velAnchorTime;
       const vx =
         nowTime - lastMoveTime <= VELOCITY_STALE_MS && dtVel >= 1 ? (pt.x - velAnchorX) / dtVel : 0;
@@ -431,18 +470,27 @@ export function bindGesturesAndPhysics(
         glideToDay(Math.round(currentPos));
       }
     } else if (targetAnchor) {
-      if (isInterruptingGlide) {
+      if (glideRafId !== null || isInterruptingGlide) {
         isSuppressNextClick = true;
+        stopGlideAnimation();
         glideToDay(Math.round(currentPos));
       }
       // Allow native <a href> click / Universal Links navigation when settled
       return;
-    } else if (dist < 10 && nowTime - lastTap > 200) {
-      lastTap = nowTime;
-      const baseDay = isInterruptingGlide ? priorTargetIdx : Math.round(dragStart);
+    } else if (dist < 10) {
+      const isGlidingNow = glideRafId !== null || isInterruptingGlide;
+      const baseDay = isGlidingNow ? targetDayIdx : Math.round(dragStart);
       const relX = (pt.x - stageLeft) / stageWidth;
-      glideToDay(relX >= 0.65 ? baseDay + 1 : relX <= 0.35 ? baseDay - 1 : Math.round(currentPos));
+      if (relX >= 0.65) {
+        glideToDay(baseDay + 1);
+      } else if (relX <= 0.35) {
+        glideToDay(baseDay - 1);
+      } else {
+        stopGlideAnimation();
+        glideToDay(Math.round(currentPos));
+      }
     } else {
+      stopGlideAnimation();
       glideToDay(Math.round(currentPos));
     }
   };
@@ -450,9 +498,11 @@ export function bindGesturesAndPhysics(
   const cancelSwipe = (e: PointerEvent): void => {
     if (activeId !== e.pointerId) return;
     activeId = null;
+    const settleTarget = Math.round(isHorizontal ? dragStart : currentPos);
     isHorizontal = false;
     isSuppressNextClick = false;
-    glideToDay(Math.round(dragStart));
+    stopGlideAnimation();
+    glideToDay(settleTarget);
   };
 
   shell.addEventListener('pointerup', endSwipe);

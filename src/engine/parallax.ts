@@ -145,25 +145,57 @@ export function mountParallaxScenes(
   const arriveDayIdx = daysData.findIndex((d) => d.planeAction === 'arrive');
   const departDayIdx = daysData.findIndex((d) => d.planeAction === 'depart');
 
+  let lastViewportWidth = -1;
   let lastArriveP = -1;
   let lastDepartP = -1;
 
   return {
     renderParallax(clamped, idxA, idxB, t, viewportWidth) {
+      if (viewportWidth !== lastViewportWidth) {
+        lastViewportWidth = viewportWidth;
+        for (let g = 0; g < sceneGroups.length; g++) {
+          const grp = sceneGroups[g];
+          const cg = cachedGroups[g];
+          const maxPanPx = (grp.endDay - grp.startDay) * grp.panStepPx;
+          const effectiveWidthPx = Math.max(grp.widthPx, Math.ceil(viewportWidth + maxPanPx));
+          if (effectiveWidthPx !== cg.lastWidthPx) {
+            const widthStr = `${effectiveWidthPx}px`;
+            cg.bgEl.style.width = widthStr;
+            cg.midEl.style.width = widthStr;
+            cg.fgEl.style.width = widthStr;
+            cg.lastWidthPx = effectiveWidthPx;
+          }
+        }
+      }
+
       const groupA = daysData[idxA].groupIdx;
       const groupB = daysData[idxB].groupIdx;
       const isSettledEndpoint = t === 0 || t === 1;
+      const settledDayIdx = t === 1 ? idxB : idxA;
+      const settledGroup = daysData[settledDayIdx].groupIdx;
+      const prevNeighborDayIdx = Math.max(0, settledDayIdx - 1);
+      const nextNeighborDayIdx = Math.min(daysData.length - 1, settledDayIdx + 1);
+      const prevNeighborGroup = daysData[prevNeighborDayIdx].groupIdx;
+      const nextNeighborGroup = daysData[nextNeighborDayIdx].groupIdx;
 
       for (let g = 0; g < sceneGroups.length; g++) {
         const grp = sceneGroups[g];
         const cg = cachedGroups[g];
-        const isGroupA = g === groupA;
-        const isGroupB = g === groupB;
+        const isActiveGroup = isSettledEndpoint
+          ? g === settledGroup || g === prevNeighborGroup || g === nextNeighborGroup
+          : g === groupA || g === groupB;
 
-        if (!isGroupA && !isGroupB) {
-          if (cg.isVisible) {
+        if (!isActiveGroup) {
+          const isDistantDuringMotion = g < groupA - 1 || g > groupB + 1;
+          if ((isSettledEndpoint || isDistantDuringMotion) && cg.isVisible) {
             cg.clipEl.classList.remove('is-visible');
             cg.isVisible = false;
+          } else if (cg.isVisible) {
+            const parkedClipX = g < groupA ? -viewportWidth : viewportWidth;
+            if (Math.abs(parkedClipX - cg.lastClipX) > 0.05) {
+              cg.clipEl.style.transform = `translate3d(${parkedClipX.toFixed(1)}px, 0, 0)`;
+              cg.lastClipX = parkedClipX;
+            }
           }
           continue;
         }
@@ -173,20 +205,23 @@ export function mountParallaxScenes(
           cg.isVisible = true;
         }
 
-        const maxPanPx = (grp.endDay - grp.startDay) * grp.panStepPx;
-        const effectiveWidthPx = Math.max(grp.widthPx, Math.ceil(viewportWidth + maxPanPx));
-        if (effectiveWidthPx !== cg.lastWidthPx) {
-          const widthStr = `${effectiveWidthPx}px`;
-          cg.bgEl.style.width = widthStr;
-          cg.midEl.style.width = widthStr;
-          cg.fgEl.style.width = widthStr;
-          cg.lastWidthPx = effectiveWidthPx;
+        let clipX: number;
+        let localDayOffset: number;
+        if (isSettledEndpoint) {
+          clipX = g === settledGroup ? 0 : g < settledGroup ? -viewportWidth : viewportWidth;
+          const anchorDay =
+            g === settledGroup
+              ? settledDayIdx
+              : g < settledGroup
+                ? prevNeighborDayIdx
+                : nextNeighborDayIdx;
+          localDayOffset = anchorDay - grp.startDay;
+        } else {
+          clipX =
+            groupA === groupB ? 0 : g === groupA ? -t * viewportWidth : (1 - t) * viewportWidth;
+          localDayOffset =
+            (groupA === groupB ? clamped : g === groupA ? idxA : idxB) - grp.startDay;
         }
-
-        const clipX =
-          groupA === groupB ? 0 : isGroupA ? -t * viewportWidth : (1 - t) * viewportWidth;
-        const localDayOffset =
-          (groupA === groupB ? clamped : isGroupA ? idxA : idxB) - grp.startDay;
         const panShift = -localDayOffset * grp.panStepPx;
 
         if (Math.abs(clipX - cg.lastClipX) > 0.05) {

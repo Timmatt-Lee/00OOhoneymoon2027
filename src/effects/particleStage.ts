@@ -4,6 +4,7 @@ import { OnsenSteamEffect } from './onsenSteamEffect';
 import { NightGlowEffect } from './nightGlowEffect';
 
 const AMBIENT_FRAME_MIN_INTERVAL_MS = 30;
+const POST_SETTLE_COOLDOWN_MS = 100;
 
 export function startParticleStage(daysData: readonly DayData[], getDayFloat: () => number): void {
   const rawCanvas = document.getElementById('fx-canvas');
@@ -30,7 +31,7 @@ export function startParticleStage(daysData: readonly DayData[], getDayFloat: ()
     window.CSS.supports('-webkit-touch-callout', 'none');
 
   const clampDpr = (): number => {
-    const maxDpr = checkIsIosWebKit() ? 1 : 2;
+    const maxDpr = checkIsIosWebKit() ? 1 : 1.25;
     return Math.min(Math.max(window.devicePixelRatio || 1, 1), maxDpr);
   };
 
@@ -60,8 +61,8 @@ export function startParticleStage(daysData: readonly DayData[], getDayFloat: ()
 
   let lastRenderedDay = -999;
   let rafId: number | null = null;
+  let resumeTimerId: number | null = null;
   let lastDrawTime: number | null = null;
-  let isStaticSyncPending = false;
 
   const checkIsSnowTinted = (dayFloat: number): boolean =>
     snowTintedIndices.some((idx) => Math.abs(dayFloat - idx) < 0.7);
@@ -70,6 +71,8 @@ export function startParticleStage(daysData: readonly DayData[], getDayFloat: ()
 
   const checkIsMoving = (): boolean =>
     appShell !== null && appShell.classList.contains('is-moving');
+
+  let isWasMoving = checkIsMoving();
 
   const renderFrame = (isAdvancing: boolean, dtScale = 1): void => {
     const dayFloat = getDayFloat();
@@ -82,7 +85,15 @@ export function startParticleStage(daysData: readonly DayData[], getDayFloat: ()
     nightGlow.render(ctx, cssWidth, cssHeight, dayFloat, isAdvancing, dtScale);
   };
 
+  const clearResumeTimer = (): void => {
+    if (resumeTimerId !== null) {
+      window.clearTimeout(resumeTimerId);
+      resumeTimerId = null;
+    }
+  };
+
   const stopLoop = (): void => {
+    clearResumeTimer();
     if (rafId !== null) {
       cancelAnimationFrame(rafId);
       rafId = null;
@@ -91,14 +102,9 @@ export function startParticleStage(daysData: readonly DayData[], getDayFloat: ()
   };
 
   const tick = (frameNow: number): void => {
-    if (document.hidden || checkIsStaticMode()) {
+    if (document.hidden || checkIsStaticMode() || checkIsMoving()) {
       rafId = null;
       lastDrawTime = null;
-      return;
-    }
-    if (checkIsMoving()) {
-      lastDrawTime = null;
-      rafId = requestAnimationFrame(tick);
       return;
     }
     if (lastDrawTime !== null && frameNow - lastDrawTime < AMBIENT_FRAME_MIN_INTERVAL_MS) {
@@ -112,43 +118,62 @@ export function startParticleStage(daysData: readonly DayData[], getDayFloat: ()
     rafId = requestAnimationFrame(tick);
   };
 
+  const schedulePostSettleResume = (): void => {
+    clearResumeTimer();
+    resumeTimerId = window.setTimeout(() => {
+      resumeTimerId = null;
+      if (!document.hidden && !checkIsStaticMode() && !checkIsMoving() && rafId === null) {
+        rafId = requestAnimationFrame(tick);
+      }
+    }, POST_SETTLE_COOLDOWN_MS);
+  };
+
   const syncLoopState = (): void => {
-    if (document.hidden) {
+    if (document.hidden || checkIsMoving()) {
       stopLoop();
       return;
-    }
-    if (!checkIsMoving()) {
-      renderFrame(false);
     }
     if (checkIsStaticMode()) {
       stopLoop();
+      renderFrame(false);
       return;
     }
+    clearResumeTimer();
+    renderFrame(false);
     if (rafId === null) {
       rafId = requestAnimationFrame(tick);
     }
   };
 
-  const runDeferredStaticSync = (): void => {
-    if (checkIsMoving()) {
-      requestAnimationFrame(runDeferredStaticSync);
+  const onNavigationTrigger = (): void => {
+    if (document.hidden || checkIsMoving()) return;
+    if (checkIsStaticMode()) {
+      renderFrame(false);
       return;
     }
-    isStaticSyncPending = false;
-    syncLoopState();
+    if (rafId === null && resumeTimerId === null) {
+      rafId = requestAnimationFrame(tick);
+    }
   };
 
-  const onNavigationTrigger = (): void => {
-    if (!checkIsStaticMode()) {
-      if (!document.hidden && rafId === null) {
-        rafId = requestAnimationFrame(tick);
+  if (appShell !== null) {
+    const shellObserver = new MutationObserver(() => {
+      const isNowMoving = checkIsMoving();
+      if (isNowMoving === isWasMoving) return;
+      isWasMoving = isNowMoving;
+      if (isNowMoving || document.hidden) {
+        stopLoop();
+        return;
       }
-      return;
-    }
-    if (isStaticSyncPending) return;
-    isStaticSyncPending = true;
-    requestAnimationFrame(runDeferredStaticSync);
-  };
+      if (checkIsStaticMode()) {
+        stopLoop();
+        renderFrame(false);
+        return;
+      }
+      schedulePostSettleResume();
+    });
+    shellObserver.observe(appShell, { attributes: true, attributeFilter: ['class'] });
+  }
 
   if (typeof reducedMotionQuery?.addEventListener === 'function') {
     reducedMotionQuery.addEventListener('change', () => {

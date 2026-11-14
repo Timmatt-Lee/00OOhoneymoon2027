@@ -220,7 +220,7 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     expect(context.pages()).toHaveLength(1);
   });
 
-  test('4. verifies WebKit GPU invariants (2x non-iOS & 1x iOS DPR cap, clipped SVG layers, zero SVG @keyframes, pruned will-change) and rapid multi-flick chaining', async ({
+  test('4. verifies WebKit & 120Hz GPU invariants (1.25x non-iOS & 1x iOS DPR cap, containment, clipped SVG layers, promoted timeline labels) and rapid multi-flick chaining', async ({
     browser
   }) => {
     const retinaContext = await browser.newContext({
@@ -231,7 +231,7 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/#day-10');
 
-    // 1. Verify #fx-canvas caps backing store at 2x (780px) on non-iOS 3x Retina devices
+    // 1. Verify #fx-canvas caps backing store at 1.25x (488px) on non-iOS 3x Retina devices
     const canvasMetrics = await page.evaluate(() => {
       const canvas = document.getElementById('fx-canvas') as HTMLCanvasElement;
       const ctx = canvas.getContext('2d');
@@ -246,14 +246,17 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
       }
       return { width: canvas.width, isPopulated };
     });
-    expect(canvasMetrics.width).toBe(780);
+    expect(canvasMetrics.width).toBe(488);
     expect(canvasMetrics.isPopulated).toBe(true);
 
-    // 2. Verify GPU layer pruning, clipped SVG textures (zero CATiledLayer overflow), and zero SVG @keyframes
+    // 2. Verify GPU layer pruning, containment, clipped SVG textures (zero CATiledLayer overflow), and zero SVG @keyframes
     const gpuState = await page.evaluate(() => {
+      const topHeader = document.getElementById('top-header');
+      const timelineRail = document.getElementById('timeline-rail');
       const inactiveSpan = document.querySelector('.story-seg:not(.is-active-pill) > span');
       const activePanel = document.querySelector<HTMLElement>('.day-schedule-panel[data-day="9"]');
       const tlNode = document.querySelector<HTMLElement>('.tl-node');
+      const tlTimeLabel = document.querySelector<HTMLElement>('.tl-time-label');
       const tlDot = document.querySelector<HTMLElement>('.tl-dot');
       const planeActor = document.querySelector<HTMLElement>('.plane-actor');
       const parallaxLayer = document.querySelector<HTMLElement>(
@@ -273,8 +276,12 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
           inactiveSpan !== null && window.getComputedStyle(inactiveSpan).display === 'none',
         stagedPanelCount: document.querySelectorAll('.day-schedule-panel.is-gpu-staged').length,
         stagedSkyCount: document.querySelectorAll('.sky-layer.is-gpu-staged').length,
+        headerContain: topHeader ? window.getComputedStyle(topHeader).contain : '',
+        railContain: timelineRail ? window.getComputedStyle(timelineRail).contain : '',
+        panelContain: activePanel ? window.getComputedStyle(activePanel).contain : '',
         activePanelWillChange: activePanel ? window.getComputedStyle(activePanel).willChange : '',
         tlNodeWillChange: tlNode ? window.getComputedStyle(tlNode).willChange : '',
+        tlTimeLabelWillChange: tlTimeLabel ? window.getComputedStyle(tlTimeLabel).willChange : '',
         tlDotWillChange: tlDot ? window.getComputedStyle(tlDot).willChange : '',
         planeWillChange: planeActor ? window.getComputedStyle(planeActor).willChange : '',
         parallaxOverflow: parallaxLayer ? window.getComputedStyle(parallaxLayer).overflow : '',
@@ -287,8 +294,12 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     expect(gpuState.isInactiveSpanHidden).toBe(true);
     expect(gpuState.stagedPanelCount).toBe(3);
     expect(gpuState.stagedSkyCount).toBe(3);
+    expect(gpuState.headerContain).toBe('content');
+    expect(gpuState.railContain).toBe('content');
+    expect(gpuState.panelContain).toBe('content');
     expect(gpuState.activePanelWillChange).toContain('transform');
-    expect(gpuState.tlNodeWillChange).toBe('auto');
+    expect(gpuState.tlNodeWillChange).toContain('transform');
+    expect(gpuState.tlTimeLabelWillChange).toBe('opacity');
     expect(gpuState.tlDotWillChange).toBe('auto');
     expect(gpuState.planeWillChange).toBe('auto');
     expect(gpuState.parallaxOverflow).toBe('hidden');
@@ -798,5 +809,207 @@ test.describe('00OO Hokkaido Honeymoon 2027 — Visual, 60Hz Physics, WCAG & Res
     );
     expect(cspViolations).toEqual([]);
     expect(errors).toEqual([]);
+  });
+
+  test('7. advances cleanly across 8 rapid 75ms right-edge taps (Day 1 -> Day 9) without dropping taps and pre-stages cross-group scenes offscreen with zero Frame-1 layer churn', async ({
+    browser
+  }) => {
+    const mobileContext = await browser.newContext({
+      viewport: { width: 412, height: 915 },
+      deviceScaleFactor: 3,
+      hasTouch: true,
+      isMobile: true
+    });
+    const page = await mobileContext.newPage();
+    const errors = await installErrorAndCspMonitors(page);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/#day-1');
+    await page.evaluate(() => document.fonts.ready);
+
+    // 1. Fire 8 rapid 75ms right-edge taps (with realistic 30ms touch contact) from Day 1 -> Day 9
+    const shell = page.locator('#app-shell');
+    for (let tapIdx = 0; tapIdx < 8; tapIdx++) {
+      const pid = 300 + tapIdx;
+      await shell.dispatchEvent('pointerdown', {
+        button: 0,
+        clientX: 392,
+        clientY: 450,
+        pointerId: pid
+      });
+      if (tapIdx === 0) {
+        // Verify moving schedule links disable pointer-events during active motion
+        await shell.evaluate((el) => {
+          el.classList.add('is-moving');
+        });
+        const movingLinkPointerEvents = await page.evaluate(() => {
+          const link = document.querySelector<HTMLElement>(
+            '.day-schedule-panel[data-day="0"] .is-map-link'
+          );
+          return link ? window.getComputedStyle(link).pointerEvents : '';
+        });
+        expect(movingLinkPointerEvents).toBe('none');
+      }
+      await page.waitForTimeout(30);
+      await shell.dispatchEvent('pointerup', {
+        button: 0,
+        clientX: 392,
+        clientY: 450,
+        pointerId: pid
+      });
+      if (tapIdx < 7) {
+        await page.waitForTimeout(45);
+      }
+    }
+
+    await expect(page.locator('.story-seg.is-active-pill .pill-day-tag')).toHaveText('Day 9');
+    await expect(shell).not.toHaveClass(/is-moving/);
+    expect(page.url()).toContain('#day-9');
+
+    // 2. Settle on Day 6 (Group 2, between Group 1 and Group 3) and verify offscreen pre-staged groups are 100% clipped outside #cityscape-footer
+    await page.locator('.story-slot[data-day="5"]').click();
+    await expect(shell).not.toHaveClass(/is-moving/);
+
+    const preStageAudit = await page.evaluate(() => {
+      const footer = document.getElementById('cityscape-footer');
+      const g1 = document.querySelector<HTMLElement>('.scene-group-clip[data-group="1"]');
+      const g2 = document.querySelector<HTMLElement>('.scene-group-clip[data-group="2"]');
+      const g3 = document.querySelector<HTMLElement>('.scene-group-clip[data-group="3"]');
+      if (!footer || !g1 || !g2 || !g3) return null;
+      const fRect = footer.getBoundingClientRect();
+      const r1 = g1.getBoundingClientRect();
+      const r2 = g2.getBoundingClientRect();
+      const r3 = g3.getBoundingClientRect();
+      return {
+        isG1Visible: g1.classList.contains('is-visible'),
+        isG2Visible: g2.classList.contains('is-visible'),
+        isG3Visible: g3.classList.contains('is-visible'),
+        isG1ClippedLeft: r1.right <= fRect.left,
+        isG2Aligned: Math.round(r2.left) === Math.round(fRect.left),
+        isG3ClippedRight: r3.left >= fRect.right
+      };
+    });
+    expect(preStageAudit).toEqual({
+      isG1Visible: true,
+      isG2Visible: true,
+      isG3Visible: true,
+      isG1ClippedLeft: true,
+      isG2Aligned: true,
+      isG3ClippedRight: true
+    });
+
+    // 3. Cross-group swipe Day 6 -> Day 7 triggers ZERO .is-visible additions and ZERO .is-gpu-staged mutations during motion
+    await page.evaluate(() => {
+      const win = window as unknown as {
+        __motionClassChurnCount?: number;
+        __motionObs?: MutationObserver;
+      };
+      win.__motionClassChurnCount = 0;
+      const obs = new MutationObserver((records) => {
+        const isMovingNow =
+          document.getElementById('app-shell')?.classList.contains('is-moving') ?? false;
+        if (!isMovingNow) return;
+        for (const r of records) {
+          if (
+            r.target instanceof HTMLElement &&
+            (r.target.classList.contains('sky-layer') ||
+              r.target.classList.contains('day-schedule-panel') ||
+              r.target.classList.contains('scene-group-clip'))
+          ) {
+            win.__motionClassChurnCount = (win.__motionClassChurnCount ?? 0) + 1;
+          }
+        }
+      });
+      const shellEl = document.getElementById('app-shell');
+      if (shellEl) {
+        obs.observe(shellEl, { subtree: true, attributes: true, attributeFilter: ['class'] });
+      }
+      win.__motionObs = obs;
+    });
+
+    await shell.dispatchEvent('pointerdown', {
+      button: 0,
+      clientX: 340,
+      clientY: 460,
+      pointerId: 401
+    });
+    await shell.dispatchEvent('pointermove', { clientX: 280, clientY: 460, pointerId: 401 });
+    await page.waitForTimeout(20);
+    await shell.dispatchEvent('pointermove', { clientX: 120, clientY: 460, pointerId: 401 });
+    await shell.dispatchEvent('pointerup', { clientX: 120, clientY: 460, pointerId: 401 });
+
+    await expect(page.locator('.story-seg.is-active-pill .pill-day-tag')).toHaveText('Day 7');
+    await expect(shell).not.toHaveClass(/is-moving/);
+
+    const motionClassChurnCount = await page.evaluate(() => {
+      const win = window as unknown as {
+        __motionClassChurnCount?: number;
+        __motionObs?: MutationObserver;
+      };
+      win.__motionObs?.disconnect();
+      return win.__motionClassChurnCount ?? -1;
+    });
+    expect(motionClassChurnCount).toBe(0);
+
+    // 4. Verify >= 4px paint-containment clearance on all 4 sides for .is-map-link:focus-visible, .story-slot:focus-visible, and .tl-dot across 412x915 and 320x568
+    for (const vp of [
+      { width: 412, height: 915 },
+      { width: 320, height: 568 }
+    ]) {
+      await page.setViewportSize(vp);
+      await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+
+      for (let dayIdx = 0; dayIdx < 12; dayIdx++) {
+        await page.locator(`.story-slot[data-day="${dayIdx}"]`).click();
+        await expect(shell).not.toHaveClass(/is-moving/);
+        await page.keyboard.press('Tab');
+
+        const minClearancePx = await page.evaluate((idx) => {
+          const header = document.getElementById('top-header');
+          const rail = document.getElementById('timeline-rail');
+          const panel = document.querySelector<HTMLElement>(
+            `.day-schedule-panel[data-day="${idx}"]`
+          );
+          if (!header || !rail || !panel) return -999;
+
+          const minInset = (inner: DOMRect, outer: DOMRect): number =>
+            Math.min(
+              inner.left - outer.left,
+              outer.right - inner.right,
+              inner.top - outer.top,
+              outer.bottom - inner.bottom
+            );
+
+          let minPx = Infinity;
+          const hRect = header.getBoundingClientRect();
+          for (const slot of header.querySelectorAll<HTMLElement>('.story-slot')) {
+            slot.focus();
+            minPx = Math.min(minPx, minInset(slot.getBoundingClientRect(), hRect));
+          }
+
+          const rRect = rail.getBoundingClientRect();
+          for (const dot of rail.querySelectorAll<HTMLElement>('.tl-dot')) {
+            const node = dot.closest<HTMLElement>('.tl-node');
+            if (node && node.style.opacity !== '0') {
+              minPx = Math.min(minPx, minInset(dot.getBoundingClientRect(), rRect));
+            }
+          }
+
+          const pRect = panel.getBoundingClientRect();
+          for (const link of panel.querySelectorAll<HTMLElement>('.is-map-link')) {
+            link.focus();
+            minPx = Math.min(minPx, minInset(link.getBoundingClientRect(), pRect));
+          }
+          return minPx;
+        }, dayIdx);
+
+        expect(
+          minClearancePx,
+          `Paint-containment clearance < 4px on Day ${dayIdx + 1} at ${vp.width}x${vp.height}`
+        ).toBeGreaterThanOrEqual(4);
+      }
+    }
+
+    expect(errors).toEqual([]);
+    await mobileContext.close();
   });
 });

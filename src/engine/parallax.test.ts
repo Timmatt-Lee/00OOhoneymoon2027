@@ -15,14 +15,14 @@ describe('mountParallaxScenes', () => {
     `;
   });
 
-  it('drives direct CSSOM transforms without mid-swipe custom-property thrashing and updates --pan-shift on settle', () => {
+  it('pre-applies layer widths upfront, pre-stages neighbor groups offscreen at settled boundaries, and drives 0-Cold-Raster cross-group swipes', () => {
     const { daysData, sceneGroups } = loadHoneymoonData();
     const parallax = mountParallaxScenes(daysData, sceneGroups);
 
     const groups = document.querySelectorAll<HTMLElement>('.scene-group-clip');
     expect(groups).toHaveLength(5);
 
-    // Day 1 (index 0, Group 0) settled at t = 0
+    // Day 1 (index 0, Group 0) settled at t = 0: Group 0 is onscreen; Day 2 is also Group 0 so Group 1 stays hidden
     parallax.renderParallax(0, 0, 1, 0, 390);
     expect(groups[0].classList.contains('is-visible')).toBe(true);
     expect(groups[1].classList.contains('is-visible')).toBe(false);
@@ -45,21 +45,67 @@ describe('mountParallaxScenes', () => {
     parallax.renderParallax(1, 0, 1, 1, 390);
     expect(groups[0].style.getPropertyValue('--pan-shift')).toBe('-54.0px');
 
-    // Cross-group swipe between Day 3 (idx 2, Group 0) and Day 4 (idx 3, Group 1) at t = 0.5
-    parallax.renderParallax(2.5, 2, 3, 0.5, 400);
+    // Settling on Day 3 (idx 2, Group 0 endDay) pre-stages Group 1 offscreen at +viewportWidth with startDay panShift
+    parallax.renderParallax(2, 2, 3, 0, 400);
     expect(groups[0].classList.contains('is-visible')).toBe(true);
     expect(groups[1].classList.contains('is-visible')).toBe(true);
+    expect(groups[0].style.transform).toBe('translate3d(0.0px, 0, 0)');
+    expect(groups[1].style.transform).toBe('translate3d(400.0px, 0, 0)');
+    expect(groups[1].style.getPropertyValue('--pan-shift')).toBe('0.0px');
+
+    // Frame 1 & midpoint of cross-group swipe Day 3 -> Day 4 adds ZERO new .is-visible classes
+    let visibleMutationCount = 0;
+    const obs = new MutationObserver(() => {
+      visibleMutationCount++;
+    });
+    for (const grpEl of groups) {
+      obs.observe(grpEl, { attributes: true, attributeFilter: ['class'] });
+    }
+    parallax.renderParallax(2.02, 2, 3, 0.02, 400);
+    parallax.renderParallax(2.5, 2, 3, 0.5, 400);
+    obs.disconnect();
+    expect(visibleMutationCount).toBe(0);
     expect(groups[0].style.transform).toBe('translate3d(-200.0px, 0, 0)');
     expect(groups[1].style.transform).toBe('translate3d(200.0px, 0, 0)');
-    expect(groups[0].style.getPropertyValue('--clip-x')).toBe('');
 
-    // Settle onto Group 2 (Day 6, idx 5) on a wide 1280px desktop screen
+    // Settling on Day 4 (idx 3, Group 1 startDay) keeps Group 0 pre-staged offscreen at -400px with endDay panShift (-108px)
+    parallax.renderParallax(3, 3, 4, 0, 400);
+    expect(groups[0].classList.contains('is-visible')).toBe(true);
+    expect(groups[0].style.transform).toBe('translate3d(-400.0px, 0, 0)');
+    expect(groups[0].style.getPropertyValue('--pan-shift')).toBe('-108.0px');
+    expect(groups[1].style.transform).toBe('translate3d(0.0px, 0, 0)');
+
+    // Settle onto Group 2 (Day 6, idx 5) on a wide 1280px desktop screen: ALL groups pre-apply width upfront
     parallax.renderParallax(5, 5, 6, 0, 1280);
     expect(groups[0].classList.contains('is-visible')).toBe(false);
-    expect(groups[1].classList.contains('is-visible')).toBe(false);
+    expect(groups[1].classList.contains('is-visible')).toBe(true);
+    expect(groups[1].style.transform).toBe('translate3d(-1280.0px, 0, 0)');
+    expect(groups[1].style.getPropertyValue('--pan-shift')).toBe('-168.0px');
     expect(groups[2].classList.contains('is-visible')).toBe(true);
-    const group2Bg = groups[2].querySelector<HTMLElement>('.parallax-bg');
-    expect(group2Bg?.style.width).toBe('1280px');
+    expect(groups[2].style.transform).toBe('translate3d(0.0px, 0, 0)');
+    expect(groups[3].classList.contains('is-visible')).toBe(true);
+    expect(groups[3].style.transform).toBe('translate3d(1280.0px, 0, 0)');
+    expect(groups[4].classList.contains('is-visible')).toBe(false);
+    expect(groups[2].querySelector<HTMLElement>('.parallax-bg')?.style.width).toBe('1280px');
+    expect(groups[4].querySelector<HTMLElement>('.parallax-bg')?.style.width).toBe('2080px');
+
+    // Mid-swipe Day 6 -> Day 7 keeps pre-staged Group 1 parked offscreen (and re-parks cleanly if viewport resizes mid-swipe)
+    parallax.renderParallax(5.5, 5, 6, 0.5, 1280);
+    expect(groups[1].classList.contains('is-visible')).toBe(true);
+    expect(groups[1].style.transform).toBe('translate3d(-1280.0px, 0, 0)');
+    parallax.renderParallax(5.5, 5, 6, 0.5, 1440);
+    expect(groups[1].style.transform).toBe('translate3d(-1440.0px, 0, 0)');
+
+    // Mid-swipe Day 6 -> Day 5 re-parks pre-staged Group 3 (> groupA) offscreen if viewport resizes mid-swipe
+    parallax.renderParallax(4.5, 4, 5, 0.5, 1600);
+    expect(groups[3].style.transform).toBe('translate3d(1600.0px, 0, 0)');
+
+    // Multi-group burst mid-motion prunes distant groups (< groupA - 1 or > groupB + 1) so layers never accumulate
+    parallax.renderParallax(7.5, 7, 8, 0.5, 1600);
+    expect(groups[1].classList.contains('is-visible')).toBe(false);
+    expect(groups[2].classList.contains('is-visible')).toBe(false);
+    parallax.renderParallax(2.5, 2, 3, 0.5, 1600);
+    expect(groups[4].classList.contains('is-visible')).toBe(false);
 
     // Day 12 (idx 11, Group 4) triggers departing plane trajectory without footer custom properties
     parallax.renderParallax(11, 11, 11, 0, 390);
